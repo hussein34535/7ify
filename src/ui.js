@@ -850,7 +850,7 @@
         '<div class="info-row"><span class="info-label">سنة الإصدار</span><span class="info-val">' + (tr.year || '2024') + '</span></div>' +
         '<div class="info-row"><span class="info-label">النوع الموسيقي</span><span class="info-val">' + esc(NG.genreLabel(tr.genre)) + '</span></div>' +
         '<div class="info-row"><span class="info-label">المدة الزمنية</span><span class="info-val">' + fmt(tr.duration) + '</span></div>' +
-        '<div class="info-row"><span class="info-label">جودة الصوت</span><span class="info-val badge-quality">HQ 320kbps Master Stream</span></div>' +
+        '<div class="info-row"><span class="info-label">جودة الصوت</span><span class="info-val badge-quality">' + (tr.source === 'file' ? 'ملف صوتي محلي عالي الدقة' : 'معاينة AAC رسمية · Apple Music') + '</span></div>' +
       '</div>' +
       (tr.bio ? '<div class="info-bio"><h4>عن العمل والفنان</h4><p>' + L(tr.bio) + '</p></div>' : '') +
       '<div class="info-actions">' +
@@ -1155,88 +1155,75 @@
       bio: {
         ar: 'الهضبة عمرو دياب، أسطورة البوب العربي والحائز على جوائز الموسيقى العالمية وسجل غينيس للأرقام القياسية كأكثر فنان عربي حصداً للجوائز العالمية والمبيعات.',
         en: 'Amr Diab, the "Father of Mediterranean Music", multiple World Music Award winner and Guinness World Record holder for best-selling Middle Eastern artist.'
-      },
-      listeners: '14,892,105'
+      }
     },
     'شيرين': {
       bio: {
         ar: 'شيرين عبد الوهاب، من أهم وأعذب الأصوات النسائية في العالم العربي، تميزت بإحساسها الطربي العالي وألبوماتها الأكثر مبيعاً في الشرق الأوسط.',
         en: 'Sherine Abdel-Wahab, one of the most celebrated and beloved voices in Arabic music, acclaimed for her emotional depth and iconic chart-topping albums.'
-      },
-      listeners: '9,431,220'
+      }
     },
     'ويجز': {
       bio: {
         ar: 'ويجز، رائد مشهد التراب والراب في مصر والعالم العربي، تصدّر قوائم الاستماع العالمية بأعماله المؤثرة مثل البخت وأسياد الصوت ودورك جاي.',
         en: 'Wegz, the pioneer of Egyptian rap and trap, dominating Arab streaming charts with landmark releases such as El Bakht and Dorak Gai.'
-      },
-      listeners: '8,210,540'
+      }
     },
     'كايروكي': {
       bio: {
         ar: 'فرقة الروك المستقل الرائدة في مصر والوطن العربي، تميزت بكلماتها المعبرة عن قضايا الشباب وألحانها التي ألهمت أجيالاً في ألبومات روما ونقطة بيضا.',
         en: 'Cairokee, the iconic Egyptian indie rock band renowned for soulful lyrics and anthems that resonated across generations in albums like Roma and Noqta Beida.'
-      },
-      listeners: '6,150,890'
+      }
     },
     'أم كلثوم': {
       bio: {
         ar: 'كوكب الشرق وسيدة الغناء العربي، أعظم صوت في تاريخ الموسيقى العربية الكلاسيكية، صنفتها مجلة رولينغ ستون ضمن أعظم مئة مغنٍ في التاريخ.',
         en: 'Umm Kulthum, the Star of the East, widely regarded as the greatest singer in the history of Arabic music and ranked among Rolling Stone\'s 100 greatest singers of all time.'
-      },
-      listeners: '4,870,410'
+      }
     },
     'فيروز': {
       bio: {
         ar: 'جارة القمر وصوت الصباح العربي، قدمت مع الأخوين رحباني مكتبة موسيقية خالدة تخطت حدود الشرق لتصل إلى مسارح العالم الكبرى في الأولمبيا والرويال ألبرت هول.',
         en: 'Fairouz, the Jewel of Lebanon and Voice of the Morning, whose timeless collaborations with the Rahbani brothers defined modern Levantine music.'
-      },
-      listeners: '7,320,110'
+      }
     },
     'مروان بابلو': {
       bio: {
         ar: 'عراب التراب المصري، أحدث ثورة في مشهد الهيب هوب المستقل ومزج الإيقاعات الإلكترونية الحديثة بالثقافة البصرية في كنترول والجميزة.',
         en: 'Marwan Pablo, widely credited as the godfather of Egyptian trap, redefining contemporary Arabic hip hop with Control and El Gemeza.'
-      },
-      listeners: '5,420,900'
+      }
     },
     'نانسي عجرم': {
       bio: {
         ar: 'ملكة البوب العربي وسفيرة النوايا الحسنة، حققت ألبوماتها مبيعات خيالية وحازت على جائزة الموسيقى العالمية كأفضل مبيعات في الشرق الأوسط.',
         en: 'Nancy Ajram, queen of Arab pop and multi-platinum artist, celebrated across the globe for her infectious hooks and performances.'
-      },
-      listeners: '11,200,450'
+      }
     },
     'ذا ويكند': {
       bio: {
         ar: 'أبيل تسفاي (The Weeknd)، الحائز على جوائز غرامي وعشرات الأرقام القياسية، صاحب أغنية Blinding Lights الأكثر استماعاً في تاريخ بيلبورد.',
         en: 'The Weeknd, multi-Grammy-winning Canadian visionary behind "Blinding Lights", the biggest Billboard Hot 100 song in history.'
-      },
-      listeners: '108,450,230'
+      }
     },
     'دافت بانك': {
       bio: {
         ar: 'الثنائي الفرنسي الأسطوري لموسيقى الفرانش هاوس والإلكترونيك، أحدثوا ثورة في الموسيقى العالمية بألبوماتهم الرائدة Random Access Memories وDiscovery.',
         en: 'Daft Punk, the pioneering French electronic music duo whose synthesis of funk, house, and synthpop shaped modern music.'
-      },
-      listeners: '32,150,000'
+      }
     },
     'جورج وسوف': {
       bio: {
         ar: 'سلطان الطرب جورج وسوف، قامة فنية استثنائية وأحد أعظم وأندر الأصوات الطربية في تاريخ الموسيقى العربية المعاصرة، اشتهر بأدائه العاطفي الخالد في روائع مثل إسمعيني بكلمة، حلف القمر، وكلام الناس.',
         en: 'George Wassouf, the "Sultan of Tarab", one of the most legendary and revered vocalists in contemporary Arab music history.'
-      },
-      listeners: '12,450,800'
+      }
     }
   };
 
   function getStreamsCount(tr) {
     if (tr.streams) return Number(tr.streams).toLocaleString('en-US');
-    let seed = 0;
-    const str = (tr.id || '') + (tr.title && (tr.title.ar || tr.title.en) || '') + (tr.artist && (tr.artist.ar || tr.artist.en) || '');
-    for (let i = 0; i < str.length; i++) seed = (seed * 31 + str.charCodeAt(i)) >>> 0;
-    const count = 15000000 + (seed % 285000000);
-    return count.toLocaleString('en-US');
+    return tr.source === 'file'
+      ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio')
+      : (state.lang === 'ar' ? 'معاينة رسمية · Apple Music' : 'Official Preview · Apple Music');
   }
 
   function openTrackPage(id) {
@@ -1265,10 +1252,12 @@
     const artistData = ARTIST_BIOS[tr.artist && (tr.artist.ar || tr.artist.en)] || null;
     const bioText = (tr.bio && L(tr.bio)) || (artistData ? byLang(artistData.bio) : (
       state.lang === 'ar' ?
-        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' بجودة استوديو 320kbps ومزامنة كاملة عبر منصة نغم.') :
-        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' in pristine master audio quality with real-time lyrics.')
+        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' عبر كتالوج Apple Music على نغم.') :
+        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' via Apple Music on Nagham.')
     ));
-    const listenersCount = artistData ? artistData.listeners : (tr.streams ? Math.floor(Number(tr.streams) / 15).toLocaleString('en-US') : '8,420,910');
+    const listenersCount = tr.source === 'file'
+      ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
+      : (state.lang === 'ar' ? 'كتالوج Apple Music الرسمي' : 'Official Apple Music Catalog');
 
     const sameArtist = TRACKS.filter((t) => t.id !== tr.id && ((t.artist && t.artist.ar === tr.artist.ar) || t.genre === tr.genre)).slice(0, 5);
     const lyrics = tr.lyrics || [];
@@ -1355,26 +1344,42 @@
     '</div>';
 
     // 3. Two-Column Spotify Layout Grid
+    const isSynced = Boolean((tr._lyricsSynced || (lyrics.length && lyrics.some(l => typeof l.t === 'number' && isFinite(l.t)))));
+    const isVerified = Boolean(tr.source !== 'file' && (artistData || ARTISTS.some(a => (a.name?.ar === artistName || a.name?.en === artistName))));
+
     html += '<div class="sp-grid">' +
       '<div class="sp-col-main">' +
         '<div class="sp-lyrics-card">' +
           '<div class="sp-card-head">' +
             '<h2>' + esc(t('track.lyrics') || 'كلمات الأغنية') + '</h2>' +
-            '<span class="sp-live-badge"><span class="sp-live-dot"></span> ' + (lyrics.length ? 'متزامنة LIVE' : 'استماع') + '</span>' +
+            (isSynced ? (
+              '<span class="sp-live-badge"><span class="sp-live-dot"></span> ' + (state.lang === 'ar' ? 'متزامنة LIVE' : 'LIVE Synced') + '</span>'
+            ) : (lyrics.length || tr.plainLyrics) ? (
+              '<span class="sp-plain-badge" style="font-size:11px;color:var(--text-sub);padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);">' + (state.lang === 'ar' ? 'كلمات نصية غير متزامنة' : 'Plain Lyrics') + '</span>'
+            ) : (
+              '<span class="sp-plain-badge" style="font-size:11px;color:var(--text-sub);padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);">' + (state.lang === 'ar' ? 'استماع' : 'Audio') + '</span>'
+            )) +
           '</div>' +
           '<div class="sp-lyrics-content">' +
-            (lyrics.length ? (
+            (isSynced ? (
               '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) =>
-                '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + line.t + '">' +
+                '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
                   '<span class="sp-lyric-main">' + esc(byLang(line)) + '</span>' +
-                  '<span class="sp-lyric-sub">' + esc(state.lang === 'ar' ? line.en : line.ar) + '</span>' +
+                  '<span class="sp-lyric-sub">' + esc(state.lang === 'ar' ? (line.en || '') : (line.ar || '')) + '</span>' +
                 '</button>'
               ).join('') + '</div>'
+            ) : (lyrics.length || tr.plainLyrics) ? (
+              '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
+                (tr.plainLyrics
+                  ? esc(tr.plainLyrics).split('\n').filter(Boolean).map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
+                  : lyrics.map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(byLang(line)) + '</p>').join('')
+                ) +
+              '</div>'
             ) : (
               '<div class="sp-lyrics-empty">' +
                 '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
-                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? 'جاري جلب كلمات الأغنية ومزامنتها...' : 'استمتع بالألحان والموسيقى النقية') + '</p>' +
-                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? 'يتم الاستعلام من قاعدة البيانات العالمية للكلمات.' : 'يتم تحديث كلمات الأغاني وتزامنها بشكل مستمر عبر مكتبة نغم ستوديو.') + '</p>' +
+                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? 'جاري جلب كلمات الأغنية...' : 'استمتع بالألحان والموسيقى') + '</p>' +
+                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'لا تتوفر كلمات لهذه الأغنية حالياً.') + '</p>' +
               '</div>'
             )) +
           '</div>' +
@@ -1411,13 +1416,19 @@
             '<div class="sp-artist-header-info">' +
               '<div class="sp-artist-kicker-row">' +
                 '<span class="sp-artist-kicker">' + esc(t('page.artist') || 'فنان') + '</span>' +
-                '<div class="sp-verified-tag">' +
-                  '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-                  '<span>' + esc(t('track.verified') || 'فنان موثق') + '</span>' +
-                '</div>' +
+                (isVerified ? (
+                  '<div class="sp-verified-tag">' +
+                    '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
+                    '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
+                  '</div>'
+                ) : (
+                  '<div class="sp-verified-tag" style="opacity:0.65;">' +
+                    '<span>' + (tr.source === 'file' ? 'ملف شخصي' : 'فنان في الكتالوج') + '</span>' +
+                  '</div>'
+                )) +
               '</div>' +
               '<h3 class="sp-artist-title">' + artistName + '</h3>' +
-              '<div class="sp-artist-listeners num">' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'كتالوج Apple Music الرسمي') + '</div>' +
+              '<div class="sp-artist-listeners num">' + esc(listenersCount) + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="sp-artist-body">' +

@@ -6,6 +6,7 @@
   "description": "NAGHAM Studio - Next-Gen Arabic Music Streaming Platform (Spotify Clone)",
   "scripts": {
     "build": "node build.mjs",
-    "start": "node serve.mjs"
+    "start": "node serve.mjs",
+    "test": "node test/runner.mjs"
   }
 }

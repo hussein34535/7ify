@@ -58,18 +58,18 @@ export default async function handler(req, res) {
         const lines = parseLRC(d.syncedLyrics);
         if (lines.length) {
           res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-          return res.status(200).json({ synced: true, lines });
+          return res.status(200).json({ synced: true, lines, plain: null });
         }
       }
       if (d.plainLyrics) {
-        const plainLines = d.plainLyrics.split('\n').map(s => s.trim()).filter(Boolean).map((text, i) => ({
-          t: i * 4,
+        const plainLines = d.plainLyrics.split('\n').map(s => s.trim()).filter(Boolean).map(text => ({
+          t: null,
           text,
           ar: text,
           en: text
         }));
         res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-        return res.status(200).json({ synced: false, lines: plainLines });
+        return res.status(200).json({ synced: false, lines: plainLines, plain: d.plainLyrics });
       }
     }
 
@@ -88,18 +88,18 @@ export default async function handler(req, res) {
           const lines = parseLRC(candidate.syncedLyrics);
           if (lines.length) {
             res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-            return res.status(200).json({ synced: true, lines });
+            return res.status(200).json({ synced: true, lines, plain: null });
           }
         }
         if (candidate.plainLyrics) {
-          const plainLines = candidate.plainLyrics.split('\n').map(s => s.trim()).filter(Boolean).map((text, i) => ({
-            t: i * 4,
+          const plainLines = candidate.plainLyrics.split('\n').map(s => s.trim()).filter(Boolean).map(text => ({
+            t: null,
             text,
             ar: text,
             en: text
           }));
           res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-          return res.status(200).json({ synced: false, lines: plainLines });
+          return res.status(200).json({ synced: false, lines: plainLines, plain: candidate.plainLyrics });
         }
       }
     }

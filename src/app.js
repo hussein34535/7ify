@@ -134,7 +134,7 @@ window.NG = (function () {
       'track.monthlyListeners': 'مستمع شهرياً',
       'track.aboutArtist': 'عن الفنان',
       'track.credits': 'بيانات الأغنية والإنتاج',
-      'track.quality': 'HQ 320kbps Master Stream',
+      'track.quality': 'معاينة صوتية رسمية · Apple Music CDN',
       'track.copyLink': 'نسخ الرابط',
       'track.copied': 'تم نسخ رابط الأغنية إلى الحافظة',
       'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
@@ -239,7 +239,7 @@ window.NG = (function () {
       'track.monthlyListeners': 'monthly listeners',
       'track.aboutArtist': 'About the Artist',
       'track.credits': 'Track Credits & Audio Specs',
-      'track.quality': 'HQ 320kbps Master Stream',
+      'track.quality': 'Official Audio Preview · Apple Music CDN',
       'track.copyLink': 'Copy Link',
       'track.copied': 'Track link copied to clipboard',
       'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
@@ -855,7 +855,7 @@ window.NG = (function () {
 
   function searchOnline(query, onDone) {
     const q = String(query || '').trim();
-    if (!q || !q.length) {
+    if (!q || q.length < 2) {
       if (typeof onDone === 'function') onDone([], []);
       return;
     }
@@ -956,6 +956,10 @@ window.NG = (function () {
             genre: (item.primaryGenreName || 'arabic').toLowerCase(),
             year: item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) || 2024 : 2024,
             duration: durSec,
+            fullDuration: durSec,
+            previewDuration: item.previewUrl ? 30 : 0,
+            playbackType: item.previewUrl ? 'preview' : 'unavailable',
+            isAudioPreview: Boolean(item.previewUrl),
             title: { ar: item.trackName || q, en: item.trackName || q },
             artist: { ar: artName, en: artName },
             album: { ar: item.collectionName || item.trackName || 'ألبوم', en: item.collectionName || item.trackName || 'Single' },
@@ -998,10 +1002,11 @@ window.NG = (function () {
     fetch(url)
       .then((r) => r.json())
       .then((d) => {
-        if (d && Array.isArray(d.lines) && d.lines.length) {
+        if (d && ((Array.isArray(d.lines) && d.lines.length) || d.plain)) {
           if (typeof track === 'object') {
-            track.lyrics = d.lines;
-            track._lyricsSynced = !!d.synced;
+            track.lyrics = d.lines || [];
+            track.plainLyrics = d.plain || null;
+            track._lyricsSynced = Boolean(d.synced);
           }
           if (typeof onDone === 'function') onDone(d);
         } else {
@@ -1080,8 +1085,10 @@ window.NG = (function () {
     el: null,
     track: null,
     playing: false,
+    status: 'idle',
     mode: 'none',
     url: '',
+    _reqId: 0,
     _looping: false,
     _vPos: 0,
     _vTimer: null,
@@ -1094,30 +1101,38 @@ window.NG = (function () {
 
       el.addEventListener('timeupdate', () => {
         if (!this.track) return;
-        const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.duration || 30);
+        const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.previewDuration || this.track.duration || 30);
         emit('tick', { pos: el.currentTime, duration: dur });
       });
 
       el.addEventListener('loadedmetadata', () => {
         if (!this.track) return;
-        const realDur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.duration || 30);
+        const realDur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.previewDuration || this.track.duration || 30);
         emit('meta', { id: this.track.id, duration: realDur });
         emit('tick', { pos: el.currentTime, duration: realDur });
       });
 
       el.addEventListener('play', () => {
         this.playing = true;
+        this.status = 'playing';
         emit('state', { playing: true });
+        emit('status', { status: 'playing' });
       });
 
       el.addEventListener('pause', () => {
         this.playing = false;
+        if (this.status !== 'ended' && this.status !== 'error') {
+          this.status = 'paused';
+        }
         emit('state', { playing: false });
+        emit('status', { status: this.status });
       });
 
       el.addEventListener('ended', () => {
         this.playing = false;
+        this.status = 'ended';
         emit('state', { playing: false });
+        emit('status', { status: 'ended' });
         emit('ended', {});
       });
 
@@ -1130,7 +1145,9 @@ window.NG = (function () {
           return;
         }
         this.playing = false;
+        this.status = 'error';
         emit('state', { playing: false });
+        emit('status', { status: 'error' });
         emit('error', { code: 'audio' });
       });
 
@@ -1147,10 +1164,12 @@ window.NG = (function () {
 
     load(track) {
       if (!track) return;
+      this._reqId++;
       try { this.el.pause(); } catch (e) {}
 
       this.track = track;
       this.playing = false;
+      this.status = 'idle';
 
       const isLocal = track.source === 'file';
       if (isLocal) {
@@ -1186,7 +1205,11 @@ window.NG = (function () {
 
       this.el.load();
       emit('state', { playing: false });
-      if (track.duration) emit('tick', { pos: 0, duration: track.duration });
+      emit('status', { status: 'idle' });
+      const initDur = isFinite(this.el.duration) && this.el.duration > 0
+        ? this.el.duration
+        : (track.previewDuration || track.duration || 30);
+      emit('tick', { pos: 0, duration: initDur });
     },
 
     async play() {
@@ -1195,20 +1218,43 @@ window.NG = (function () {
         return;
       }
 
+      const reqId = this._reqId;
+      this.status = 'loading';
+      emit('status', { status: 'loading' });
+
       this.el.volume = state.muted ? 0 : state.volume / 100;
       try {
         await this.el.play();
+        if (this._reqId !== reqId) {
+          try { this.el.pause(); } catch (e) {}
+          return;
+        }
+        this.playing = true;
+        this.status = 'playing';
+        emit('state', { playing: true });
+        emit('status', { status: 'playing' });
       } catch (e) {
+        if (this._reqId !== reqId) return;
         // Fallback for file:// or offline environments
         if (this.track && this.track.preview && this.el.src !== this.track.preview) {
           this.el.src = this.track.preview;
           try {
             await this.el.play();
+            if (this._reqId !== reqId) {
+              try { this.el.pause(); } catch (e2) {}
+              return;
+            }
+            this.playing = true;
+            this.status = 'playing';
+            emit('state', { playing: true });
+            emit('status', { status: 'playing' });
             return;
           } catch (e2) {}
         }
         this.playing = false;
+        this.status = 'error';
         emit('state', { playing: false });
+        emit('status', { status: 'error' });
         emit('error', { code: 'blocked' });
       }
     },
@@ -1218,6 +1264,10 @@ window.NG = (function () {
 
     pause() {
       try { this.el.pause(); } catch (e) {}
+      this.playing = false;
+      this.status = 'paused';
+      emit('state', { playing: false });
+      emit('status', { status: 'paused' });
     },
 
     toggle() {
@@ -1226,33 +1276,42 @@ window.NG = (function () {
     },
 
     seek(sec) {
-      const dur = (this.track && this.track.duration) || 0;
+      const dur = (this.track && (this.track.previewDuration || this.track.duration)) || 30;
       const target = clamp(Number(sec) || 0, 0, Math.max(0, dur - 0.05));
 
-      if (this.mode === 'preview' && this._looping) {
-        this._vPos = target;
-        const pDur = this._previewDur || 30;
-        try { this.el.currentTime = target % pDur; } catch (e) {}
-        emit('tick', { pos: target, duration: dur });
-        if (this.playing) this._startVirtualTimer();
-      } else {
-        try { this.el.currentTime = target; } catch (e) {}
-        emit('tick', { pos: target, duration: dur });
-      }
+      try { this.el.currentTime = target; } catch (e) {}
+      emit('tick', { pos: target, duration: dur });
     },
 
     getPosition() {
-      if (this.mode === 'preview' && this._looping) return this._vPos;
       const pos = this.el ? this.el.currentTime : 0;
       return isFinite(pos) ? pos : 0;
     },
 
+    getDuration() {
+      if (this.el && isFinite(this.el.duration) && this.el.duration > 0) return this.el.duration;
+      return (this.track && (this.track.previewDuration || this.track.duration)) || 30;
+    },
+
+    getFullDuration() {
+      return (this.track && (this.track.fullDuration || this.track.duration)) || 30;
+    },
+
+    isAudioPreview() {
+      return Boolean(this.track && (this.track.source !== 'file' && (this.track.preview || this.track.playbackType === 'preview')));
+    },
+
     stop(silent) {
+      this._reqId++;
       this._stopVirtualTimer();
       this._vPos = 0;
       this.pause();
       try { this.el.currentTime = 0; } catch (e) {}
-      if (!silent) emit('state', { playing: false });
+      this.status = 'idle';
+      if (!silent) {
+        emit('state', { playing: false });
+        emit('status', { status: 'idle' });
+      }
     },
 
     ensure() {

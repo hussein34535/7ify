@@ -9,8 +9,8 @@ export default async function handler(req, res) {
 
   const { q } = req.query || {};
   const query = String(q || '').trim();
-  if (!query) {
-    return res.status(400).json({ error: 'missing_query', results: [], artists: [] });
+  if (!query || query.length < 2) {
+    return res.status(200).json({ results: [], artists: [] });
   }
 
   const palettes = [
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
           sub: { ar: item.primaryGenreName || 'موسيقى', en: item.primaryGenreName || 'Music' },
           track: id,
           colors: palette,
-          listeners: Math.floor(2000000 + (Math.abs(item.artistId || 1000) % 18000000)).toLocaleString('en-US')
+          source: 'apple-music'
         });
       }
 
@@ -72,6 +72,10 @@ export default async function handler(req, res) {
         art: artHiRes,
         preview: item.previewUrl || '',
         duration: durSec,
+        fullDuration: durSec,
+        previewDuration: item.previewUrl ? 30 : 0,
+        playbackType: item.previewUrl ? 'preview' : 'unavailable',
+        isAudioPreview: Boolean(item.previewUrl),
         year: item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) || 2024 : 2024,
         genre: (item.primaryGenreName || 'arabic').toLowerCase(),
         colors: palette,
