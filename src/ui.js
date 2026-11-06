@@ -316,7 +316,7 @@
 
   function triggerOnlineSearch(query) {
     const q = String(query || '').trim();
-    if (!q || q.length < 2) return;
+    if (!q) return;
     ui.isSearchingOnline = true;
     NG.searchOnline(q, (onlineSongs, onlineArtists) => {
       ui.isSearchingOnline = false;
@@ -382,7 +382,7 @@
 
     ui.ctx.search = songs.map((tr) => tr.id);
 
-    const statusBadge = ui.isSearchingOnline
+    const statusBadge = (ui.isSearchingOnline && songs.length === 0)
       ? ' <span style="font-size:12px;opacity:0.75;display:inline-flex;align-items:center;gap:4px;">· ' + ic('sparkle') + esc(t('search.searchingOnline')) + '</span>'
       : '';
 
@@ -570,8 +570,12 @@
     $('#pTitleBtn').setAttribute('aria-label', byLang(tr.title) + ' — ' + byLang(tr.artist));
     $('#pArtist').textContent = byLang(tr.artist);
     const mark = $('#pMark');
-    mark.hidden = false;
-    mark.textContent = tr.source === 'file' ? t('player.local') : t('player.synth');
+    if (tr.source === 'file') {
+      mark.hidden = false;
+      mark.textContent = t('player.local');
+    } else {
+      mark.hidden = true;
+    }
     $('#pDur').textContent = fmt(tr.duration);
     $('#pLike').setAttribute('aria-pressed', String(fav));
     $('#pLikeIcon').querySelector('use').setAttribute('href', fav ? '#i-heart-fill' : '#i-heart');

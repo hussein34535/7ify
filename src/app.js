@@ -57,7 +57,7 @@ window.NG = (function () {
       'player.pause': 'إيقاف مؤقت', 'player.next': 'التالي', 'player.repeat': 'تكرار',
       'player.mute': 'كتم الصوت', 'player.unmute': 'إلغاء كتم الصوت', 'player.about': 'عن الأغنية',
       'player.queue': 'قائمة الانتظار', 'player.seek': 'موضع التشغيل', 'player.volume': 'مستوى الصوت',
-      'player.close': 'إغلاق المشغل', 'player.preview': 'معاينة', 'player.local': 'ملف محلي',
+      'player.close': 'إغلاق المشغل', 'player.preview': 'معاينة', 'player.local': 'ملف محلي', 'player.synth': 'بث ماستر HQ',
       'player.unavailable': 'غير متاح',
       'sheet.from': 'يُشغَّل من مكتبتك', 'sheet.player': 'المشغل', 'sheet.queue': 'الانتظار', 'sheet.about': 'عن الأغنية', 'sheet.lyrics': 'الكلمات',
       'common.close': 'إغلاق', 'common.cancel': 'إلغاء', 'common.create': 'إنشاء', 'common.seeAll': 'عرض الكل',
@@ -156,7 +156,7 @@ window.NG = (function () {
       'player.pause': 'Pause', 'player.next': 'Next', 'player.repeat': 'Repeat',
       'player.mute': 'Mute', 'player.unmute': 'Unmute', 'player.about': 'About this song',
       'player.queue': 'Queue', 'player.seek': 'Playback position', 'player.volume': 'Volume',
-      'player.close': 'Close player', 'player.preview': 'PREVIEW', 'player.local': 'LOCAL FILE',
+      'player.close': 'Close player', 'player.preview': 'PREVIEW', 'player.local': 'LOCAL FILE', 'player.synth': 'Master HQ',
       'player.unavailable': 'UNAVAILABLE',
       'sheet.from': 'PLAYING FROM YOUR LIBRARY', 'sheet.player': 'Player', 'sheet.queue': 'Queue', 'sheet.about': 'About', 'sheet.lyrics': 'Lyrics',
       'common.close': 'Close', 'common.cancel': 'Cancel', 'common.create': 'Create', 'common.seeAll': 'See all',
@@ -754,7 +754,9 @@ window.NG = (function () {
     const qWords = nq.split(' ').filter(Boolean);
     if (!qWords.length) return [];
 
+    const isShort = nq.length <= 2;
     const scored = [];
+
     for (const tr of TRACKS) {
       tr._matchedLyric = null;
       let score = 0;
@@ -762,40 +764,62 @@ window.NG = (function () {
       const titleEn = norm(tr.title.en);
       const artistAr = norm(tr.artist.ar);
       const artistEn = norm(tr.artist.en);
-      const hay = getTrackHaystack(tr);
 
-      // 1. Exact title match
-      if (titleAr === nq || titleEn === nq) score += 2000;
-      else if (titleAr.includes(nq) || titleEn.includes(nq)) score += 1000;
+      if (isShort) {
+        // Strict prefix matching for 1-2 character queries:
+        // ONLY match if Title or Artist has a word starting with the query (NO lyrics search!)
+        const tTokens = (titleAr + ' ' + titleEn).split(' ').filter(Boolean);
+        const aTokens = (artistAr + ' ' + artistEn).split(' ').filter(Boolean);
+        const matchPrefix = (tokens) => tokens.some((tok) => {
+          if (tok.startsWith(nq)) return true;
+          if (tok.startsWith('ال') && tok.length > 2 && tok.slice(2).startsWith(nq)) return true;
+          return false;
+        });
 
-      // 2. Exact artist match
-      if (artistAr === nq || artistEn === nq) score += 1500;
-      else if (artistAr.includes(nq) || artistEn.includes(nq)) score += 800;
+        if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 2000;
+        else if (matchPrefix(tTokens)) score += 1200;
 
-      // 3. Exact phrase match in haystack (including lyrics)
-      if (hay.includes(nq)) {
-        score += 650;
-        const ml = findMatchedLyric(tr, query);
-        if (ml) tr._matchedLyric = ml;
-      }
+        if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1500;
+        else if (matchPrefix(aTokens)) score += 1000;
+      } else {
+        // Full multi-character search
+        if (titleAr === nq || titleEn === nq) score += 2500;
+        else if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 1500;
+        else if (titleAr.includes(nq) || titleEn.includes(nq)) score += 1000;
 
-      // 4. Word-level matching with Arabic stems & token boundaries
-      let hitCount = 0;
-      const hayTokens = hay.split(' ').filter(Boolean);
-      for (const w of qWords) {
-        const stems = arStems(w);
-        if (stems.some((st) => hayTokens.some((tok) => tok === st || tok.startsWith(st) || tok.endsWith(st)))) {
-          hitCount++;
+        if (artistAr === nq || artistEn === nq) score += 2000;
+        else if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1300;
+        else if (artistAr.includes(nq) || artistEn.includes(nq)) score += 800;
+
+        const hay = getTrackHaystack(tr);
+
+        // Phrase match in haystack (including lyrics)
+        if (hay.includes(nq)) {
+          score += 650;
+          const ml = findMatchedLyric(tr, query);
+          if (ml) tr._matchedLyric = ml;
         }
-      }
 
-      const minHits = qWords.length >= 3 ? Math.ceil(qWords.length * 0.75) : qWords.length;
-      if (hitCount === qWords.length) {
-        score += 500 + (hitCount * 50);
-        if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
-      } else if (hitCount >= minHits) {
-        score += hitCount * 60;
-        if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
+        // Multi-word stem matching for natural phrases
+        if (qWords.length >= 2) {
+          let hitCount = 0;
+          const hayTokens = hay.split(' ').filter(Boolean);
+          for (const w of qWords) {
+            const stems = arStems(w);
+            if (stems.some((st) => hayTokens.some((tok) => tok === st || tok.startsWith(st) || tok.endsWith(st)))) {
+              hitCount++;
+            }
+          }
+
+          const minHits = Math.ceil(qWords.length * 0.75);
+          if (hitCount === qWords.length) {
+            score += 600 + (hitCount * 50);
+            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
+          } else if (hitCount >= minHits) {
+            score += hitCount * 60;
+            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
+          }
+        }
       }
 
       if (score > 0) scored.push({ tr, score });
@@ -819,7 +843,7 @@ window.NG = (function () {
 
   function searchOnline(query, onDone) {
     const q = String(query || '').trim();
-    if (!q || q.length < 2) {
+    if (!q || !q.length) {
       if (typeof onDone === 'function') onDone([], []);
       return;
     }
