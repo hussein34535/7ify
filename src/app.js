@@ -179,6 +179,13 @@ window.NG = (function () {
       'toast.spotifyDisconnected': 'تم فصل حساب Spotify بنجاح',
       'studio.spotifyConnectFailed': 'تعذر الاتصال بـ Spotify أو تم إلغاء العملية',
       'studio.spotifyNotPremium': 'حسابك في Spotify ليس Premium. يلزم اشتراك Premium لتشغيل الأغاني الكاملة عبر المتصفح.',
+      'sources.title': 'المصادر المتاحة',
+      'sources.fallback': 'تم الانتقال تلقائياً إلى مصدر بديل',
+      'sources.full': 'تشغيل كامل',
+      'sources.embed': 'مشغل رسمي',
+      'sources.preview': 'معاينة صوتية (٣٠ ثانية)',
+      'sources.switch': 'تشغيل بهذا المصدر',
+      'sources.none': 'لا توجد مصادر بديلة لهذه الأغنية',
       'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
       'sec.popular': 'أشهر الأغاني', 'sec.albums': 'الألبومات والإصدارات',
       'sec.arabicMusic': 'الموسيقى العربية', 'sec.intlMusic': 'الموسيقى العالمية',
@@ -311,6 +318,13 @@ window.NG = (function () {
       'toast.spotifyDisconnected': 'Disconnected from Spotify successfully',
       'studio.spotifyConnectFailed': 'Failed to connect to Spotify or operation was cancelled',
       'studio.spotifyNotPremium': 'Your Spotify account is not Premium. A Premium subscription is required for full browser streaming.',
+      'sources.title': 'Available Sources',
+      'sources.fallback': 'Automatically switched to alternative source',
+      'sources.full': 'Full Playback',
+      'sources.embed': 'Official Embed',
+      'sources.preview': 'Audio Preview (30s)',
+      'sources.switch': 'Play with this source',
+      'sources.none': 'No alternative sources available for this track',
       'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
       'sec.popular': 'Popular Tracks', 'sec.albums': 'Albums & Releases',
       'sec.arabicMusic': 'Arabic Music', 'sec.intlMusic': 'International Music',
@@ -1044,7 +1058,35 @@ window.NG = (function () {
       const abortCtrl = new AbortController();
       activeSearchAbort = abortCtrl;
 
-      // 1. Try serverless search endpoint first (fast, clean JSON, CORS-free)
+      // 1. Try multi-source search endpoint first (Apple, YouTube, Jamendo, Archive)
+      try {
+        const res = await fetch('/api/search-multi?q=' + encodeURIComponent(q), {
+          signal: abortCtrl.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (requestId !== searchRequestId) return;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (requestId !== searchRequestId) return;
+
+          if (Array.isArray(data.results) && data.results.length > 0) {
+            const mapped = data.results.map((tr) => {
+              const existingIdx = TRACKS.findIndex((t) => t.id === tr.id);
+              if (existingIdx === -1) TRACKS.push(tr);
+              else TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
+              return tr;
+            });
+            if (typeof onDone === 'function') onDone(mapped, data.artists || []);
+            return;
+          }
+        }
+      } catch (err) {
+        if (err.name === 'AbortError' || requestId !== searchRequestId) return;
+      }
+
+      // 2. Fallback to classic search endpoint (Apple Music)
       try {
         const res = await fetch('/api/search?q=' + encodeURIComponent(q), {
           signal: abortCtrl.signal,
@@ -1068,11 +1110,11 @@ window.NG = (function () {
             return;
           }
         }
-      } catch (err) {
-        if (err.name === 'AbortError' || requestId !== searchRequestId) return;
+      } catch (err2) {
+        if (err2.name === 'AbortError' || requestId !== searchRequestId) return;
       }
 
-      // 2. Fallback to iTunes JSONP for offline or local file:// mode
+      // 3. Fallback to iTunes JSONP for offline or local file:// mode
       if (requestId !== searchRequestId) return;
 
       const cbName = '__naghamJsonp_' + requestId + '_' + Math.floor(Math.random() * 10000);
@@ -1099,46 +1141,32 @@ window.NG = (function () {
 
       const timer = setTimeout(() => finish([], []), 4000);
 
-      window[cbName] = function (data) {
+      window[cbName] = (data) => {
         clearTimeout(timer);
-        if (requestId !== searchRequestId) {
-          cleanup();
-          return;
-        }
-        if (!data || !Array.isArray(data.results)) {
-          finish([], []);
-          return;
-        }
-
-        const palettes = [
-          ['#1A0C06', '#7A3B12', '#F0A64B'],
-          ['#1A0508', '#5C0E17', '#F26B6B'],
-          ['#050B10', '#0F3446', '#58C7E8'],
-          ['#0A1110', '#1C3A36', '#9AD7C8'],
-          ['#0B0A14', '#2E2B4F', '#9B8BFF'],
-          ['#14030A', '#6B0F2A', '#FF7A93']
-        ];
-        const motifs = ['rings', 'arcs', 'dots', 'orb'];
+        if (requestId !== searchRequestId) { cleanup(); return; }
+        const rawList = Array.isArray(data?.results) ? data.results : [];
         const artistMap = new Map();
-
-        const mapped = data.results.map((item, idx) => {
+        const results = rawList.map((item, idx) => {
           const id = 'sp-' + (item.trackId || (Date.now() + '_' + idx));
-          const artHiRes = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-
+          const artHiRes = item.artworkUrl100
+            ? item.artworkUrl100.replace(/100x100bb\.(jpg|png|webp)/, '600x600bb.$1')
+            : '';
           const durationMs = Number(item.trackTimeMillis);
           const fullDuration = Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs / 1000) : null;
-
           const releaseYear = item.releaseDate ? Number.parseInt(String(item.releaseDate).slice(0, 4), 10) : null;
           const year = Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
             ? releaseYear
             : null;
-
-          const artName = item.artistName || 'فنان';
+          const palettes = [
+            ['#1A0C06', '#7A3B12', '#F0A64B'],
+            ['#1A0508', '#5C0E17', '#F26B6B'],
+            ['#050B10', '#0F3446', '#58C7E8']
+          ];
           const palette = palettes[idx % palettes.length];
-
-          if (!artistMap.has(artName)) {
-            artistMap.set(artName, {
-              name: { ar: artName, en: artName },
+          const artistName = item.artistName || 'فنان';
+          if (!artistMap.has(artistName)) {
+            artistMap.set(artistName, {
+              name: { ar: artistName, en: artistName },
               sub: { ar: item.primaryGenreName || 'موسيقى', en: item.primaryGenreName || 'Music' },
               track: id,
               colors: palette,
@@ -1149,49 +1177,52 @@ window.NG = (function () {
           const tr = {
             id,
             appleId: item.trackId,
-            genre: (item.primaryGenreName || 'arabic').toLowerCase(),
-            year,
+            title: { ar: item.trackName || q, en: item.trackName || q },
+            artist: { ar: artistName, en: artistName },
+            album: { ar: item.collectionName || item.trackName || 'ألبوم', en: item.collectionName || item.trackName || 'Single' },
+            art: artHiRes,
+            preview: item.previewUrl || '',
             duration: fullDuration,
             fullDuration,
             catalogDuration: fullDuration,
-            previewDuration: (item.previewUrl || item.preview) ? 30 : null,
-            playableDuration: (item.previewUrl || item.preview) ? 30 : 0,
-            playbackType: (item.previewUrl || item.preview) ? 'preview' : 'unavailable',
-            playbackProvider: (item.previewUrl || item.preview) ? 'apple-preview' : 'none',
-            isAudioPreview: Boolean(item.previewUrl || item.preview),
+            previewDuration: item.previewUrl ? 30 : null,
+            playableDuration: item.previewUrl ? 30 : 0,
+            playbackType: item.previewUrl ? 'preview' : 'unavailable',
+            playbackMode: item.previewUrl ? 'PREVIEW' : 'UNAVAILABLE',
+            playbackProvider: item.previewUrl ? 'apple-preview' : 'none',
+            activeSource: item.previewUrl ? 'apple-preview' : 'none',
+            isAudioPreview: Boolean(item.previewUrl),
             isFullTrack: false,
-            isPreview: Boolean(item.previewUrl || item.preview),
-            requiresAuthentication: false,
-            availability: (item.previewUrl || item.preview) ? 'preview_only' : 'unavailable',
-            title: { ar: item.trackName || (item.title && (item.title.ar || item.title.en)) || q, en: item.trackName || (item.title && (item.title.en || item.title.ar)) || q },
-            artist: { ar: artName, en: artName },
-            album: { ar: item.collectionName || (item.album && (item.album.ar || item.album.en)) || item.trackName || 'ألبوم', en: item.collectionName || (item.album && (item.album.en || item.album.ar)) || item.trackName || 'Single' },
-            art: artHiRes || item.art || '',
-            preview: item.previewUrl || item.preview || '',
+            isPreview: Boolean(item.previewUrl),
+            availability: item.previewUrl ? 'preview_only' : 'unavailable',
+            year,
+            genre: (item.primaryGenreName || 'arabic').toLowerCase(),
             colors: palette,
-            motif: motifs[idx % motifs.length],
-            source: 'online'
+            motif: 'rings',
+            source: 'online',
+            sources: item.previewUrl ? [
+              {
+                provider: 'apple-preview',
+                providerName: 'Apple Music',
+                playbackMode: 'PREVIEW',
+                isFullTrack: false,
+                duration: 30,
+                url: item.previewUrl
+              }
+            ] : []
           };
-          const existingIdx = TRACKS.findIndex((t) => t.id === id);
-          if (existingIdx === -1) {
-            TRACKS.push(tr);
-          } else {
-            TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
-          }
+          const existingIdx = TRACKS.findIndex((t) => t.id === tr.id);
+          if (existingIdx === -1) TRACKS.push(tr);
+          else TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
           return tr;
         });
-
-        finish(mapped, Array.from(artistMap.values()).slice(0, 6));
+        finish(results, Array.from(artistMap.values()).slice(0, 8));
       };
 
-      script.onerror = () => {
-        clearTimeout(timer);
-        finish([], []);
-      };
-
+      script.onerror = () => finish([], []);
       script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&entity=song&limit=25&callback=' + cbName;
-      document.body.appendChild(script);
-    }, 250);
+      document.head.appendChild(script);
+    }, 280);
   }
 
   function fetchArtistTracks(artistName, onDone) {
@@ -1512,13 +1543,196 @@ window.NG = (function () {
     await engine._spotifyPlayer.resume();
   }
 
+  const PLAYBACK_MODES = {
+    FULL: 'FULL',
+    OFFICIAL_EMBED: 'OFFICIAL_EMBED',
+    PREVIEW: 'PREVIEW',
+    METADATA_ONLY: 'METADATA_ONLY',
+    UNAVAILABLE: 'UNAVAILABLE'
+  };
+
+  const ENGINE_STATES = {
+    IDLE: 'idle',
+    SEARCHING: 'searching',
+    RESOLVING: 'resolving',
+    READY_FULL: 'ready_full',
+    READY_PREVIEW: 'ready_preview',
+    PLAYING: 'playing',
+    PAUSED: 'paused',
+    LOADING: 'loading',
+    FALLBACK: 'fallback',
+    ENDED: 'ended',
+    UNAVAILABLE: 'unavailable',
+    ERROR: 'error'
+  };
+
+  let activeYtTicker = null;
+  const ytDriver = {
+    player: null,
+    ready: false,
+    _loadingPromise: null,
+
+    loadAPI() {
+      if (this._loadingPromise) return this._loadingPromise;
+      this._loadingPromise = new Promise((resolve) => {
+        if (typeof window !== 'undefined' && window.YT && window.YT.Player) {
+          return resolve(window.YT);
+        }
+        if (typeof window === 'undefined') return resolve(null);
+
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+          if (typeof prev === 'function') {
+            try { prev(); } catch (e) {}
+          }
+          resolve(window.YT);
+        };
+
+        if (typeof document !== 'undefined' && document.head) {
+          const existing = document.querySelector('script[src*="youtube.com/iframe_api"]');
+          if (!existing) {
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            tag.async = true;
+            document.head.appendChild(tag);
+          }
+        } else {
+          resolve(null);
+        }
+      });
+      return this._loadingPromise;
+    },
+
+    async init() {
+      if (this.player && this.ready) return this.player;
+      const YT = await this.loadAPI();
+      if (!YT || !YT.Player) {
+        throw new Error('yt_api_unavailable');
+      }
+
+      return new Promise((resolve) => {
+        let container = typeof document !== 'undefined' ? document.getElementById('yt-player-host') : null;
+        if (!container && typeof document !== 'undefined' && document.body) {
+          container = document.createElement('div');
+          container.id = 'yt-player-host';
+          container.style.cssText = 'position:fixed;bottom:-9999px;left:-9999px;width:240px;height:160px;opacity:0.001;pointer-events:none;z-index:-10;';
+          document.body.appendChild(container);
+        }
+
+        this.player = new YT.Player('yt-player-host', {
+          height: '160',
+          width: '240',
+          playerVars: {
+            playsinline: 1,
+            controls: 0,
+            disablekb: 1,
+            modestbranding: 1,
+            rel: 0
+          },
+          events: {
+            onReady: (e) => {
+              this.ready = true;
+              resolve(this.player);
+            },
+            onStateChange: (e) => {
+              if (engine.mode !== 'youtube') return;
+              if (e.data === 1) { // PLAYING
+                engine.playing = true;
+                engine.status = 'playing';
+                emit('state', { playing: true });
+                emit('status', { status: 'playing' });
+                engine._startYTTicker();
+              } else if (e.data === 2) { // PAUSED
+                engine.playing = false;
+                if (engine.status !== 'ended' && engine.status !== 'error') {
+                  engine.status = 'paused';
+                }
+                emit('state', { playing: false });
+                emit('status', { status: engine.status });
+                engine._stopYTTicker();
+              } else if (e.data === 0) { // ENDED
+                engine._stopYTTicker();
+                engine.pauseAtEnd();
+                emit('ended', {});
+              } else if (e.data === 3) { // BUFFERING
+                engine.status = 'loading';
+                emit('status', { status: 'loading' });
+              }
+            },
+            onError: (e) => {
+              console.warn('YouTube Player error:', e?.data);
+              if (engine.mode === 'youtube') {
+                engine.handlePlaybackFallback('youtube', new Error('yt_error_' + (e?.data || 'unknown')));
+              }
+            }
+          }
+        });
+      });
+    },
+
+    async play(videoId) {
+      if (!this.player || !this.ready) {
+        await this.init();
+      }
+      if (this.player && typeof this.player.loadVideoById === 'function') {
+        this.player.loadVideoById(videoId);
+        if (typeof this.player.playVideo === 'function') {
+          this.player.playVideo();
+        }
+      }
+      return true;
+    },
+
+    pause() {
+      if (this.player && typeof this.player.pauseVideo === 'function') {
+        try { this.player.pauseVideo(); } catch (e) {}
+      }
+    },
+
+    resume() {
+      if (this.player && typeof this.player.playVideo === 'function') {
+        try { this.player.playVideo(); } catch (e) {}
+      }
+    },
+
+    seek(seconds) {
+      if (this.player && typeof this.player.seekTo === 'function') {
+        try { this.player.seekTo(seconds, true); } catch (e) {}
+      }
+    },
+
+    setVolume(vol) {
+      if (this.player && typeof this.player.setVolume === 'function') {
+        try { this.player.setVolume(clamp(vol, 0, 100)); } catch (e) {}
+      }
+    },
+
+    getTime() {
+      if (this.player && typeof this.player.getCurrentTime === 'function') {
+        const t = this.player.getCurrentTime();
+        return (Number.isFinite(t) && t >= 0) ? t : 0;
+      }
+      return 0;
+    },
+
+    getDuration() {
+      if (this.player && typeof this.player.getDuration === 'function') {
+        const d = this.player.getDuration();
+        return (Number.isFinite(d) && d > 0) ? d : 0;
+      }
+      return 0;
+    }
+  };
+
   async function resolvePlaybackSource(track) {
     if (!track) return null;
 
+    // 1. Local file
     if (track.source === 'file' || track.playbackType === 'local') {
       return {
         type: 'local',
         provider: 'local',
+        playbackMode: PLAYBACK_MODES.FULL,
         url: track.url,
         duration: track.duration || 0,
         isFullTrack: true,
@@ -1526,6 +1740,7 @@ window.NG = (function () {
       };
     }
 
+    // 2. Spotify Premium (if user is authenticated and is premium)
     const spotifyAuth = providers.getProviderStatus().spotify;
     if (spotifyAuth.connected && spotifyAuth.isPremium) {
       try {
@@ -1537,6 +1752,7 @@ window.NG = (function () {
           return {
             type: 'full',
             provider: 'spotify',
+            playbackMode: PLAYBACK_MODES.FULL,
             uri: matched.uri,
             duration: matched.duration || track.duration || track.fullDuration || 0,
             isFullTrack: true,
@@ -1548,10 +1764,52 @@ window.NG = (function () {
       }
     }
 
+    // 3. YouTube (Official Embed)
+    const ytVideoId = track.youtubeVideoId || (track.sources?.find(s => s.provider === 'youtube')?.videoId);
+    if (ytVideoId) {
+      return {
+        type: 'official_embed',
+        provider: 'youtube',
+        playbackMode: PLAYBACK_MODES.OFFICIAL_EMBED,
+        videoId: ytVideoId,
+        duration: track.duration || track.fullDuration || 210,
+        isFullTrack: true,
+        isPreview: false
+      };
+    }
+
+    // 4. Jamendo (CC Full MP3 stream)
+    if (track.activeSource === 'jamendo' || (track.playbackProvider === 'jamendo' && track.url)) {
+      return {
+        type: 'full',
+        provider: 'jamendo',
+        playbackMode: PLAYBACK_MODES.FULL,
+        url: track.url,
+        duration: track.duration || track.fullDuration || 180,
+        isFullTrack: true,
+        isPreview: false
+      };
+    }
+
+    // 5. Internet Archive (Audio Stream / Embed)
+    if (track.activeSource === 'archive' || (track.playbackProvider === 'archive' && track.url)) {
+      return {
+        type: 'full',
+        provider: 'archive',
+        playbackMode: PLAYBACK_MODES.FULL,
+        url: track.url,
+        duration: track.duration || track.fullDuration || 190,
+        isFullTrack: true,
+        isPreview: false
+      };
+    }
+
+    // 6. Apple Music Preview (30 seconds)
     if (track.preview) {
       return {
         type: 'preview',
         provider: 'apple-preview',
+        playbackMode: PLAYBACK_MODES.PREVIEW,
         url: track.preview,
         duration: track.previewDuration || 30,
         isFullTrack: false,
@@ -1562,11 +1820,28 @@ window.NG = (function () {
     return {
       type: 'unavailable',
       provider: 'none',
+      playbackMode: PLAYBACK_MODES.UNAVAILABLE,
       duration: 0,
       isFullTrack: false,
       isPreview: false
     };
   }
+
+  const musicProviders = {
+    list() {
+      return [
+        { id: 'local', name: { ar: 'ملف محلي', en: 'Local File' }, mode: PLAYBACK_MODES.FULL, enabled: true },
+        { id: 'youtube', name: { ar: 'YouTube', en: 'YouTube' }, mode: PLAYBACK_MODES.OFFICIAL_EMBED, enabled: true },
+        { id: 'spotify', name: { ar: 'Spotify', en: 'Spotify' }, mode: PLAYBACK_MODES.FULL, enabled: providers.getProviderStatus().spotify.connected },
+        { id: 'jamendo', name: { ar: 'Jamendo', en: 'Jamendo' }, mode: PLAYBACK_MODES.FULL, enabled: true },
+        { id: 'archive', name: { ar: 'أرشيف الإنترنت', en: 'Internet Archive' }, mode: PLAYBACK_MODES.FULL, enabled: true },
+        { id: 'apple-preview', name: { ar: 'Apple Music', en: 'Apple Music' }, mode: PLAYBACK_MODES.PREVIEW, enabled: true }
+      ];
+    },
+    get(id) {
+      return this.list().find(p => p.id === id) || null;
+    }
+  };
 
   const providers = {
     spotify: {
@@ -1589,8 +1864,11 @@ window.NG = (function () {
           deviceId: providers.spotify.deviceId || null,
           requiresAuth: !isConn
         },
-        local: { available: true },
-        applePreview: { available: true }
+        youtube: { available: true, mode: 'OFFICIAL_EMBED' },
+        local: { available: true, mode: 'FULL' },
+        jamendo: { available: true, mode: 'FULL' },
+        archive: { available: true, mode: 'FULL' },
+        applePreview: { available: true, mode: 'PREVIEW' }
       };
     },
 
@@ -1653,6 +1931,7 @@ window.NG = (function () {
       const art = track.artist?.ar || track.artist?.en || (typeof track.artist === 'string' ? track.artist : '');
       const dur = track.duration || track.fullDuration || 0;
       if (!tit) return null;
+
       try {
         const url = `/api/provider-match?title=${encodeURIComponent(tit)}&artist=${encodeURIComponent(art)}&duration=${dur}&provider=spotify`;
         const r = await fetch(url);
@@ -1824,19 +2103,35 @@ window.NG = (function () {
   function getPlayableDuration(track) {
     if (!track) return 0;
 
-    if (track.playbackType === 'unavailable') return 0;
+    if (track.playbackType === 'unavailable' || track.playbackMode === 'UNAVAILABLE') return 0;
 
-    if (track.source === 'file' || track.playbackType === 'local') {
+    if (track.source === 'file' || track.playbackType === 'local' || track.playbackProvider === 'local') {
       const duration = Number(engine?.el?.duration || track.duration);
       return Number.isFinite(duration) && duration > 0 ? duration : 0;
     }
 
-    if (track.playbackProvider === 'spotify' && track.playbackType === 'full') {
+    if (track.playbackProvider === 'youtube' || track.activeSource === 'youtube' || track.playbackType === 'embed' || track.playbackMode === 'OFFICIAL_EMBED') {
+      const ytDur = ytDriver.getDuration();
+      if (Number.isFinite(ytDur) && ytDur > 0) return ytDur;
+      const d = Number(track.duration || track.fullDuration || track.catalogDuration);
+      return Number.isFinite(d) && d > 0 ? d : 0;
+    }
+
+    if (track.playbackProvider === 'spotify' && (track.playbackType === 'full' || track.playbackMode === 'FULL')) {
       const duration = Number(engine?._spotifyDur || track.duration || track.fullDuration);
       return Number.isFinite(duration) && duration > 0 ? duration : 0;
     }
 
+    if (track.playbackMode === 'FULL' || track.playbackType === 'full' || track.playbackProvider === 'jamendo' || track.playbackProvider === 'archive' || track.activeSource === 'jamendo' || track.activeSource === 'archive') {
+      const duration = Number(engine?.el?.duration || track.duration || track.fullDuration);
+      return Number.isFinite(duration) && duration > 0 ? duration : 0;
+    }
+
     if (engine?.track?.id === track.id) {
+      if (engine.mode === 'youtube') {
+        const d = ytDriver.getDuration();
+        if (Number.isFinite(d) && d > 0) return d;
+      }
       const actualDuration = Number(engine.el?.duration);
       if (Number.isFinite(actualDuration) && actualDuration > 0) {
         return actualDuration;
@@ -1846,6 +2141,10 @@ window.NG = (function () {
     const previewDuration = Number(track.previewDuration);
     if (Number.isFinite(previewDuration) && previewDuration > 0) {
       return previewDuration;
+    }
+
+    if (track.isAudioPreview || track.preview || track.playbackType === 'preview' || track.playbackMode === 'PREVIEW') {
+      return 30;
     }
 
     return 0;
@@ -1868,6 +2167,8 @@ window.NG = (function () {
     _previewDur: 0,
     _spotifyPlayer: null,
     _spotifyPos: 0,
+    _spotifyDur: 0,
+    _failedSources: new Set(),
 
     init() {
       const el = new Audio();
@@ -1875,13 +2176,13 @@ window.NG = (function () {
       el.setAttribute('playsinline', '');
 
       el.addEventListener('timeupdate', () => {
-        if (!this.track) return;
+        if (!this.track || this.mode === 'youtube' || this.mode === 'spotify') return;
         const dur = this.getDuration();
         emit('tick', { pos: el.currentTime, duration: dur });
       });
 
       el.addEventListener('loadedmetadata', () => {
-        if (!this.track) return;
+        if (!this.track || this.mode === 'youtube' || this.mode === 'spotify') return;
         const dur = this.getDuration();
         if (this.track.source === 'file' && Number.isFinite(dur) && dur > 0 && (!this.track.duration || this.track.duration === 0)) {
           this.track.duration = Math.round(dur);
@@ -1891,6 +2192,7 @@ window.NG = (function () {
       });
 
       el.addEventListener('play', () => {
+        if (this.mode === 'youtube' || this.mode === 'spotify') return;
         this.playing = true;
         this.status = 'playing';
         emit('state', { playing: true });
@@ -1898,6 +2200,7 @@ window.NG = (function () {
       });
 
       el.addEventListener('pause', () => {
+        if (this.mode === 'youtube' || this.mode === 'spotify') return;
         this.playing = false;
         if (this.status !== 'ended' && this.status !== 'error') {
           this.status = 'paused';
@@ -1907,6 +2210,7 @@ window.NG = (function () {
       });
 
       el.addEventListener('ended', () => {
+        if (this.mode === 'youtube' || this.mode === 'spotify') return;
         this.playing = false;
         this.status = 'ended';
         emit('state', { playing: false });
@@ -1915,84 +2219,128 @@ window.NG = (function () {
       });
 
       el.addEventListener('error', () => {
-        if (this.track && this.track.preview && this.el.src !== this.track.preview) {
-          const shouldPlay = this.playing;
-          this.el.src = this.track.preview;
-          this.el.load();
-          if (shouldPlay) this.el.play().catch(() => {});
-          return;
-        }
-        this.playing = false;
-        this.status = 'error';
-        emit('state', { playing: false });
-        emit('status', { status: 'error' });
-        emit('error', { code: 'audio' });
+        if (this.mode === 'youtube' || this.mode === 'spotify') return;
+        console.warn('Audio element error, checking fallback for:', this.track?.id);
+        this.handlePlaybackFallback(this.mode, new Error('audio_element_error'));
       });
 
       this.el = el;
       this.el.volume = state.muted ? 0 : state.volume / 100;
     },
 
-    _trackQuery(track) {
-      if (!track) return '';
-      const art = track.artist?.ar || track.artist?.en || '';
-      const tit = track.title?.ar || track.title?.en || '';
-      return (art + ' ' + tit).trim();
-    },
-
-    load(track) {
-      if (!track) return;
-      this._reqId++;
-      try { this.el.pause(); } catch (e) {}
-      if (this._spotifyPlayer) {
+    stopDrivers(activeMode) {
+      if (activeMode !== 'audio' && this.el) {
+        try { this.el.pause(); this.el.removeAttribute('src'); } catch (e) {}
+      }
+      if (activeMode !== 'spotify' && this._spotifyPlayer) {
         try { this._spotifyPlayer.pause(); } catch (e) {}
       }
+      if (activeMode !== 'youtube') {
+        try { ytDriver.pause(); } catch (e) {}
+      }
+      this._stopVirtualTimer();
+      this._stopYTTicker();
+    },
+
+    _startYTTicker() {
+      this._stopYTTicker();
+      activeYtTicker = setInterval(() => {
+        if (this.mode !== 'youtube' || !this.playing) {
+          this._stopYTTicker();
+          return;
+        }
+        const pos = ytDriver.getTime();
+        const dur = this.getDuration();
+        emit('tick', { pos, duration: dur });
+      }, 250);
+    },
+
+    _stopYTTicker() {
+      if (activeYtTicker) {
+        clearInterval(activeYtTicker);
+        activeYtTicker = null;
+      }
+    },
+
+    load(track, preferredProviderId) {
+      if (!track) return;
+      this._reqId++;
+      this.stopDrivers();
+      this._failedSources = new Set();
 
       this.track = track;
       this.playing = false;
       this.status = 'idle';
       this._spotifyPos = 0;
 
+      if (preferredProviderId) {
+        track.activeSource = preferredProviderId;
+      }
+
       const isLocal = track.source === 'file' || track.playbackType === 'local';
       const spotifyAuth = providers.getProviderStatus().spotify;
       const canSpotify = Boolean(spotifyAuth.connected && spotifyAuth.isPremium);
 
+      // 1. Local audio file
       if (isLocal) {
         this.mode = 'file';
         this.url = track.url || '';
         this.el.loop = false;
         this.el.src = this.url;
         this.el.load();
-      } else if ((track.playbackType === 'full' && (track.playbackProvider === 'spotify' || track.spotifyUri)) || (canSpotify && track.spotifyUri)) {
+        this.status = 'ready_full';
+      }
+      // 2. YouTube Official Embed
+      else if (track.activeSource === 'youtube' || (track.youtubeVideoId && (!track.activeSource || track.activeSource === 'youtube'))) {
+        this.mode = 'youtube';
+        this.url = '';
+        this.status = 'ready_full';
+      }
+      // 3. Spotify SDK (if authorized Premium or explicit spotify mode)
+      else if ((track.playbackType === 'full' && (track.playbackProvider === 'spotify' || track.spotifyUri)) || (canSpotify && (track.spotifyUri || track.activeSource === 'spotify'))) {
         this.mode = 'spotify';
         this.url = '';
-        try { this.el.pause(); this.el.removeAttribute('src'); } catch (e) {}
-      } else if (track.preview) {
-        // Direct CDN stream (Apple Music CDN) - instant playback, zero 502 errors!
+        this.status = 'ready_full';
+      }
+      // 4. Jamendo full stream
+      else if (track.activeSource === 'jamendo' || (track.playbackProvider === 'jamendo' && (track.url || track.preview))) {
+        this.mode = 'jamendo';
+        this.url = track.url || track.preview;
+        this.el.loop = false;
+        if (this.el.src !== this.url) this.el.src = this.url;
+        this.el.load();
+        this.status = 'ready_full';
+      }
+      // 5. Internet Archive stream
+      else if (track.activeSource === 'archive' || (track.playbackProvider === 'archive' && (track.url || track.preview))) {
+        this.mode = 'archive';
+        this.url = track.url || track.preview;
+        this.el.loop = false;
+        if (this.el.src !== this.url) this.el.src = this.url;
+        this.el.load();
+        this.status = 'ready_full';
+      }
+      // 6. Apple Music 30s preview
+      else if (track.preview) {
         this.mode = 'stream';
         this.url = track.preview;
         this.el.loop = false;
-        if (this.el.src !== this.url) {
-          this.el.src = this.url;
-        }
+        if (this.el.src !== this.url) this.el.src = this.url;
         this.el.load();
-      } else if (track.url) {
+        this.status = 'ready_preview';
+      }
+      else if (track.url) {
         this.mode = 'stream';
         this.url = track.url;
         this.el.loop = false;
-        if (this.el.src !== this.url) {
-          this.el.src = this.url;
-        }
+        if (this.el.src !== this.url) this.el.src = this.url;
         this.el.load();
-      } else if (canSpotify) {
-        this.mode = 'spotify';
-        this.url = '';
-        try { this.el.pause(); this.el.removeAttribute('src'); } catch (e) {}
-      } else {
+        this.status = 'ready_full';
+      }
+      else {
         this.mode = 'unavailable';
         this.url = '';
         this.status = 'unavailable';
-        try { this.el.removeAttribute('src'); } catch (e) {}
         emit('state', { playing: false });
         emit('status', { status: 'unavailable' });
         emit('error', { code: 'unavailable' });
@@ -2000,7 +2348,7 @@ window.NG = (function () {
       }
 
       emit('state', { playing: false });
-      emit('status', { status: 'idle' });
+      emit('status', { status: this.status });
       const initDur = this.getDuration();
       emit('tick', { pos: 0, duration: initDur });
     },
@@ -2014,7 +2362,8 @@ window.NG = (function () {
       const spotifyAuth = providers.getProviderStatus().spotify;
       const canSpotify = Boolean(spotifyAuth.connected && spotifyAuth.isPremium);
 
-      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file' && !this.track.spotifyUri && !canSpotify)) {
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' ||
+        (!this.track.preview && !this.track.url && this.track.source !== 'file' && !this.track.spotifyUri && !this.track.youtubeVideoId && !canSpotify)) {
         this.status = 'unavailable';
         this.playing = false;
         emit('state', { playing: false });
@@ -2029,106 +2378,197 @@ window.NG = (function () {
       }
 
       const reqId = this._reqId;
-      const audioAtStart = this.el;
       this.status = 'loading';
       emit('status', { status: 'loading' });
 
-      // If Spotify is authenticated and premium, resolve track if not already resolved
-      if (canSpotify && this.track.source !== 'file') {
-        if (!this.track.spotifyUri) {
-          try {
-            const resolved = await resolvePlaybackSource(this.track);
-            if (this._reqId !== reqId) return;
-            if (resolved?.type === 'spotify' && resolved.uri) {
-              this.track.spotifyUri = resolved.uri;
-              this.track.playbackType = 'full';
-              this.track.playbackProvider = 'spotify';
-              this.mode = 'spotify';
-            }
-          } catch (e) {
-            console.warn('Spotify resolve on play failed:', e);
+      // If Spotify is authenticated and premium, resolve track if not already resolved and no other full source active
+      if (canSpotify && this.track.source !== 'file' && !this.track.youtubeVideoId && !this.track.spotifyUri && this.track.activeSource !== 'youtube') {
+        try {
+          const resolved = await resolvePlaybackSource(this.track);
+          if (this._reqId !== reqId) return;
+          if (resolved?.type === 'spotify' && resolved.uri) {
+            this.track.spotifyUri = resolved.uri;
+            this.track.playbackType = 'full';
+            this.track.playbackProvider = 'spotify';
+            this.mode = 'spotify';
           }
-        } else {
-          this.mode = 'spotify';
+        } catch (e) {
+          console.warn('Spotify resolve on play failed:', e);
         }
       }
 
+      // 1. YouTube Mode
+      if (this.mode === 'youtube') {
+        this.stopDrivers('youtube');
+        const videoId = this.track.youtubeVideoId
+          || (this.track.sources?.find(s => s.provider === 'youtube')?.videoId);
+
+        if (!videoId) {
+          return this.handlePlaybackFallback('youtube', new Error('youtube_video_id_missing'));
+        }
+
+        try {
+          await ytDriver.play(videoId);
+          if (this._reqId !== reqId || this.mode !== 'youtube') return;
+          this.playing = true;
+          this.status = 'playing';
+          emit('state', { playing: true });
+          emit('status', { status: 'playing' });
+          this._startYTTicker();
+          return;
+        } catch (error) {
+          console.warn('YouTube playback failed, attempting fallback:', error);
+          if (this._reqId !== reqId) return;
+          return this.handlePlaybackFallback('youtube', error);
+        }
+      }
+
+      // 2. Spotify Mode
       if (this.mode === 'spotify') {
+        this.stopDrivers('spotify');
         try {
           await playSpotifyTrack(this.track);
-
           if (this._reqId !== reqId || this.mode !== 'spotify') return;
-
           this.status = 'loading';
           emit('status', { status: 'loading' });
           return;
         } catch (error) {
-          console.error('Spotify playback failed:', error);
+          console.error('Spotify playback failed, attempting fallback:', error);
           if (this._reqId !== reqId) return;
-
-          if (this.track?.preview) {
-            this.mode = 'stream';
-            this.url = this.track.preview;
-            this.el.src = this.url;
-            this.el.load();
-
-            this.status = 'idle';
-            await this.el.play();
-            return;
-          }
-
-          this.playing = false;
-          this.status = 'error';
-
-          emit('state', { playing: false });
-          emit('status', { status: 'error' });
-          emit('error', { code: 'spotify_playback_failed' });
-          return;
+          return this.handlePlaybackFallback('spotify', error);
         }
       }
 
+      // 3. Audio Element Modes (file, jamendo, archive, stream preview)
+      this.stopDrivers('audio');
       this.el.volume = state.muted ? 0 : state.volume / 100;
       try {
-        await audioAtStart.play();
-        if (this._reqId !== reqId || audioAtStart !== this.el) {
-          return;
-        }
+        await this.el.play();
+        if (this._reqId !== reqId) return;
         this.playing = true;
         this.status = 'playing';
         emit('state', { playing: true });
         emit('status', { status: 'playing' });
       } catch (e) {
-        if (this._reqId !== reqId || audioAtStart !== this.el) return;
-        // Fallback for file:// or offline environments
-        if (this.track && this.track.preview && this.el.src !== this.track.preview) {
-          this.el.src = this.track.preview;
-          try {
-            await this.el.play();
-            if (this._reqId !== reqId || audioAtStart !== this.el) {
-              return;
-            }
-            this.playing = true;
-            this.status = 'playing';
-            emit('state', { playing: true });
-            emit('status', { status: 'playing' });
-            return;
-          } catch (e2) {}
-        }
-        this.playing = false;
-        this.status = 'error';
-        emit('state', { playing: false });
-        emit('status', { status: 'error' });
-        emit('error', { code: 'blocked' });
+        if (this._reqId !== reqId) return;
+        return this.handlePlaybackFallback(this.mode, e);
       }
+    },
+
+    async handlePlaybackFallback(failedProvider, error) {
+      if (!this.track) return;
+      this._failedSources = this._failedSources || new Set();
+      this._failedSources.add(failedProvider);
+
+      const sources = Array.isArray(this.track.sources) ? this.track.sources : [];
+      // Find the next available untried source
+      const nextSource = sources.find(s => !this._failedSources.has(s.provider) && s.provider !== failedProvider);
+
+      if (nextSource) {
+        console.log(`[Playback Coordinator] Falling back from ${failedProvider} to ${nextSource.provider} (${nextSource.playbackMode})`);
+        this.status = 'fallback';
+        emit('status', { status: 'fallback' });
+        emit('fallback', {
+          track: this.track,
+          from: failedProvider,
+          to: nextSource.provider,
+          playbackMode: nextSource.playbackMode,
+          reason: error?.message || 'playback_error'
+        });
+
+        // Switch to next source
+        this.track.activeSource = nextSource.provider;
+        this.track.playbackProvider = nextSource.provider;
+        this.track.playbackMode = nextSource.playbackMode || (nextSource.mode === 'embed' ? 'OFFICIAL_EMBED' : (nextSource.mode === 'preview' ? 'PREVIEW' : 'FULL'));
+        this.track.playbackType = nextSource.mode || (nextSource.provider === 'youtube' ? 'embed' : (nextSource.provider === 'apple' ? 'preview' : 'full'));
+        if (nextSource.provider === 'youtube') {
+          this.track.youtubeVideoId = nextSource.videoId || nextSource.id;
+          this.track.youtubeId = nextSource.videoId || nextSource.id;
+        } else if (nextSource.url || nextSource.audioUrl || nextSource.previewUrl) {
+          const streamUrl = nextSource.url || nextSource.audioUrl || nextSource.previewUrl;
+          this.track.src = streamUrl;
+          this.track.preview = streamUrl;
+          this.track.previewUrl = streamUrl;
+        }
+
+        this.load(this.track);
+        return this.play();
+      }
+
+      // If no alternative in sources, but track.preview exists and wasn't tried yet:
+      if (failedProvider !== 'apple-preview' && this.track.preview && !this._failedSources.has('apple-preview')) {
+        this._failedSources.add('apple-preview');
+        this.status = 'fallback';
+        emit('status', { status: 'fallback' });
+        emit('fallback', {
+          track: this.track,
+          from: failedProvider,
+          to: 'apple-preview',
+          playbackMode: 'PREVIEW',
+          reason: error?.message || 'fallback_preview'
+        });
+        this.mode = 'stream';
+        this.url = this.track.preview;
+        this.el.src = this.url;
+        this.el.load();
+        try {
+          await this.el.play();
+          this.playing = true;
+          this.status = 'playing';
+          emit('state', { playing: true });
+          emit('status', { status: 'playing' });
+          return;
+        } catch (e2) {}
+      }
+
+      // All options exhausted
+      this.playing = false;
+      this.status = 'error';
+      emit('state', { playing: false });
+      emit('status', { status: 'error' });
+      const errCode = failedProvider === 'spotify' ? 'spotify_playback_failed' : 'all_sources_failed';
+      emit('error', { code: errCode, provider: failedProvider });
+    },
+
+    switchSource(targetProviderId) {
+      if (!this.track) return false;
+      const sources = Array.isArray(this.track.sources) ? this.track.sources : [];
+      const chosen = sources.find(s => s.provider === targetProviderId);
+      if (!chosen) return false;
+      this.track.activeSource = chosen.provider;
+      this.track.playbackMode = chosen.playbackMode || (chosen.mode === 'embed' ? 'OFFICIAL_EMBED' : (chosen.mode === 'preview' ? 'PREVIEW' : 'FULL'));
+      this.track.playbackType = chosen.mode || (chosen.provider === 'youtube' ? 'embed' : (chosen.provider === 'apple' ? 'preview' : 'full'));
+      this.track.playbackProvider = chosen.provider;
+      this.track.isFullTrack = chosen.isFullTrack !== false && chosen.mode !== 'preview';
+      this.track.playableDuration = chosen.duration;
+      if (chosen.provider === 'youtube') {
+        this.track.youtubeVideoId = chosen.videoId || chosen.id;
+        this.track.youtubeId = chosen.videoId || chosen.id;
+      } else if (chosen.url || chosen.audioUrl || chosen.previewUrl) {
+        const streamUrl = chosen.url || chosen.audioUrl || chosen.previewUrl;
+        this.track.src = streamUrl;
+        this.track.preview = streamUrl;
+        this.track.previewUrl = streamUrl;
+      }
+      const wasPlaying = this.playing;
+      this.load(this.track);
+      if (wasPlaying) {
+        this.play().catch(() => {});
+      }
+      emit('source-changed', { track: this.track, activeSource: chosen.provider });
+      return true;
     },
 
     _stopVirtualTimer() {},
     _startVirtualTimer() {},
 
     pause() {
-      try { this.el.pause(); } catch (e) {}
-      if (this.mode === 'spotify') {
+      if (this.mode === 'youtube') {
+        ytDriver.pause();
+      } else if (this.mode === 'spotify') {
         try { spotifyPause(); } catch (e) {}
+      } else {
+        try { this.el.pause(); } catch (e) {}
       }
       this.playing = false;
       this.status = 'paused';
@@ -2138,7 +2578,9 @@ window.NG = (function () {
 
     pauseAtEnd() {
       this._reqId++;
-      if (this.mode === 'spotify') {
+      if (this.mode === 'youtube') {
+        ytDriver.pause();
+      } else if (this.mode === 'spotify') {
         try { spotifyPause(); } catch (e) {}
       } else {
         try { this.el.pause(); } catch (e) {}
@@ -2155,7 +2597,9 @@ window.NG = (function () {
       if (this.playing) {
         this.pause();
       } else {
-        if (this.mode === 'spotify' && this.status === 'paused' && this._spotifyPlayer) {
+        if (this.mode === 'youtube') {
+          ytDriver.resume();
+        } else if (this.mode === 'spotify' && this.status === 'paused' && this._spotifyPlayer) {
           spotifyResume().catch(() => {
             this.play();
           });
@@ -2174,7 +2618,9 @@ window.NG = (function () {
         this.status = 'paused';
       }
 
-      if (this.mode === 'spotify') {
+      if (this.mode === 'youtube') {
+        ytDriver.seek(target);
+      } else if (this.mode === 'spotify') {
         this._spotifyPos = target;
         try {
           spotifySeek(target).catch(() => {});
@@ -2189,18 +2635,31 @@ window.NG = (function () {
       if (this.status === 'ended') {
         return this.getDuration();
       }
+      if (this.mode === 'youtube') {
+        return ytDriver.getTime();
+      }
       if (this.mode === 'spotify') {
         return this._spotifyPos || 0;
       }
       const pos = this.el ? this.el.currentTime : 0;
-      return isFinite(pos) ? pos : 0;
+      return Number.isFinite(pos) ? pos : 0;
     },
 
     getDuration() {
       if (!this.track) return 0;
-      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file' && this.track.playbackType !== 'full' && this.mode !== 'spotify')) {
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || this.track.playbackMode === 'UNAVAILABLE') {
         return 0;
       }
+
+      // If YouTube mode
+      if (this.mode === 'youtube') {
+        const ytDur = ytDriver.getDuration();
+        if (Number.isFinite(ytDur) && ytDur > 0) return ytDur;
+        const d = Number(this.track.duration || this.track.fullDuration || this.track.catalogDuration);
+        return (Number.isFinite(d) && d > 0) ? d : 0;
+      }
+
+      // If Spotify mode
       if (this.mode === 'spotify' || (this.track.playbackProvider === 'spotify' && this.track.playbackType === 'full')) {
         if (this._spotifyDur && Number.isFinite(this._spotifyDur) && this._spotifyDur > 0) {
           return this._spotifyDur;
@@ -2208,19 +2667,36 @@ window.NG = (function () {
         const d = Number(this.track.duration || this.track.fullDuration);
         return Number.isFinite(d) && d > 0 ? d : 0;
       }
-      if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
-        return this.el.duration;
-      }
+
+      // If local file
       if (this.track.source === 'file' || this.track.playbackType === 'local') {
+        if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
+          return this.el.duration;
+        }
         const d = Number(this.track.duration);
         return Number.isFinite(d) && d > 0 ? d : 0;
       }
-      if (this.track.previewDuration && Number.isFinite(Number(this.track.previewDuration)) && Number(this.track.previewDuration) > 0) {
-        return Number(this.track.previewDuration);
+
+      // If Jamendo or Archive full stream
+      if (this.mode === 'jamendo' || this.mode === 'archive' || this.track.playbackMode === 'FULL') {
+        if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
+          return this.el.duration;
+        }
+        const d = Number(this.track.duration || this.track.fullDuration);
+        return Number.isFinite(d) && d > 0 ? d : 0;
       }
-      if (this.track.isAudioPreview || this.track.preview || this.track.playbackType === 'preview') {
+
+      // If preview mode (Apple Music)
+      if (this.track.playbackMode === 'PREVIEW' || this.track.playbackType === 'preview' || this.track.isAudioPreview || this.track.preview) {
+        if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
+          return this.el.duration;
+        }
+        if (this.track.previewDuration && Number.isFinite(Number(this.track.previewDuration))) {
+          return Number(this.track.previewDuration);
+        }
         return 30;
       }
+
       const d = Number(this.track.duration);
       return Number.isFinite(d) && d > 0 ? d : 0;
     },
@@ -2231,16 +2707,16 @@ window.NG = (function () {
     },
 
     isAudioPreview() {
-      return Boolean(this.track && (this.track.source !== 'file' && (this.track.preview || this.track.playbackType === 'preview')));
+      return Boolean(this.track && (this.track.source !== 'file' && (this.track.playbackMode === 'PREVIEW' || this.track.preview || this.track.playbackType === 'preview')) && !this.track.isFullTrack);
     },
 
     isFullTrack() {
-      return Boolean(this.track && (this.track.source === 'file' || this.track.playbackType === 'full' || this.track.isFullTrack));
+      return Boolean(this.track && (this.track.source === 'file' || this.track.playbackType === 'full' || this.track.playbackMode === 'FULL' || this.track.playbackMode === 'OFFICIAL_EMBED' || this.track.isFullTrack));
     },
 
     stop(silent) {
       this._reqId++;
-      this._stopVirtualTimer();
+      this.stopDrivers();
       this._vPos = 0;
       this.pause();
       try { this.el.currentTime = 0; } catch (e) {}
@@ -2266,6 +2742,7 @@ window.NG = (function () {
       if (this.el) {
         this.el.volume = state.muted ? 0 : vol / 100;
       }
+      ytDriver.setVolume(state.muted ? 0 : vol);
     },
 
     activeBlobUrls: new Set(),
@@ -2288,7 +2765,9 @@ window.NG = (function () {
           id: uid('local'),
           source: 'file',
           playbackType: 'local',
+          playbackMode: 'FULL',
           playbackProvider: 'local',
+          activeSource: 'local',
           isFullTrack: true,
           isPreview: false,
           requiresAuthentication: false,
@@ -2307,7 +2786,18 @@ window.NG = (function () {
           motif: 'dots',
           photo: PHOTO.studio,
           art: '',
-          url
+          url,
+          sources: [
+            {
+              provider: 'local',
+              providerName: 'ملف محلي',
+              label: 'ملف من جهازك (تشغيل كامل)',
+              playbackMode: 'FULL',
+              isFullTrack: true,
+              duration: 0,
+              url
+            }
+          ]
         };
         TRACKS.unshift(tr);
         made.push(tr);
@@ -2391,6 +2881,7 @@ window.NG = (function () {
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
     trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
+    PLAYBACK_MODES, ENGINE_STATES, musicProviders, ytDriver, loadYouTubeIframeAPI: () => ytDriver.loadAPI(),
     loadSpotifySDK, initializeSpotifyPlayer, playSpotifyTrack, spotifySeek, spotifyPause, spotifyResume, resolvePlaybackSource,
     bus, emit, engine, providers, STORAGE_KEY
   };

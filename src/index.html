@@ -219,6 +219,9 @@
     </div>
 
     <div class="player-end">
+      <button class="ctrl" data-action="open-sources" id="bSources" aria-label="المصادر المتاحة" data-i18n-aria="sources.title" title="المصادر المتاحة">
+        <svg aria-hidden="true"><use href="#i-headphones"></use></svg>
+      </button>
       <button class="ctrl" data-action="open-track" aria-label="الكلمات" data-i18n-aria="player.lyrics">
         <svg aria-hidden="true"><use href="#i-lyrics"></use></svg>
       </button>
@@ -373,9 +376,23 @@
   </div>
 </dialog>
 
+<dialog class="dlg sources-dlg" id="sourcesDlg" aria-labelledby="sourcesDlgTitle">
+  <div class="dlg-head">
+    <h2 id="sourcesDlgTitle" data-i18n="sources.title">المصادر المتاحة للتشغيل</h2>
+    <button class="icon-btn is-small" data-action="close-dlg" aria-label="إغلاق" data-i18n-aria="common.close">
+      <svg aria-hidden="true"><use href="#i-x"></use></svg>
+    </button>
+  </div>
+  <div class="dlg-body">
+    <div id="sourcesTrackInfo" class="sources-track-info"></div>
+    <div id="sourcesList" class="sources-list" role="list"></div>
+  </div>
+</dialog>
+
 <div class="toasts" id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <div id="ytPlayerContainer" style="position:fixed;bottom:-9999px;left:-9999px;width:320px;height:240px;pointer-events:none;opacity:0.001;" aria-hidden="true">
+  <div id="yt-player-host"></div>
   <div id="ytFrame"></div>
 </div>
 

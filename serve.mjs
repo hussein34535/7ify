@@ -74,6 +74,13 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // API endpoint: /api/search-multi
+    if (url.pathname === '/api/search-multi') {
+      const { default: multiSearchHandler } = await import('./api/search-multi.js');
+      await multiSearchHandler(apiReq, createApiRes(res));
+      return;
+    }
+
     // API endpoint: /api/lyrics
     if (url.pathname === '/api/lyrics') {
       const { default: lyricsHandler } = await import('./api/lyrics.js');

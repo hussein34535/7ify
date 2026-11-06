@@ -85,6 +85,9 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
       },
       head: { appendChild: () => {}, removeChild: () => {} },
       body: { appendChild: () => {}, removeChild: () => {} },
+      getElementById: (id) => null,
+      querySelector: (sel) => null,
+      querySelectorAll: (sel) => [],
       addEventListener: (ev, fn) => {
         if (!listeners.has(ev)) listeners.set(ev, []);
         listeners.get(ev).push(fn);

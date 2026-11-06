@@ -60,6 +60,9 @@
     fileInput: $('#fileInput'),
     shortcutsDlg: $('#shortcutsDlg'),
     confirmDlg: $('#confirmDlg'),
+    sourcesDlg: $('#sourcesDlg'),
+    sourcesList: $('#sourcesList'),
+    sourcesTrackInfo: $('#sourcesTrackInfo'),
     vol: $('#vol')
   };
 
@@ -209,6 +212,115 @@
     }).join('') + '</div>';
   }
 
+  function providerBadgeHTML(tr) {
+    if (!tr) return '';
+    const prov = tr.playbackProvider || (tr.source === 'file' ? 'local' : 'apple');
+    const mode = tr.playbackType || (prov === 'youtube' ? 'embed' : (prov === 'local' || prov === 'jamendo' || prov === 'archive' ? 'full' : 'preview'));
+
+    let pName = 'Apple Music';
+    let pCls = 'prov-apple';
+    if (prov === 'youtube') { pName = 'YouTube'; pCls = 'prov-yt'; }
+    else if (prov === 'spotify') { pName = 'Spotify'; pCls = 'prov-sp'; }
+    else if (prov === 'jamendo') { pName = 'Jamendo'; pCls = 'prov-jam'; }
+    else if (prov === 'archive') { pName = 'Archive'; pCls = 'prov-arc'; }
+    else if (prov === 'local' || tr.source === 'file') { pName = t('player.local') || 'محلي'; pCls = 'prov-loc'; }
+
+    let mName = mode === 'full' ? (t('sources.full') || 'كامل') :
+                mode === 'embed' ? (t('sources.embed') || 'مشغل رسمي') :
+                (t('sources.preview') || 'معاينة ٣٠ث');
+
+    const sourcesCount = Array.isArray(tr.sources) && tr.sources.length > 1 ? tr.sources.length : 0;
+    const countBadge = sourcesCount > 1
+      ? ' <span class="badge-source-count" data-action="open-sources" data-id="' + esc(tr.id) + '" title="' + esc(t('sources.title') || 'المصادر المتاحة') + ' (+' + (sourcesCount - 1) + ')">+' + (sourcesCount - 1) + '</span>'
+      : '';
+
+    return '<span class="badge-source ' + pCls + '" data-action="open-sources" data-id="' + esc(tr.id) + '" title="' + esc(pName + ' · ' + mName) + '">' +
+      '<span class="badge-source-prov">' + esc(pName) + '</span>' +
+      '<span class="badge-source-dot">·</span>' +
+      '<span class="badge-source-mode">' + esc(mName) + '</span>' +
+      countBadge +
+      '</span>';
+  }
+
+  function openSourcesDialog(tr) {
+    if (!tr) return;
+    const infoEl = $('#sourcesTrackInfo');
+    const listEl = $('#sourcesList');
+    if (!infoEl || !listEl) return;
+
+    infoEl.innerHTML = '<div class="sources-track-art">' + trackArt(tr) + '</div>' +
+      '<div class="sources-track-details">' +
+        '<h3 class="clamp-1">' + L(tr.title) + '</h3>' +
+        '<p class="clamp-1">' + L(tr.artist) + ' · ' + fmt(tr.duration) + '</p>' +
+      '</div>';
+
+    let sources = Array.isArray(tr.sources) && tr.sources.length ? tr.sources : [];
+    if (!sources.length) {
+      if (tr.source === 'file' || tr.playbackType === 'local') {
+        sources = [{ provider: 'local', mode: 'full', duration: tr.duration, id: tr.id }];
+      } else if (tr.playbackProvider === 'youtube' || tr.youtubeId) {
+        sources = [{ provider: 'youtube', mode: 'embed', duration: tr.duration, id: tr.youtubeId || tr.id }];
+      } else if (tr.previewUrl) {
+        sources = [{ provider: 'apple', mode: 'preview', duration: tr.previewDuration || 30, previewUrl: tr.previewUrl, id: tr.id }];
+      }
+    }
+
+    const activeProvider = (engine.track?.id === tr.id && engine.track?.playbackProvider) || tr.playbackProvider || (tr.source === 'file' ? 'local' : 'apple');
+
+    listEl.innerHTML = sources.map((s) => {
+      const isActive = (engine.track?.id === tr.id) && (activeProvider === s.provider);
+      let provName = 'Apple Music';
+      let provBadgeCls = 'prov-apple';
+      let provDesc = state.lang === 'ar' ? 'معاينة صوتية رسمية من Apple Music' : 'Official 30s preview from Apple Music';
+      if (s.provider === 'youtube') {
+        provName = 'YouTube';
+        provBadgeCls = 'prov-yt';
+        provDesc = state.lang === 'ar' ? 'تشغيل كامل عبر مشغل YouTube IFrame API الرسمي' : 'Full playback via official YouTube IFrame API';
+      } else if (s.provider === 'jamendo') {
+        provName = 'Jamendo';
+        provBadgeCls = 'prov-jam';
+        provDesc = state.lang === 'ar' ? 'تشغيل كامل بترخيص Creative Commons' : 'Full playback with Creative Commons license';
+      } else if (s.provider === 'archive') {
+        provName = 'Internet Archive';
+        provBadgeCls = 'prov-arc';
+        provDesc = state.lang === 'ar' ? 'تشغيل كامل من أرشيف التسجيلات الحرة' : 'Full playback from open audio archive';
+      } else if (s.provider === 'spotify') {
+        provName = 'Spotify';
+        provBadgeCls = 'prov-sp';
+        provDesc = state.lang === 'ar' ? 'تشغيل كامل لمشتركي Spotify Premium' : 'Full playback for Spotify Premium users';
+      } else if (s.provider === 'local') {
+        provName = t('player.local') || 'ملف محلي';
+        provBadgeCls = 'prov-loc';
+        provDesc = state.lang === 'ar' ? 'ملف صوتي تم استيراده على هذا الجهاز' : 'Audio file imported on this device';
+      }
+
+      const modeLabel = s.mode === 'full' ? (t('sources.full') || 'تشغيل كامل') :
+                        s.mode === 'embed' ? (t('sources.embed') || 'مشغل رسمي') :
+                        (t('sources.preview') || 'معاينة ٣٠ ثانية');
+
+      const dur = s.duration || (s.mode === 'preview' ? 30 : tr.duration);
+
+      return '<div class="source-card ' + (isActive ? 'is-active' : '') + '">' +
+        '<div class="source-card-info">' +
+          '<div class="source-card-header">' +
+            '<span class="source-card-name">' + esc(provName) + '</span>' +
+            '<span class="badge-source ' + provBadgeCls + '">' + esc(modeLabel) + '</span>' +
+            '<span class="source-card-dur num">' + fmt(dur) + '</span>' +
+          '</div>' +
+          '<div class="source-card-desc">' + esc(provDesc) + '</div>' +
+        '</div>' +
+        '<div class="source-card-actions">' +
+          (isActive
+            ? '<span class="badge-active-source">' + esc(t('sources.active') || 'يعمل حاليًا') + '</span>'
+            : '<button class="btn btn-sm" data-action="switch-source" data-provider="' + esc(s.provider) + '" data-track-id="' + esc(tr.id) + '">' + esc(t('sources.switch') || 'تشغيل بهذا المصدر') + '</button>'
+          ) +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    if (el.sourcesDlg) el.sourcesDlg.showModal();
+  }
+
   function rowHTML(tr, index, ctxName) {
     const current = state.trackId === tr.id;
     const fav = isFav(tr.id);
@@ -218,7 +330,7 @@
       '<span class="row-index">' + (playing ? eq() : (index + 1)) + '</span>' +
       '<span class="row-art">' + trackArt(tr) + '</span>' +
       '<span class="row-main"><span class="row-title clamp-1">' + L(tr.title) + '</span>' +
-      '<span class="row-artist clamp-1">' + L(tr.artist) + '</span>' +
+      '<span class="row-artist clamp-1"><span class="row-artist-name">' + L(tr.artist) + '</span> ' + providerBadgeHTML(tr) + '</span>' +
       (tr._matchedLyric && ctxName === 'search' ? ('<span class="row-lyric-match clamp-1" title="مطابقة من الكلمات"><svg class="ic" aria-hidden="true" style="width:11px;height:11px;fill:var(--accent);display:inline-block;vertical-align:baseline;margin-inline-end:4px;"><use href="#i-lyrics"></use></svg>«... ' + esc(tr._matchedLyric) + ' ...»</span>') : '') +
       '</span>' +
       '<span class="row-album clamp-1">' + L(tr.album) + '</span>' +
@@ -638,20 +750,26 @@
     $('#pTitleBtn').setAttribute('aria-label', byLang(tr.title) + ' — ' + byLang(tr.artist));
     $('#pArtist').textContent = byLang(tr.artist);
     const mark = $('#pMark');
-    if (tr.source === 'file' || tr.playbackType === 'local') {
+    const bSources = $('#bSources');
+    const prov = tr.playbackProvider || (tr.source === 'file' ? 'local' : 'apple');
+    const mode = tr.playbackType || (prov === 'youtube' ? 'embed' : (prov === 'local' || prov === 'jamendo' || prov === 'archive' ? 'full' : 'preview'));
+
+    if (mark) {
       mark.hidden = false;
-      mark.textContent = t('player.local');
-    } else if (tr.playbackType === 'full' && tr.playbackProvider === 'spotify') {
-      mark.hidden = false;
-      mark.textContent = t('player.spotifyFull') || 'Spotify';
-    } else if (tr.playbackType === 'preview' || tr.isAudioPreview || tr.preview) {
-      mark.hidden = false;
-      mark.textContent = t('player.previewBadge') || '30s';
-    } else if (tr.playbackType === 'unavailable') {
-      mark.hidden = false;
-      mark.textContent = t('player.unavailable') || 'N/A';
-    } else {
-      mark.hidden = true;
+      let markText = '';
+      if (prov === 'youtube') markText = 'YouTube · ' + (t('sources.embed') || 'مشغل رسمي');
+      else if (prov === 'jamendo') markText = 'Jamendo · ' + (t('sources.full') || 'كامل');
+      else if (prov === 'archive') markText = 'Archive · ' + (t('sources.full') || 'كامل');
+      else if (prov === 'spotify') markText = 'Spotify · ' + (mode === 'full' ? (t('sources.full') || 'كامل') : (t('sources.preview') || 'معاينة'));
+      else if (prov === 'local' || tr.source === 'file') markText = (t('player.local') || 'محلي') + ' · ' + (t('sources.full') || 'كامل');
+      else markText = (t('player.previewBadge') || '30s') + ' · Apple';
+      mark.textContent = markText;
+      mark.style.cursor = 'pointer';
+      mark.dataset.action = 'open-sources';
+      mark.dataset.id = tr.id;
+    }
+    if (bSources) {
+      bSources.dataset.id = tr.id;
     }
     const playableDur = engine.getDuration();
     $('#pDur').textContent = fmt(playableDur);
@@ -1390,8 +1508,19 @@
       '<div class="sp-actions-right">' +
         '<span class="sp-badge-hq">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> ' +
-          '<span>' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewNoteShort') || 'معاينة صوتية ٣٠ ثانية · Apple Music')) + '</span>' +
+          '<span>' + (
+            (tr.playbackProvider === 'youtube' || tr.playbackType === 'embed') ? (state.lang === 'ar' ? 'مشغل YouTube الرسمي · تشغيل كامل' : 'YouTube Player · Full Playback') :
+            tr.playbackProvider === 'jamendo' ? (state.lang === 'ar' ? 'Jamendo · تشغيل كامل (ترخيص حر)' : 'Jamendo · Full Stream') :
+            tr.playbackProvider === 'archive' ? (state.lang === 'ar' ? 'Internet Archive · تشغيل كامل' : 'Archive.org · Full Stream') :
+            tr.playbackProvider === 'spotify' ? ('Spotify ' + (tr.playbackType === 'full' ? (state.lang === 'ar' ? '· تشغيل كامل' : '· Full Playback') : (state.lang === 'ar' ? '· معاينة' : '· Preview'))) :
+            (tr.source === 'file' || tr.playbackType === 'local') ? esc(t('track.localFile') || 'ملف صوتي محلي') :
+            esc(t('track.previewNoteShort') || 'معاينة صوتية ٣٠ ثانية · Apple Music')
+          ) + '</span>' +
         '</span>' +
+        '<button class="sp-sources-btn" data-action="open-sources" data-id="' + tr.id + '" title="' + esc(t('sources.title') || 'المصادر المتاحة') + '">' +
+          '<svg class="ic" aria-hidden="true"><use href="#i-headphones"></use></svg>' +
+          '<span>' + esc(t('sources.title') || 'المصادر المتاحة') + '</span>' +
+        '</button>' +
       '</div>' +
     '</div>';
 
@@ -1596,11 +1725,11 @@
     if (el.scroll) el.scroll.scrollTop = 0;
   }
 
-  function playTrack(id, context) {
+  function playTrack(id, context, preferredProviderId) {
     const tr = getTrack(id);
     if (!tr) return;
     const same = state.trackId === id;
-    if (same && engine.playing) { engine.pause(); return; }
+    if (same && !preferredProviderId && engine.playing) { engine.pause(); return; }
 
     if (Array.isArray(context) && context.length) {
       const ids = context.filter((x) => getTrack(x));
@@ -1608,11 +1737,11 @@
     }
     if (state.queue.indexOf(id) === -1) state.queue.push(id);
 
-    if (!same) {
+    if (!same || preferredProviderId) {
       state.trackId = id;
       if (ui.view === 'track') ui.viewTrackId = id;
       state.recent = [id].concat(state.recent.filter((x) => x !== id)).slice(0, 8);
-      engine.load(tr);
+      engine.load(tr, preferredProviderId);
     }
     engine.play();
     save();
@@ -1910,6 +2039,25 @@
         renderPlayer();
         break;
       }
+      case 'open-sources': {
+        const trId = node.dataset.id || state.trackId;
+        const tr = getTrack(trId);
+        if (tr) openSourcesDialog(tr);
+        break;
+      }
+      case 'switch-source': {
+        const trId = node.dataset.trackId || state.trackId;
+        const provId = node.dataset.provider;
+        if (!provId) return;
+        const tr = getTrack(trId);
+        if (tr && state.trackId !== tr.id) {
+          playTrack(tr.id, 'sources', provId);
+        } else {
+          engine.switchSource(provId);
+        }
+        if (el.sourcesDlg) el.sourcesDlg.close();
+        break;
+      }
       case 'reset-open': el.confirmDlg.showModal(); break;
       case 'reset-confirm': resetStudio(); break;
       case 'close-dlg': {
@@ -2191,6 +2339,7 @@
     });
     el.sheet.addEventListener('close', () => { ui.dragging = false; });    el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
     el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
+    if (el.sourcesDlg) el.sourcesDlg.addEventListener('click', (e) => { if (e.target === el.sourcesDlg) el.sourcesDlg.close(); });
     el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
 
     bus.addEventListener('state', () => { refreshTransport(); renderView(); renderNowPanel(); });
@@ -2201,6 +2350,16 @@
     bus.addEventListener('ended', onEnded);
     bus.addEventListener('meta', () => { renderPlayer(); renderView(); });
     bus.addEventListener('app-toast', (e) => toast(t(e.detail.key)));
+    bus.addEventListener('fallback', (e) => {
+      const prov = e.detail?.to || '';
+      const provName = prov === 'youtube' ? 'YouTube' :
+                       prov === 'jamendo' ? 'Jamendo' :
+                       prov === 'archive' ? 'Internet Archive' :
+                       prov === 'apple' ? 'Apple Music' : prov;
+      toast((t('sources.fallback') || 'تم الانتقال تلقائياً إلى مصدر بديل') + (provName ? ' (' + provName + ')' : ''));
+      renderPlayer();
+      renderView();
+    });
     bus.addEventListener('error', () => toast(t('toast.importError')));
 
     document.addEventListener('keydown', (e) => {
@@ -2209,6 +2368,7 @@
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
       if (e.key === 'Escape') {
         if (el.sheet.open) { closeSheet(); return; }
+        if (el.sourcesDlg && el.sourcesDlg.open) { el.sourcesDlg.close(); return; }
         if (el.shortcutsDlg.open) { el.shortcutsDlg.close(); return; }
         if (el.confirmDlg.open) { el.confirmDlg.close(); return; }
         if (el.newPlDlg.open) { el.newPlDlg.close(); return; }

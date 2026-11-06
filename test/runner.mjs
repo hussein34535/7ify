@@ -32,7 +32,8 @@ const unitRes = spawnSync(process.execPath, [
   'test/unit/provider-sources.test.mjs',
   'test/unit/spotify-playback.test.mjs',
   'test/unit/track-matching.test.mjs',
-  'test/unit/end-of-track.test.mjs'
+  'test/unit/end-of-track.test.mjs',
+  'test/unit/multi-source-engine.test.mjs'
 ], { stdio: 'inherit' });
 if (unitRes.status !== 0) {
   console.error('\n❌ Unit tests failed!');
@@ -50,7 +51,8 @@ const apiRes = spawnSync(process.execPath, [
   'test/api/search.test.mjs',
   'test/api/lyrics.test.mjs',
   'test/api/stream.test.mjs',
-  'test/api/provider-match.test.mjs'
+  'test/api/provider-match.test.mjs',
+  'test/api/search-multi.test.mjs'
 ], { stdio: 'inherit' });
 if (apiRes.status !== 0) {
   console.error('\n❌ API tests failed!');
