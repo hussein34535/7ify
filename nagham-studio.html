@@ -3722,6 +3722,18 @@ window.NG = (function () {
           trackIds: cleanSavedIds(p.trackIds)
         }));
     }
+    if (Array.isArray(saved.savedTracks)) {
+      for (const st of saved.savedTracks) {
+        if (st && typeof st.id === 'string' && !st.id.startsWith('local-') && !st.id.startsWith('file-')) {
+          const idx = TRACKS.findIndex((t) => t.id === st.id);
+          if (idx === -1) {
+            TRACKS.push(st);
+          } else {
+            TRACKS[idx] = Object.assign(TRACKS[idx], st);
+          }
+        }
+      }
+    }
     return merged;
   }
 
@@ -3729,11 +3741,49 @@ window.NG = (function () {
 
   function save() {
     try {
+      const referencedIds = new Set([
+        ...state.favorites,
+        ...state.queue,
+        ...state.recent,
+        ...(state.trackId ? [state.trackId] : []),
+        ...state.playlists.flatMap((p) => p.trackIds || [])
+      ]);
+      const savedTracks = TRACKS.filter((tr) =>
+        tr &&
+        referencedIds.has(tr.id) &&
+        !tr.id.startsWith('local-') &&
+        !tr.id.startsWith('file-') &&
+        tr.source !== 'file' &&
+        !/^t\d+$/.test(tr.id)
+      ).map((tr) => ({
+        id: tr.id,
+        appleId: tr.appleId,
+        genre: tr.genre,
+        year: tr.year,
+        duration: tr.duration,
+        fullDuration: tr.fullDuration,
+        previewDuration: tr.previewDuration,
+        playbackType: tr.playbackType,
+        isAudioPreview: tr.isAudioPreview,
+        title: tr.title,
+        artist: tr.artist,
+        album: tr.album,
+        art: tr.art,
+        preview: tr.preview,
+        colors: tr.colors,
+        motif: tr.motif,
+        source: tr.source || 'online',
+        lyrics: tr.lyrics || null,
+        plainLyrics: tr.plainLyrics || null,
+        _lyricsSynced: tr._lyricsSynced
+      }));
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         lang: state.lang, theme: state.theme, accent: state.accent, density: state.density,
         motion: state.motion, volume: state.volume, muted: state.muted, repeat: state.repeat,
         shuffle: state.shuffle, favorites: state.favorites, playlists: state.playlists,
-        trackId: state.trackId, queue: state.queue, recent: state.recent
+        trackId: state.trackId, queue: state.queue, recent: state.recent,
+        savedTracks
       }));
     } catch (e) { /* storage may be unavailable; the session still works */ }
   }
@@ -3846,46 +3896,65 @@ window.NG = (function () {
 
   function getTrackHaystack(tr) {
     const parts = [
-      tr.title.ar, tr.title.en,
-      tr.artist.ar, tr.artist.en,
-      tr.album.ar, tr.album.en,
-      tr.year,
+      tr.title?.ar || '', tr.title?.en || '',
+      tr.artist?.ar || '', tr.artist?.en || '',
+      tr.album?.ar || '', tr.album?.en || '',
+      tr.year || '',
       genreLabel(tr.genre)
     ];
     if (Array.isArray(tr.lyrics)) {
       for (const line of tr.lyrics) {
+        if (line.text) parts.push(line.text);
         if (line.ar) parts.push(line.ar);
         if (line.en) parts.push(line.en);
       }
+    }
+    if (typeof tr.plainLyrics === 'string') {
+      parts.push(tr.plainLyrics);
     }
     return norm(parts.join(' '));
   }
 
   function findMatchedLyric(tr, q) {
-    if (!tr || !Array.isArray(tr.lyrics) || !q) return null;
+    if (!tr || !q) return null;
     const nq = norm(q);
     const qWords = nq.split(' ').filter(Boolean);
     if (!qWords.length) return null;
 
-    for (const line of tr.lyrics) {
-      const nar = norm(line.ar || '');
-      const nen = norm(line.en || '');
-      if (nar.includes(nq)) return line.ar;
-      if (nen.includes(nq)) return line.en;
+    const lines = [];
+    if (Array.isArray(tr.lyrics)) {
+      for (const l of tr.lyrics) {
+        const primary = l.text || l.ar || l.en || '';
+        if (primary) lines.push({ primary, alt: l.translation || l.en || l.ar || '' });
+      }
+    }
+    if (typeof tr.plainLyrics === 'string') {
+      for (const s of tr.plainLyrics.split(/\r?\n/)) {
+        const trimmed = s.trim();
+        if (trimmed) lines.push({ primary: trimmed, alt: '' });
+      }
+    }
+    if (!lines.length) return null;
+
+    for (const l of lines) {
+      const np = norm(l.primary);
+      const na = norm(l.alt);
+      if (np.includes(nq)) return l.primary;
+      if (na && na.includes(nq)) return l.primary;
     }
 
     let bestLine = null;
     let maxHits = 0;
-    for (const line of tr.lyrics) {
-      const nar = norm(line.ar || '');
+    for (const l of lines) {
+      const np = norm(l.primary);
       let hits = 0;
       for (const w of qWords) {
         const stems = arStems(w);
-        if (stems.some((st) => nar.includes(st))) hits++;
+        if (stems.some((st) => np.includes(st))) hits++;
       }
       if (hits > maxHits && (hits >= 2 || hits === qWords.length)) {
         maxHits = hits;
-        bestLine = line.ar;
+        bestLine = l.primary;
       }
     }
     return bestLine;
@@ -4245,31 +4314,6 @@ window.NG = (function () {
       });
   }
 
-  function ensureFallbackTrack(query) {
-    if (!query) return null;
-    const q = query.trim();
-    const id = 'custom-' + Math.abs(q.split('').reduce((a, c) => ((a << 5) - a) + c.charCodeAt(0), 0));
-    let tr = TRACKS.find((t) => t.id === id);
-    if (!tr) {
-      tr = {
-        id,
-        genre: 'arabic',
-        year: 2026,
-        duration: 30,
-        title: { ar: q + ' (نسخة الاستوديو)', en: q + ' (Studio Edition)' },
-        artist: { ar: 'موسيقى نَغَم', en: 'Nagham Studio' },
-        album: { ar: q, en: q },
-        art: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
-        preview: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/b8/b5/65/b8b5657d-a197-0402-297c-95b6cb463c63/mzaf_6451634591741541097.plus.aac.p.m4a',
-        colors: ['#1A0C06', '#7A3B12', '#F0A64B'],
-        motif: 'arcs',
-        source: 'custom'
-      };
-      TRACKS.push(tr);
-    }
-    return tr;
-  }
-
   function artStyle(colors) {
     const c = Array.isArray(colors) && colors.length === 3 ? colors : ['#1B1F26', '#2A2F3A', '#6C7683'];
     return '--c1:' + c[0] + ';--c2:' + c[1] + ';--c3:' + c[2];
@@ -4615,7 +4659,7 @@ window.NG = (function () {
           id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
           name: tr.album,
           artist: tr.artist,
-          year: tr.year || 2024,
+          year: tr.year || null,
           art: tr.art,
           colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
           motif: tr.motif || 'rings',
@@ -4649,7 +4693,7 @@ window.NG = (function () {
           id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
           name: tr.album,
           artist: tr.artist,
-          year: tr.year || 2024,
+          year: tr.year || null,
           art: tr.art,
           colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
           motif: tr.motif || 'rings',
@@ -4674,9 +4718,9 @@ window.NG = (function () {
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
-    state, save, reset, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
+    state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
-    trackMatches, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline, ensureFallbackTrack,
+    trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
     bus, emit, engine, STORAGE_KEY
   };
@@ -4992,7 +5036,7 @@ window.NG = (function () {
           '<span class="card-art">' + coverHTML(alb) +
           '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
           '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-          '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span></button>'
+          '<span class="card-sub clamp-1">' + L(alb.artist) + (alb.year ? ' · ' + alb.year : '') + '</span></button>'
         ).join('') + '</div></section>';
     }
 
@@ -5043,9 +5087,6 @@ window.NG = (function () {
       if (ui.q.trim() === q) {
         ui.onlineSongs = onlineSongs || [];
         ui.onlineArtists = onlineArtists || [];
-        if (!NG.searchTracks(q).length && !ui.onlineSongs.length) {
-          NG.ensureFallbackTrack(q);
-        }
         if (ui.view === 'search') renderSearch();
       }
     });
@@ -5222,7 +5263,7 @@ window.NG = (function () {
             '<span class="card-art">' + coverHTML(alb) +
             '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
             '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-            '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span>' +
+            '<span class="card-sub clamp-1">' + L(alb.artist) + (alb.year ? ' · ' + alb.year : '') + '</span>' +
             '<span class="card-sub">' + esc(countLabel(alb.tracks.length, 'songs')) + '</span></button>'
         ).join('') + '</div>';
       }
@@ -5462,10 +5503,12 @@ window.NG = (function () {
         el.np.innerHTML = emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
         return;
       }
-      el.np.innerHTML = '<div class="lyrics">' + lyrics.map((line) =>
-        '<button class="lyric" data-action="seek-lyric" data-t="' + line.t + '">' + esc(byLang(line)) +
-        '<em>' + esc(state.lang === 'ar' ? line.en : line.ar) + '</em></button>'
-      ).join('') + '</div>';
+      el.np.innerHTML = '<div class="lyrics">' + lyrics.map((line) => {
+        const txt = line.text || byLang(line) || line.ar || line.en || '';
+        const sub = (line.translation && line.translation !== txt) ? line.translation : (state.lang === 'ar' ? (line.en || '') : (line.ar || ''));
+        return '<button class="lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' + esc(txt) +
+          (sub ? '<em>' + esc(sub) + '</em>' : '') + '</button>';
+      }).join('') + '</div>';
       updateLyricHighlight(engine.getPosition());
       return;
     }
@@ -5496,9 +5539,10 @@ window.NG = (function () {
   function sheetPlayerPanel(tr) {
     const lyrics = tr.lyrics || [];
     const first = lyrics.slice(0, 2);
-    return (first.length ? '<div class="np-credits">' + first.map((l) =>
-      '<p style="font-size:13px;line-height:1.9">' + esc(byLang(l)) + '</p>'
-    ).join('') + '</div>' : '') +
+    return (first.length ? '<div class="np-credits">' + first.map((l) => {
+      const txt = l.text || byLang(l) || l.ar || l.en || '';
+      return '<p style="font-size:13px;line-height:1.9">' + esc(txt) + '</p>';
+    }).join('') + '</div>' : '') +
       '<div class="np-next" style="margin-top:18px"><div class="np-next-head"><h4>' + esc(t('sheet.queue')) + '</h4>' +
       '<button class="section-more" data-action="sheet-tab" data-tab="queue">' + esc(t('common.seeAll')) + '</button></div>' +
       (state.queue.length ? state.queue.slice(0, 5).map((id) => getTrack(id)).filter(Boolean).map(miniTrack).join('') : '<p class="muted" style="font-size:12px">' + esc(t('queue.empty')) + '</p>') +
@@ -5521,11 +5565,18 @@ window.NG = (function () {
 
   function sheetLyricsPanel(tr) {
     const lyrics = tr.lyrics || [];
-    if (!lyrics.length) return emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
-    return '<div class="lyrics">' + lyrics.map((line) =>
-      '<button class="lyric" data-action="seek-lyric" data-t="' + line.t + '">' + esc(byLang(line)) +
-      '<em>' + esc(state.lang === 'ar' ? line.en : line.ar) + '</em></button>'
-    ).join('') + '</div>';
+    if (!lyrics.length && !tr.plainLyrics) return emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
+    if (!lyrics.length && tr.plainLyrics) {
+      return '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
+        esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('') +
+      '</div>';
+    }
+    return '<div class="lyrics">' + lyrics.map((line) => {
+      const txt = line.text || byLang(line) || line.ar || line.en || '';
+      const sub = (line.translation && line.translation !== txt) ? line.translation : (state.lang === 'ar' ? (line.en || '') : (line.ar || ''));
+      return '<button class="lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' + esc(txt) +
+        (sub ? '<em>' + esc(sub) + '</em>' : '') + '</button>';
+    }).join('') + '</div>';
   }
 
   function sheetInfoPanel(tr) {
@@ -5533,7 +5584,7 @@ window.NG = (function () {
     return '<div class="sheet-info-panel">' +
       '<div class="info-card">' +
         '<div class="info-row"><span class="info-label">' + esc(t('hero.album')) + '</span><span class="info-val">' + L(tr.album) + '</span></div>' +
-        '<div class="info-row"><span class="info-label">سنة الإصدار</span><span class="info-val">' + (tr.year || '2024') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">' + esc(t('track.releaseYear') || 'سنة الإصدار') + '</span><span class="info-val">' + (tr.year ? String(tr.year) : (state.lang === 'ar' ? 'غير محددة' : 'Unknown')) + '</span></div>' +
         '<div class="info-row"><span class="info-label">النوع الموسيقي</span><span class="info-val">' + esc(NG.genreLabel(tr.genre)) + '</span></div>' +
         '<div class="info-row"><span class="info-label">المدة الزمنية</span><span class="info-val">' + fmt(tr.duration) + '</span></div>' +
         '<div class="info-row"><span class="info-label">جودة الصوت</span><span class="info-val badge-quality">' + (tr.source === 'file' ? 'ملف صوتي محلي عالي الدقة' : 'معاينة AAC رسمية · Apple Music') + '</span></div>' +
@@ -5709,10 +5760,14 @@ window.NG = (function () {
             artistAvatar({ name: { ar: artistName, en: artistName }, track: t0.id }) +
           '</div>' +
           '<div class="artist-hero-meta">' +
-            '<div class="sp-verified-tag">' +
-              '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-              '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
-            '</div>' +
+            (t0 && t0.verified === true ? (
+              '<div class="sp-verified-tag">' +
+                '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
+                '<span>' + esc(t('track.verified') || 'فنان موثق') + '</span>' +
+              '</div>'
+            ) : (
+              '<span class="sp-artist-kicker">' + esc(t('page.artist') || 'فنان') + '</span>'
+            )) +
             '<h1 class="artist-hero-name clamp-1">' + esc(artistName) + '</h1>' +
             '<div class="artist-hero-subline">' +
               '<span class="artist-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
@@ -5746,7 +5801,7 @@ window.NG = (function () {
               '<span class="card-art">' + coverHTML(alb) +
               '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></span>' +
               '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-              '<span class="card-sub clamp-1">' + (alb.year || 2024) + ' · ' + esc(countLabel(alb.tracks.length, 'songs')) + '</span>' +
+              '<span class="card-sub clamp-1">' + (alb.year ? alb.year + ' · ' : '') + esc(countLabel(alb.tracks.length, 'songs')) + '</span>' +
             '</button>'
           ).join('') +
         '</div>' +
@@ -5787,8 +5842,7 @@ window.NG = (function () {
               artistAvatar({ name: t0.artist, track: t0.id }) +
               '<span class="sp-artist-link">' + L(t0.artist) + '</span>' +
             '</button>' +
-            '<span class="pl-sep">•</span>' +
-            '<span class="num">' + (t0.year || 2024) + '</span>' +
+            (t0.year ? ('<span class="pl-sep">•</span><span class="num">' + t0.year + '</span>') : '') +
             '<span class="pl-sep">•</span>' +
             '<span class="pl-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
             '<span class="pl-sep">•</span>' +

@@ -47,3 +47,59 @@ test('search returns empty results immediately for queries < 2 chars', async () 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.data.results, []);
 });
+
+test('search returns 502 with upstream_failed when external provider fails', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('Connection refused by simulated upstream');
+  };
+  try {
+    const req = { method: 'GET', query: { q: 'Valid Query' } };
+    const res = createMockRes();
+    await searchHandler(req, res);
+    assert.equal(res.statusCode, 502);
+    assert.equal(res.data.error, 'upstream_unavailable');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('search correctly transforms upstream response into clean schema without fake durations', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      results: [
+        {
+          trackId: 123456,
+          trackName: 'Test Song',
+          artistName: 'Test Artist',
+          collectionName: 'Test Album',
+          artworkUrl100: 'https://example.com/100x100bb.jpg',
+          previewUrl: 'https://example.com/preview.m4a',
+          trackTimeMillis: 185000,
+          releaseDate: '2023-05-15T00:00:00Z',
+          primaryGenreName: 'Arabic'
+        }
+      ]
+    })
+  });
+
+  try {
+    const req = { method: 'GET', query: { q: 'Test Song' } };
+    const res = createMockRes();
+    await searchHandler(req, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.data.results.length, 1);
+    const item = res.data.results[0];
+    assert.equal(item.appleId, 123456);
+    assert.equal(item.title.ar, 'Test Song');
+    assert.equal(item.artist.ar, 'Test Artist');
+    assert.equal(item.duration, 185);
+    assert.equal(item.year, 2023);
+    assert.equal(item.preview, 'https://example.com/preview.m4a');
+    assert.equal(item.art, 'https://example.com/600x600bb.jpg');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

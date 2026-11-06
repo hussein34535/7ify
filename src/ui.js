@@ -307,7 +307,7 @@
           '<span class="card-art">' + coverHTML(alb) +
           '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
           '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-          '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span></button>'
+          '<span class="card-sub clamp-1">' + L(alb.artist) + (alb.year ? ' · ' + alb.year : '') + '</span></button>'
         ).join('') + '</div></section>';
     }
 
@@ -358,9 +358,6 @@
       if (ui.q.trim() === q) {
         ui.onlineSongs = onlineSongs || [];
         ui.onlineArtists = onlineArtists || [];
-        if (!NG.searchTracks(q).length && !ui.onlineSongs.length) {
-          NG.ensureFallbackTrack(q);
-        }
         if (ui.view === 'search') renderSearch();
       }
     });
@@ -537,7 +534,7 @@
             '<span class="card-art">' + coverHTML(alb) +
             '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
             '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-            '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span>' +
+            '<span class="card-sub clamp-1">' + L(alb.artist) + (alb.year ? ' · ' + alb.year : '') + '</span>' +
             '<span class="card-sub">' + esc(countLabel(alb.tracks.length, 'songs')) + '</span></button>'
         ).join('') + '</div>';
       }
@@ -777,10 +774,12 @@
         el.np.innerHTML = emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
         return;
       }
-      el.np.innerHTML = '<div class="lyrics">' + lyrics.map((line) =>
-        '<button class="lyric" data-action="seek-lyric" data-t="' + line.t + '">' + esc(byLang(line)) +
-        '<em>' + esc(state.lang === 'ar' ? line.en : line.ar) + '</em></button>'
-      ).join('') + '</div>';
+      el.np.innerHTML = '<div class="lyrics">' + lyrics.map((line) => {
+        const txt = line.text || byLang(line) || line.ar || line.en || '';
+        const sub = (line.translation && line.translation !== txt) ? line.translation : (state.lang === 'ar' ? (line.en || '') : (line.ar || ''));
+        return '<button class="lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' + esc(txt) +
+          (sub ? '<em>' + esc(sub) + '</em>' : '') + '</button>';
+      }).join('') + '</div>';
       updateLyricHighlight(engine.getPosition());
       return;
     }
@@ -811,9 +810,10 @@
   function sheetPlayerPanel(tr) {
     const lyrics = tr.lyrics || [];
     const first = lyrics.slice(0, 2);
-    return (first.length ? '<div class="np-credits">' + first.map((l) =>
-      '<p style="font-size:13px;line-height:1.9">' + esc(byLang(l)) + '</p>'
-    ).join('') + '</div>' : '') +
+    return (first.length ? '<div class="np-credits">' + first.map((l) => {
+      const txt = l.text || byLang(l) || l.ar || l.en || '';
+      return '<p style="font-size:13px;line-height:1.9">' + esc(txt) + '</p>';
+    }).join('') + '</div>' : '') +
       '<div class="np-next" style="margin-top:18px"><div class="np-next-head"><h4>' + esc(t('sheet.queue')) + '</h4>' +
       '<button class="section-more" data-action="sheet-tab" data-tab="queue">' + esc(t('common.seeAll')) + '</button></div>' +
       (state.queue.length ? state.queue.slice(0, 5).map((id) => getTrack(id)).filter(Boolean).map(miniTrack).join('') : '<p class="muted" style="font-size:12px">' + esc(t('queue.empty')) + '</p>') +
@@ -836,11 +836,18 @@
 
   function sheetLyricsPanel(tr) {
     const lyrics = tr.lyrics || [];
-    if (!lyrics.length) return emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
-    return '<div class="lyrics">' + lyrics.map((line) =>
-      '<button class="lyric" data-action="seek-lyric" data-t="' + line.t + '">' + esc(byLang(line)) +
-      '<em>' + esc(state.lang === 'ar' ? line.en : line.ar) + '</em></button>'
-    ).join('') + '</div>';
+    if (!lyrics.length && !tr.plainLyrics) return emptyState('lyrics', t('lyrics.empty'), t('lyrics.emptyBody'));
+    if (!lyrics.length && tr.plainLyrics) {
+      return '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
+        esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('') +
+      '</div>';
+    }
+    return '<div class="lyrics">' + lyrics.map((line) => {
+      const txt = line.text || byLang(line) || line.ar || line.en || '';
+      const sub = (line.translation && line.translation !== txt) ? line.translation : (state.lang === 'ar' ? (line.en || '') : (line.ar || ''));
+      return '<button class="lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' + esc(txt) +
+        (sub ? '<em>' + esc(sub) + '</em>' : '') + '</button>';
+    }).join('') + '</div>';
   }
 
   function sheetInfoPanel(tr) {
@@ -848,7 +855,7 @@
     return '<div class="sheet-info-panel">' +
       '<div class="info-card">' +
         '<div class="info-row"><span class="info-label">' + esc(t('hero.album')) + '</span><span class="info-val">' + L(tr.album) + '</span></div>' +
-        '<div class="info-row"><span class="info-label">سنة الإصدار</span><span class="info-val">' + (tr.year || '2024') + '</span></div>' +
+        '<div class="info-row"><span class="info-label">' + esc(t('track.releaseYear') || 'سنة الإصدار') + '</span><span class="info-val">' + (tr.year ? String(tr.year) : (state.lang === 'ar' ? 'غير محددة' : 'Unknown')) + '</span></div>' +
         '<div class="info-row"><span class="info-label">النوع الموسيقي</span><span class="info-val">' + esc(NG.genreLabel(tr.genre)) + '</span></div>' +
         '<div class="info-row"><span class="info-label">المدة الزمنية</span><span class="info-val">' + fmt(tr.duration) + '</span></div>' +
         '<div class="info-row"><span class="info-label">جودة الصوت</span><span class="info-val badge-quality">' + (tr.source === 'file' ? 'ملف صوتي محلي عالي الدقة' : 'معاينة AAC رسمية · Apple Music') + '</span></div>' +
@@ -1024,10 +1031,14 @@
             artistAvatar({ name: { ar: artistName, en: artistName }, track: t0.id }) +
           '</div>' +
           '<div class="artist-hero-meta">' +
-            '<div class="sp-verified-tag">' +
-              '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-              '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
-            '</div>' +
+            (t0 && t0.verified === true ? (
+              '<div class="sp-verified-tag">' +
+                '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
+                '<span>' + esc(t('track.verified') || 'فنان موثق') + '</span>' +
+              '</div>'
+            ) : (
+              '<span class="sp-artist-kicker">' + esc(t('page.artist') || 'فنان') + '</span>'
+            )) +
             '<h1 class="artist-hero-name clamp-1">' + esc(artistName) + '</h1>' +
             '<div class="artist-hero-subline">' +
               '<span class="artist-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
@@ -1061,7 +1072,7 @@
               '<span class="card-art">' + coverHTML(alb) +
               '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></span>' +
               '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
-              '<span class="card-sub clamp-1">' + (alb.year || 2024) + ' · ' + esc(countLabel(alb.tracks.length, 'songs')) + '</span>' +
+              '<span class="card-sub clamp-1">' + (alb.year ? alb.year + ' · ' : '') + esc(countLabel(alb.tracks.length, 'songs')) + '</span>' +
             '</button>'
           ).join('') +
         '</div>' +
@@ -1102,8 +1113,7 @@
               artistAvatar({ name: t0.artist, track: t0.id }) +
               '<span class="sp-artist-link">' + L(t0.artist) + '</span>' +
             '</button>' +
-            '<span class="pl-sep">•</span>' +
-            '<span class="num">' + (t0.year || 2024) + '</span>' +
+            (t0.year ? ('<span class="pl-sep">•</span><span class="num">' + t0.year + '</span>') : '') +
             '<span class="pl-sep">•</span>' +
             '<span class="pl-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
             '<span class="pl-sep">•</span>' +

@@ -1,3 +1,10 @@
+export function parseYear(releaseDate) {
+  const releaseYear = releaseDate ? Number.parseInt(String(releaseDate).slice(0, 4), 10) : null;
+  return Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
+    ? releaseYear
+    : null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -62,10 +69,7 @@ export default async function handler(req, res) {
       const durationMs = Number(item.trackTimeMillis);
       const fullDuration = Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs / 1000) : null;
 
-      const releaseYear = item.releaseDate ? Number.parseInt(String(item.releaseDate).slice(0, 4), 10) : null;
-      const year = Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
-        ? releaseYear
-        : null;
+      const year = parseYear(item.releaseDate);
 
       const palette = palettes[idx % palettes.length];
       const motif = motifs[idx % motifs.length];

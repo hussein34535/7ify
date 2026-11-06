@@ -20,7 +20,14 @@ console.log('✅ Build successful.\n');
 console.log('----------------------------------------------------');
 console.log('Step 2: Running Unit Tests (node --test test/unit/*.test.mjs)...');
 console.log('----------------------------------------------------');
-const unitRes = spawnSync(process.execPath, ['--test', 'test/unit/lrc.test.mjs', 'test/unit/metadata.test.mjs', 'test/unit/state.test.mjs'], { stdio: 'inherit' });
+const unitRes = spawnSync(process.execPath, [
+  '--test',
+  'test/unit/lrc.test.mjs',
+  'test/unit/metadata.test.mjs',
+  'test/unit/state.test.mjs',
+  'test/unit/lyrics-search.test.mjs',
+  'test/unit/race.test.mjs'
+], { stdio: 'inherit' });
 if (unitRes.status !== 0) {
   console.error('\n❌ Unit tests failed!');
   failed++;

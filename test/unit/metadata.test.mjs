@@ -1,28 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { parseYear } from '../../api/search.js';
+import { loadAppInstance } from '../helpers/load-app.mjs';
 
-function formatDuration(val) {
-  const n = Number(val);
-  if (!Number.isFinite(n) || n <= 0) return '--:--';
-  const total = Math.floor(n);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-}
+const { NG } = loadAppInstance();
+const { formatDuration, formatPosition } = NG;
 
-function formatPosition(val) {
-  const n = Number(val);
-  const safe = Number.isFinite(n) ? Math.max(0, n) : 0;
-  const total = Math.floor(safe);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-}
-
-function parseYear(rawDate) {
-  const releaseYear = rawDate ? Number.parseInt(String(rawDate).slice(0, 4), 10) : null;
-  return Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
-    ? releaseYear
-    : null;
-}
-
-test('formatDuration formats valid durations correctly', () => {
+test('formatDuration formats valid durations correctly from actual runtime', () => {
   assert.equal(formatDuration(260), '4:20');
   assert.equal(formatDuration(30), '0:30');
   assert.equal(formatDuration(65), '1:05');
@@ -40,11 +24,32 @@ test('formatPosition safely formats position 0 as 0:00', () => {
   assert.equal(formatPosition(15.4), '0:15');
 });
 
-test('parseYear returns null for missing or invalid dates without fake 2024 fallback', () => {
+test('parseYear exported from api/search.js returns integer year or null without fake 2024 fallback', () => {
   assert.equal(parseYear('2000-08-01T07:00:00Z'), 2000);
   assert.equal(parseYear('1996'), 1996);
   assert.equal(parseYear(null), null);
   assert.equal(parseYear(''), null);
   assert.equal(parseYear('invalid-date'), null);
   assert.equal(parseYear('1840'), null); // too early
+});
+
+test('getAlbums and getArtistAlbums from runtime NG return null for missing years without fake 2024 fallback', () => {
+  const { NG: instanceNG, TRACKS } = loadAppInstance();
+  TRACKS.push({
+    id: 'test-track-no-year',
+    title: { ar: 'أغنية بدون سنة', en: 'Song No Year' },
+    artist: { ar: 'فنان تجريبي', en: 'Test Artist' },
+    album: { ar: 'ألبوم بدون سنة', en: 'Album No Year' },
+    year: null,
+    duration: 120
+  });
+  const albums = instanceNG.getAlbums();
+  const testAlb = albums.find(a => a.name?.ar === 'ألبوم بدون سنة');
+  assert.ok(testAlb, 'Album should be grouped');
+  assert.equal(testAlb.year, null, 'Album year should be null, not 2024');
+
+  const artistAlbums = instanceNG.getArtistAlbums('فنان تجريبي');
+  const testArtistAlb = artistAlbums.find(a => a.name?.ar === 'ألبوم بدون سنة');
+  assert.ok(testArtistAlb, 'Artist album should be found');
+  assert.equal(testArtistAlb.year, null, 'Artist album year should be null, not 2024');
 });

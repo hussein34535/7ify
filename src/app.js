@@ -613,6 +613,18 @@ window.NG = (function () {
           trackIds: cleanSavedIds(p.trackIds)
         }));
     }
+    if (Array.isArray(saved.savedTracks)) {
+      for (const st of saved.savedTracks) {
+        if (st && typeof st.id === 'string' && !st.id.startsWith('local-') && !st.id.startsWith('file-')) {
+          const idx = TRACKS.findIndex((t) => t.id === st.id);
+          if (idx === -1) {
+            TRACKS.push(st);
+          } else {
+            TRACKS[idx] = Object.assign(TRACKS[idx], st);
+          }
+        }
+      }
+    }
     return merged;
   }
 
@@ -620,11 +632,49 @@ window.NG = (function () {
 
   function save() {
     try {
+      const referencedIds = new Set([
+        ...state.favorites,
+        ...state.queue,
+        ...state.recent,
+        ...(state.trackId ? [state.trackId] : []),
+        ...state.playlists.flatMap((p) => p.trackIds || [])
+      ]);
+      const savedTracks = TRACKS.filter((tr) =>
+        tr &&
+        referencedIds.has(tr.id) &&
+        !tr.id.startsWith('local-') &&
+        !tr.id.startsWith('file-') &&
+        tr.source !== 'file' &&
+        !/^t\d+$/.test(tr.id)
+      ).map((tr) => ({
+        id: tr.id,
+        appleId: tr.appleId,
+        genre: tr.genre,
+        year: tr.year,
+        duration: tr.duration,
+        fullDuration: tr.fullDuration,
+        previewDuration: tr.previewDuration,
+        playbackType: tr.playbackType,
+        isAudioPreview: tr.isAudioPreview,
+        title: tr.title,
+        artist: tr.artist,
+        album: tr.album,
+        art: tr.art,
+        preview: tr.preview,
+        colors: tr.colors,
+        motif: tr.motif,
+        source: tr.source || 'online',
+        lyrics: tr.lyrics || null,
+        plainLyrics: tr.plainLyrics || null,
+        _lyricsSynced: tr._lyricsSynced
+      }));
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         lang: state.lang, theme: state.theme, accent: state.accent, density: state.density,
         motion: state.motion, volume: state.volume, muted: state.muted, repeat: state.repeat,
         shuffle: state.shuffle, favorites: state.favorites, playlists: state.playlists,
-        trackId: state.trackId, queue: state.queue, recent: state.recent
+        trackId: state.trackId, queue: state.queue, recent: state.recent,
+        savedTracks
       }));
     } catch (e) { /* storage may be unavailable; the session still works */ }
   }
@@ -737,46 +787,65 @@ window.NG = (function () {
 
   function getTrackHaystack(tr) {
     const parts = [
-      tr.title.ar, tr.title.en,
-      tr.artist.ar, tr.artist.en,
-      tr.album.ar, tr.album.en,
-      tr.year,
+      tr.title?.ar || '', tr.title?.en || '',
+      tr.artist?.ar || '', tr.artist?.en || '',
+      tr.album?.ar || '', tr.album?.en || '',
+      tr.year || '',
       genreLabel(tr.genre)
     ];
     if (Array.isArray(tr.lyrics)) {
       for (const line of tr.lyrics) {
+        if (line.text) parts.push(line.text);
         if (line.ar) parts.push(line.ar);
         if (line.en) parts.push(line.en);
       }
+    }
+    if (typeof tr.plainLyrics === 'string') {
+      parts.push(tr.plainLyrics);
     }
     return norm(parts.join(' '));
   }
 
   function findMatchedLyric(tr, q) {
-    if (!tr || !Array.isArray(tr.lyrics) || !q) return null;
+    if (!tr || !q) return null;
     const nq = norm(q);
     const qWords = nq.split(' ').filter(Boolean);
     if (!qWords.length) return null;
 
-    for (const line of tr.lyrics) {
-      const nar = norm(line.ar || '');
-      const nen = norm(line.en || '');
-      if (nar.includes(nq)) return line.ar;
-      if (nen.includes(nq)) return line.en;
+    const lines = [];
+    if (Array.isArray(tr.lyrics)) {
+      for (const l of tr.lyrics) {
+        const primary = l.text || l.ar || l.en || '';
+        if (primary) lines.push({ primary, alt: l.translation || l.en || l.ar || '' });
+      }
+    }
+    if (typeof tr.plainLyrics === 'string') {
+      for (const s of tr.plainLyrics.split(/\r?\n/)) {
+        const trimmed = s.trim();
+        if (trimmed) lines.push({ primary: trimmed, alt: '' });
+      }
+    }
+    if (!lines.length) return null;
+
+    for (const l of lines) {
+      const np = norm(l.primary);
+      const na = norm(l.alt);
+      if (np.includes(nq)) return l.primary;
+      if (na && na.includes(nq)) return l.primary;
     }
 
     let bestLine = null;
     let maxHits = 0;
-    for (const line of tr.lyrics) {
-      const nar = norm(line.ar || '');
+    for (const l of lines) {
+      const np = norm(l.primary);
       let hits = 0;
       for (const w of qWords) {
         const stems = arStems(w);
-        if (stems.some((st) => nar.includes(st))) hits++;
+        if (stems.some((st) => np.includes(st))) hits++;
       }
       if (hits > maxHits && (hits >= 2 || hits === qWords.length)) {
         maxHits = hits;
-        bestLine = line.ar;
+        bestLine = l.primary;
       }
     }
     return bestLine;
@@ -1136,31 +1205,6 @@ window.NG = (function () {
       });
   }
 
-  function ensureFallbackTrack(query) {
-    if (!query) return null;
-    const q = query.trim();
-    const id = 'custom-' + Math.abs(q.split('').reduce((a, c) => ((a << 5) - a) + c.charCodeAt(0), 0));
-    let tr = TRACKS.find((t) => t.id === id);
-    if (!tr) {
-      tr = {
-        id,
-        genre: 'arabic',
-        year: 2026,
-        duration: 30,
-        title: { ar: q + ' (نسخة الاستوديو)', en: q + ' (Studio Edition)' },
-        artist: { ar: 'موسيقى نَغَم', en: 'Nagham Studio' },
-        album: { ar: q, en: q },
-        art: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
-        preview: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/b8/b5/65/b8b5657d-a197-0402-297c-95b6cb463c63/mzaf_6451634591741541097.plus.aac.p.m4a',
-        colors: ['#1A0C06', '#7A3B12', '#F0A64B'],
-        motif: 'arcs',
-        source: 'custom'
-      };
-      TRACKS.push(tr);
-    }
-    return tr;
-  }
-
   function artStyle(colors) {
     const c = Array.isArray(colors) && colors.length === 3 ? colors : ['#1B1F26', '#2A2F3A', '#6C7683'];
     return '--c1:' + c[0] + ';--c2:' + c[1] + ';--c3:' + c[2];
@@ -1506,7 +1550,7 @@ window.NG = (function () {
           id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
           name: tr.album,
           artist: tr.artist,
-          year: tr.year || 2024,
+          year: tr.year || null,
           art: tr.art,
           colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
           motif: tr.motif || 'rings',
@@ -1540,7 +1584,7 @@ window.NG = (function () {
           id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
           name: tr.album,
           artist: tr.artist,
-          year: tr.year || 2024,
+          year: tr.year || null,
           art: tr.art,
           colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
           motif: tr.motif || 'rings',
@@ -1565,9 +1609,9 @@ window.NG = (function () {
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
-    state, save, reset, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
+    state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
-    trackMatches, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline, ensureFallbackTrack,
+    trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
     bus, emit, engine, STORAGE_KEY
   };
