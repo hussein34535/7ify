@@ -6,7 +6,7 @@
 
   const NG = window.NG;
   const {
-    $, $$, esc, fmt, norm, t, state, getTrack, getPlayableDuration, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
+    $, $$, esc, fmt, norm, t, state, getTrack, getPlayableDuration, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, providers, save,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks
   } = NG;
   const TRACKS = NG.TRACKS;
@@ -582,6 +582,23 @@
       '<button class="btn btn-accent" data-action="import">' + ic('upload') + esc(t('studio.file')) + '</button>' +
       '<button class="btn" data-action="go" data-view="library">' + ic('library') + esc(t('library.tabLiked')) + '</button></div></section>' +
 
+      '<section class="panel-block"><h2>' + esc(t('studio.providers')) + '</h2><p>' + esc(t('studio.providersSub')) + '</p>' +
+      (function() {
+        const pStatus = (providers && typeof providers.getProviderStatus === 'function')
+          ? providers.getProviderStatus()
+          : { spotify: { connected: false } };
+        const isConn = Boolean(pStatus.spotify && pStatus.spotify.connected);
+        return '<div class="engine-card" style="margin-bottom:8px">' +
+          '<span class="dot" style="background:' + (isConn ? '#1ED760' : 'var(--muted)') + '"></span>' +
+          '<span><b>' + (isConn ? esc(t('studio.spotifyConnected')) : esc(t('studio.spotifyDisconnected'))) + '</b>' +
+          '<span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">' + esc(t('studio.providerNotice')) + '</span></span></div>' +
+          '<div class="btn-row">' +
+          (isConn
+            ? '<button class="btn btn-danger" data-action="disconnect-spotify">' + ic('trash') + esc(t('studio.disconnectSpotify')) + '</button>'
+            : '<button class="btn btn-accent" data-action="connect-spotify">' + ic('plus') + esc(t('studio.connectSpotify')) + '</button>') +
+          '</div>';
+      })() + '</section>' +
+
       '<section class="panel-block"><h2>' + esc(t('studio.language')) + '</h2><p>' + esc(t('studio.languageSub')) + '</p>' +
       '<div class="opt-list">' +
       '<button class="opt" data-action="lang-set" data-id="ar" aria-pressed="' + (state.lang === 'ar') + '"><span class="opt-text"><b>' + esc(t('lang.ar')) + '</b><span>RTL · العربية</span></span><span class="opt-mark">' + ic('check') + '</span></button>' +
@@ -621,9 +638,18 @@
     $('#pTitleBtn').setAttribute('aria-label', byLang(tr.title) + ' — ' + byLang(tr.artist));
     $('#pArtist').textContent = byLang(tr.artist);
     const mark = $('#pMark');
-    if (tr.source === 'file') {
+    if (tr.source === 'file' || tr.playbackType === 'local') {
       mark.hidden = false;
       mark.textContent = t('player.local');
+    } else if (tr.playbackType === 'full' && tr.playbackProvider === 'spotify') {
+      mark.hidden = false;
+      mark.textContent = t('player.spotifyFull') || 'Spotify';
+    } else if (tr.playbackType === 'preview' || tr.isAudioPreview || tr.preview) {
+      mark.hidden = false;
+      mark.textContent = t('player.previewBadge') || '30s';
+    } else if (tr.playbackType === 'unavailable') {
+      mark.hidden = false;
+      mark.textContent = t('player.unavailable') || 'N/A';
     } else {
       mark.hidden = true;
     }
@@ -1633,9 +1659,7 @@
     const i = ids.indexOf(state.trackId);
     const isLast = i === ids.length - 1;
     if (isLast && state.repeat === 'off') {
-      const dur = (getTrack(state.trackId) || {}).duration || 0;
-      engine.stop(true);
-      engine.pos = dur;
+      engine.pauseAtEnd();
       refreshTransport();
       renderView();
       syncProgress();
@@ -1868,6 +1892,35 @@
         renderShortcuts();
         el.shortcutsDlg.showModal();
         break;
+      case 'connect-spotify': {
+        const entered = prompt(
+          state.lang === 'ar'
+            ? 'أدخل مفتاح Spotify Access Token أو Client ID الخاص بك (حساب Premium مطلوب للبث الكامل):'
+            : 'Enter your Spotify Access Token or Client ID (Premium account required for full playback):'
+        );
+        if (entered && entered.trim()) {
+          if (providers && typeof providers.setSpotifyAuth === 'function') {
+            providers.setSpotifyAuth({
+              accessToken: entered.trim(),
+              expiresAt: Date.now() + 3600 * 1000,
+              user: { product: 'premium', display_name: 'Spotify User' }
+            });
+          }
+          toast(t('toast.spotifyConnected'));
+          renderStudio();
+          renderPlayer();
+        }
+        break;
+      }
+      case 'disconnect-spotify': {
+        if (providers && typeof providers.setSpotifyAuth === 'function') {
+          providers.setSpotifyAuth(null);
+        }
+        toast(t('toast.spotifyDisconnected'));
+        renderStudio();
+        renderPlayer();
+        break;
+      }
       case 'reset-open': el.confirmDlg.showModal(); break;
       case 'reset-confirm': resetStudio(); break;
       case 'close-dlg': {

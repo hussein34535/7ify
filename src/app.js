@@ -164,6 +164,19 @@ window.NG = (function () {
       'track.catalogDuration': 'مدة الأغنية في الكتالوج',
       'track.playableDuration': 'مدة المعاينة المتاحة',
       'track.fullCatalogDuration': 'المدة الكاملة في الكتالوج',
+      'player.previewBadge': 'معاينة ٣٠ ثانية',
+      'player.spotifyFull': 'تشغيل كامل · Spotify',
+      'player.fullTrackBadge': 'تشغيل كامل',
+      'player.unavailable': 'غير متاح',
+      'studio.providers': 'مصادر الموسيقى ومزودات التشغيل',
+      'studio.providersSub': 'مصادر الصوت، المعاينات الرسمية، وربط الحسابات للتشغيل الكامل',
+      'studio.spotifyConnected': 'Spotify Premium متصل (تشغيل كامل متاح)',
+      'studio.spotifyDisconnected': 'Spotify غير متصل (تعمل المعاينات الرسمية ٣٠ ثانية)',
+      'studio.connectSpotify': 'ربط حساب Spotify',
+      'studio.disconnectSpotify': 'فصل حساب Spotify',
+      'studio.providerNotice': 'الأغاني التجارية العالمية مرخصة رسميًا؛ توفر Apple Music معاينات مجانية ٣٠ ثانية لجميع الأغاني للاستكشاف. لتشغيل الأغاني بالكامل: اربط حساب Spotify Premium الخاص بك، أو استورد ملفات MP3 محلية مجانًا.',
+      'toast.spotifyConnected': 'تم ربط حساب Spotify Premium بنجاح',
+      'toast.spotifyDisconnected': 'تم فصل حساب Spotify بنجاح',
       'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
       'sec.popular': 'أشهر الأغاني', 'sec.albums': 'الألبومات والإصدارات',
       'sec.arabicMusic': 'الموسيقى العربية', 'sec.intlMusic': 'الموسيقى العالمية',
@@ -281,6 +294,19 @@ window.NG = (function () {
       'track.catalogDuration': 'Full Catalog Duration',
       'track.playableDuration': 'Playable Preview Duration',
       'track.fullCatalogDuration': 'Full Catalog Duration',
+      'player.previewBadge': '30s Preview',
+      'player.spotifyFull': 'Full Track · Spotify',
+      'player.fullTrackBadge': 'Full Track',
+      'player.unavailable': 'Unavailable',
+      'studio.providers': 'Music Sources & Playback Providers',
+      'studio.providersSub': 'Audio sources, official previews, and full playback connections',
+      'studio.spotifyConnected': 'Spotify Premium Connected (Full Track Available)',
+      'studio.spotifyDisconnected': 'Spotify Disconnected (30s Official Preview Mode)',
+      'studio.connectSpotify': 'Connect Spotify Account',
+      'studio.disconnectSpotify': 'Disconnect Spotify',
+      'studio.providerNotice': 'Commercial music is strictly copyrighted; Apple Music provides free 30-second previews for discovery. For full-length playback: connect your Spotify Premium account or import local MP3 files for free.',
+      'toast.spotifyConnected': 'Connected to Spotify Premium successfully',
+      'toast.spotifyDisconnected': 'Disconnected from Spotify successfully',
       'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
       'sec.popular': 'Popular Tracks', 'sec.albums': 'Albums & Releases',
       'sec.arabicMusic': 'Arabic Music', 'sec.intlMusic': 'International Music',
@@ -659,9 +685,16 @@ window.NG = (function () {
         year: tr.year,
         duration: tr.duration,
         fullDuration: tr.fullDuration,
+        catalogDuration: tr.fullDuration || tr.duration,
         previewDuration: tr.previewDuration,
         playbackType: tr.playbackType,
+        playbackProvider: tr.playbackProvider,
         isAudioPreview: tr.isAudioPreview,
+        isFullTrack: tr.isFullTrack,
+        isPreview: tr.isPreview,
+        requiresAuthentication: tr.requiresAuthentication,
+        availability: tr.availability,
+        spotifyUri: tr.spotifyUri,
         title: tr.title,
         artist: tr.artist,
         album: tr.album,
@@ -1116,14 +1149,21 @@ window.NG = (function () {
             year,
             duration: fullDuration,
             fullDuration,
-            previewDuration: item.previewUrl ? 30 : null,
-            playbackType: item.previewUrl ? 'preview' : 'unavailable',
-            isAudioPreview: Boolean(item.previewUrl),
-            title: { ar: item.trackName || q, en: item.trackName || q },
+            catalogDuration: fullDuration,
+            previewDuration: (item.previewUrl || item.preview) ? 30 : null,
+            playableDuration: (item.previewUrl || item.preview) ? 30 : 0,
+            playbackType: (item.previewUrl || item.preview) ? 'preview' : 'unavailable',
+            playbackProvider: (item.previewUrl || item.preview) ? 'apple-preview' : 'none',
+            isAudioPreview: Boolean(item.previewUrl || item.preview),
+            isFullTrack: false,
+            isPreview: Boolean(item.previewUrl || item.preview),
+            requiresAuthentication: false,
+            availability: (item.previewUrl || item.preview) ? 'preview_only' : 'unavailable',
+            title: { ar: item.trackName || (item.title && (item.title.ar || item.title.en)) || q, en: item.trackName || (item.title && (item.title.en || item.title.ar)) || q },
             artist: { ar: artName, en: artName },
-            album: { ar: item.collectionName || item.trackName || 'ألبوم', en: item.collectionName || item.trackName || 'Single' },
-            art: artHiRes,
-            preview: item.previewUrl || '',
+            album: { ar: item.collectionName || (item.album && (item.album.ar || item.album.en)) || item.trackName || 'ألبوم', en: item.collectionName || (item.album && (item.album.en || item.album.ar)) || item.trackName || 'Single' },
+            art: artHiRes || item.art || '',
+            preview: item.previewUrl || item.preview || '',
             colors: palette,
             motif: motifs[idx % motifs.length],
             source: 'online'
@@ -1285,17 +1325,79 @@ window.NG = (function () {
     el.innerHTML = coverImages(item || {}, eager);
   }
 
-  /* ---------- audio engine (real audio + YouTube stream support) ------------ */
+  /* ---------- audio providers & engine (multi-source architecture) ---------- */
+
+  const providers = {
+    spotify: {
+      connected: false,
+      user: null,
+      isPremium: false,
+      accessToken: null,
+      deviceId: null
+    },
+
+    getProviderStatus() {
+      let auth = null;
+      try {
+        const stored = localStorage.getItem('nagham_spotify_auth');
+        auth = stored ? JSON.parse(stored) : null;
+      } catch (e) {}
+      const isConn = Boolean(auth && auth.accessToken && (Date.now() < (auth.expiresAt || 0)));
+      return {
+        spotify: {
+          connected: isConn,
+          user: auth?.user || null,
+          isPremium: Boolean(auth?.user?.product === 'premium'),
+          requiresAuth: !isConn
+        },
+        local: { available: true },
+        applePreview: { available: true }
+      };
+    },
+
+    setSpotifyAuth(data) {
+      if (!data) {
+        try { localStorage.removeItem('nagham_spotify_auth'); } catch (e) {}
+      } else {
+        try { localStorage.setItem('nagham_spotify_auth', JSON.stringify(data)); } catch (e) {}
+      }
+      emit('provider-changed', this.getProviderStatus());
+    },
+
+    async matchTrack(track) {
+      if (!track || track.source === 'file') return null;
+      const tit = track.title?.ar || track.title?.en || (typeof track.title === 'string' ? track.title : '');
+      const art = track.artist?.ar || track.artist?.en || (typeof track.artist === 'string' ? track.artist : '');
+      const dur = track.duration || track.fullDuration || 0;
+      if (!tit) return null;
+      try {
+        const url = `/api/provider-match?title=${encodeURIComponent(tit)}&artist=${encodeURIComponent(art)}&duration=${dur}&provider=spotify`;
+        const r = await fetch(url);
+        if (r.ok) {
+          const d = await r.json();
+          if (d.matched && d.track) {
+            track.spotifyUri = d.track.uri;
+            return d.track;
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+  };
 
   function getPlayableDuration(track) {
     if (!track) return 0;
-    if (track.playbackType === 'unavailable' || (!track.preview && !track.url && track.source !== 'file')) {
+    if (track.playbackType === 'unavailable' || (!track.preview && !track.url && track.source !== 'file' && track.playbackType !== 'full')) {
       return 0;
+    }
+    if (track.playbackType === 'full' || track.playbackProvider === 'spotify' || track.isFullTrack) {
+      const d = Number(track.duration || track.fullDuration);
+      return Number.isFinite(d) && d > 0 ? d : 210;
     }
     if (engine && engine.track && engine.track.id === track.id && engine.el && Number.isFinite(engine.el.duration) && engine.el.duration > 0) {
       return engine.el.duration;
     }
-    if (track.source === 'file') {
+    if (track.source === 'file' || track.playbackType === 'local') {
       const d = Number(track.duration);
       return Number.isFinite(d) && d > 0 ? d : 0;
     }
@@ -1324,6 +1426,8 @@ window.NG = (function () {
     _vPos: 0,
     _vTimer: null,
     _previewDur: 0,
+    _spotifyPlayer: null,
+    _spotifyPos: 0,
 
     init() {
       const el = new Audio();
@@ -1400,25 +1504,35 @@ window.NG = (function () {
       if (!track) return;
       this._reqId++;
       try { this.el.pause(); } catch (e) {}
+      if (this._spotifyPlayer) {
+        try { this._spotifyPlayer.pause(); } catch (e) {}
+      }
 
       this.track = track;
       this.playing = false;
       this.status = 'idle';
+      this._spotifyPos = 0;
 
-      const isLocal = track.source === 'file';
+      const isLocal = track.source === 'file' || track.playbackType === 'local';
       if (isLocal) {
         this.mode = 'file';
         this.url = track.url || '';
         this.el.loop = false;
         this.el.src = this.url;
+        this.el.load();
+      } else if (track.playbackType === 'full' && (track.playbackProvider === 'spotify' || track.spotifyUri)) {
+        this.mode = 'spotify';
+        this.url = '';
+        try { this.el.pause(); this.el.removeAttribute('src'); } catch (e) {}
       } else if (track.preview) {
-        // Direct CDN stream (Apple Music / Deezer CDN) - instant playback, zero 502 errors!
+        // Direct CDN stream (Apple Music CDN) - instant playback, zero 502 errors!
         this.mode = 'stream';
         this.url = track.preview;
         this.el.loop = false;
         if (this.el.src !== this.url) {
           this.el.src = this.url;
         }
+        this.el.load();
       } else if (track.url) {
         this.mode = 'stream';
         this.url = track.url;
@@ -1426,6 +1540,7 @@ window.NG = (function () {
         if (this.el.src !== this.url) {
           this.el.src = this.url;
         }
+        this.el.load();
       } else {
         this.mode = 'unavailable';
         this.url = '';
@@ -1437,7 +1552,6 @@ window.NG = (function () {
         return;
       }
 
-      this.el.load();
       emit('state', { playing: false });
       emit('status', { status: 'idle' });
       const initDur = this.getDuration();
@@ -1450,7 +1564,7 @@ window.NG = (function () {
         return;
       }
 
-      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file')) {
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file' && this.track.playbackType !== 'full')) {
         this.status = 'unavailable';
         this.playing = false;
         emit('state', { playing: false });
@@ -1459,10 +1573,37 @@ window.NG = (function () {
         return;
       }
 
+      // If at end of track or status was ended, restart cleanly from beginning
+      if (this.status === 'ended' || this.getPosition() >= this.getDuration() - 0.05) {
+        this.seek(0);
+      }
+
       const reqId = this._reqId;
       const audioAtStart = this.el;
       this.status = 'loading';
       emit('status', { status: 'loading' });
+
+      if (this.mode === 'spotify') {
+        if (this._spotifyPlayer) {
+          try {
+            await this._spotifyPlayer.resume();
+            if (this._reqId !== reqId) return;
+            this.playing = true;
+            this.status = 'playing';
+            emit('state', { playing: true });
+            emit('status', { status: 'playing' });
+            return;
+          } catch (e) {
+            // fallback to preview if spotify playback fails
+            if (this.track.preview) {
+              this.mode = 'stream';
+              this.url = this.track.preview;
+              this.el.src = this.url;
+              this.el.load();
+            }
+          }
+        }
+      }
 
       this.el.volume = state.muted ? 0 : state.volume / 100;
       try {
@@ -1504,10 +1645,30 @@ window.NG = (function () {
 
     pause() {
       try { this.el.pause(); } catch (e) {}
+      if (this.mode === 'spotify' && this._spotifyPlayer) {
+        try { this._spotifyPlayer.pause(); } catch (e) {}
+      }
       this.playing = false;
       this.status = 'paused';
       emit('state', { playing: false });
       emit('status', { status: 'paused' });
+    },
+
+    pauseAtEnd() {
+      this._reqId++;
+      if (this.mode === 'spotify') {
+        if (this._spotifyPlayer) {
+          try { this._spotifyPlayer.pause(); } catch (e) {}
+        }
+      } else {
+        try { this.el.pause(); } catch (e) {}
+      }
+      this.playing = false;
+      this.status = 'ended';
+      const dur = this.getDuration();
+      emit('state', { playing: false });
+      emit('status', { status: 'ended' });
+      emit('tick', { pos: dur, duration: dur });
     },
 
     toggle() {
@@ -1520,24 +1681,45 @@ window.NG = (function () {
       if (!dur || dur <= 0) return;
       const target = clamp(Number(sec) || 0, 0, Math.max(0, dur - 0.05));
 
-      try { this.el.currentTime = target; } catch (e) {}
+      if (this.status === 'ended') {
+        this.status = 'paused';
+      }
+
+      if (this.mode === 'spotify') {
+        this._spotifyPos = target;
+        if (this._spotifyPlayer && typeof this._spotifyPlayer.seek === 'function') {
+          this._spotifyPlayer.seek(Math.round(target * 1000)).catch(() => {});
+        }
+      } else {
+        try { this.el.currentTime = target; } catch (e) {}
+      }
       emit('tick', { pos: target, duration: dur });
     },
 
     getPosition() {
+      if (this.status === 'ended') {
+        return this.getDuration();
+      }
+      if (this.mode === 'spotify') {
+        return this._spotifyPos || 0;
+      }
       const pos = this.el ? this.el.currentTime : 0;
       return isFinite(pos) ? pos : 0;
     },
 
     getDuration() {
       if (!this.track) return 0;
-      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file')) {
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file' && this.track.playbackType !== 'full')) {
         return 0;
+      }
+      if (this.mode === 'spotify' || this.track.playbackType === 'full') {
+        const d = Number(this.track.duration || this.track.fullDuration);
+        return Number.isFinite(d) && d > 0 ? d : 210;
       }
       if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
         return this.el.duration;
       }
-      if (this.track.source === 'file') {
+      if (this.track.source === 'file' || this.track.playbackType === 'local') {
         const d = Number(this.track.duration);
         return Number.isFinite(d) && d > 0 ? d : 0;
       }
@@ -1559,16 +1741,22 @@ window.NG = (function () {
       return Boolean(this.track && (this.track.source !== 'file' && (this.track.preview || this.track.playbackType === 'preview')));
     },
 
+    isFullTrack() {
+      return Boolean(this.track && (this.track.source === 'file' || this.track.playbackType === 'full' || this.track.isFullTrack));
+    },
+
     stop(silent) {
       this._reqId++;
       this._stopVirtualTimer();
       this._vPos = 0;
       this.pause();
       try { this.el.currentTime = 0; } catch (e) {}
+      this._spotifyPos = 0;
       this.status = 'idle';
       if (!silent) {
         emit('state', { playing: false });
         emit('status', { status: 'idle' });
+        emit('tick', { pos: 0, duration: this.getDuration() });
       }
     },
 
@@ -1607,9 +1795,18 @@ window.NG = (function () {
           id: uid('local'),
           source: 'file',
           playbackType: 'local',
+          playbackProvider: 'local',
+          isFullTrack: true,
+          isPreview: false,
+          requiresAuthentication: false,
+          availability: 'available',
           genre: 'local',
           year: new Date().getFullYear(),
           duration: 0,
+          fullDuration: 0,
+          catalogDuration: 0,
+          previewDuration: null,
+          playableDuration: 0,
           title: { ar: name, en: name },
           artist: { ar: 'ملف من جهازك', en: 'From your device' },
           album: { ar: 'ملفات محلية', en: 'Local files' },
@@ -1701,6 +1898,6 @@ window.NG = (function () {
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
     trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
-    bus, emit, engine, STORAGE_KEY
+    bus, emit, engine, providers, STORAGE_KEY
   };
 })();

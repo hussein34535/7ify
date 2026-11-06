@@ -28,7 +28,10 @@ const unitRes = spawnSync(process.execPath, [
   'test/unit/lyrics-search.test.mjs',
   'test/unit/race.test.mjs',
   'test/unit/timeline.test.mjs',
-  'test/unit/lyrics-persistence.test.mjs'
+  'test/unit/lyrics-persistence.test.mjs',
+  'test/unit/provider-sources.test.mjs',
+  'test/unit/track-matching.test.mjs',
+  'test/unit/end-of-track.test.mjs'
 ], { stdio: 'inherit' });
 if (unitRes.status !== 0) {
   console.error('\n❌ Unit tests failed!');
@@ -41,7 +44,13 @@ if (unitRes.status !== 0) {
 console.log('----------------------------------------------------');
 console.log('Step 3: Running API Security & Contract Tests...');
 console.log('----------------------------------------------------');
-const apiRes = spawnSync(process.execPath, ['--test', 'test/api/search.test.mjs', 'test/api/lyrics.test.mjs', 'test/api/stream.test.mjs'], { stdio: 'inherit' });
+const apiRes = spawnSync(process.execPath, [
+  '--test',
+  'test/api/search.test.mjs',
+  'test/api/lyrics.test.mjs',
+  'test/api/stream.test.mjs',
+  'test/api/provider-match.test.mjs'
+], { stdio: 'inherit' });
 if (apiRes.status !== 0) {
   console.error('\n❌ API tests failed!');
   failed++;

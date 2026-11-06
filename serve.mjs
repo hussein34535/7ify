@@ -95,6 +95,13 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // API endpoint: /api/provider-match
+    if (url.pathname === '/api/provider-match') {
+      const { default: matchHandler } = await import('./api/provider-match.js');
+      await matchHandler(apiReq, createApiRes(res));
+      return;
+    }
+
     // Static file serving with strict path traversal prevention
     let pathname = decodeURIComponent(url.pathname);
     if (pathname === '/') pathname = '/nagham-studio.html';
