@@ -26,7 +26,9 @@ const unitRes = spawnSync(process.execPath, [
   'test/unit/metadata.test.mjs',
   'test/unit/state.test.mjs',
   'test/unit/lyrics-search.test.mjs',
-  'test/unit/race.test.mjs'
+  'test/unit/race.test.mjs',
+  'test/unit/timeline.test.mjs',
+  'test/unit/lyrics-persistence.test.mjs'
 ], { stdio: 'inherit' });
 if (unitRes.status !== 0) {
   console.error('\n❌ Unit tests failed!');

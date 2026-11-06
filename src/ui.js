@@ -6,7 +6,7 @@
 
   const NG = window.NG;
   const {
-    $, $$, esc, fmt, norm, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
+    $, $$, esc, fmt, norm, t, state, getTrack, getPlayableDuration, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks
   } = NG;
   const TRACKS = NG.TRACKS;
@@ -627,7 +627,9 @@
     } else {
       mark.hidden = true;
     }
-    $('#pDur').textContent = fmt(tr.duration);
+    const playableDur = engine.getDuration();
+    $('#pDur').textContent = fmt(playableDur);
+    $('#shDur').textContent = fmt(playableDur);
     $('#pLike').setAttribute('aria-pressed', String(fav));
     $('#pLikeIcon').querySelector('use').setAttribute('href', fav ? '#i-heart-fill' : '#i-heart');
     $('#pLike').classList.toggle('is-liked', fav);
@@ -683,11 +685,13 @@
     const tr = getTrack(state.trackId);
     if (!tr) return;
     const pos = engine.getPosition();
-    paintProgress(pos, tr.duration);
+    const dur = engine.getDuration();
+    paintProgress(pos, dur);
   }
 
   function paintProgress(pos, duration) {
-    const pct = duration > 0 ? clamp((pos / duration) * 100, 0, 100) : 0;
+    const safeDur = (Number.isFinite(duration) && duration > 0) ? duration : engine.getDuration();
+    const pct = safeDur > 0 ? clamp((pos / safeDur) * 100, 0, 100) : 0;
     const pSeek = $('#pSeek');
     const shSeek = $('#shSeek');
     if (pSeek) pSeek.style.setProperty('--pct', pct + '%');
@@ -696,8 +700,8 @@
     if (mini && mini.firstElementChild) mini.firstElementChild.style.width = pct + '%';
     $('#pCur').textContent = fmt(pos);
     $('#shCur').textContent = fmt(pos);
-    $('#pDur').textContent = fmt(duration);
-    $('#shDur').textContent = fmt(duration);
+    $('#pDur').textContent = fmt(safeDur);
+    $('#shDur').textContent = fmt(safeDur);
     if (pSeek) {
       pSeek.setAttribute('aria-valuenow', String(Math.round(pct)));
       pSeek.setAttribute('aria-valuetext', fmt(pos));
@@ -1282,11 +1286,12 @@
     if ((!tr.lyrics || !tr.lyrics.length) && !tr._lyricsRequested && NG.fetchLyricsOnline) {
       tr._lyricsRequested = true;
       NG.fetchLyricsOnline(tr, tr.artist, (data) => {
-        if (data && data.lines && data.lines.length) {
-          tr.lyrics = data.lines;
-          tr._lyricsSynced = data.synced;
+        if (data && ((data.lines && data.lines.length) || data.plain)) {
           if (ui.view === 'track' && (ui.viewTrackId === tr.id || state.trackId === tr.id)) {
             renderTrackPage();
+          }
+          if (state.trackId === tr.id) {
+            renderPlayer();
           }
         }
       });
@@ -1326,7 +1331,13 @@
             '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
             (tr.year ? ('<span class="sp-sep">•</span><span class="sp-year-text">' + tr.year + '</span>') : '') +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>' +
+            (tr.source === 'file'
+              ? ('<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>')
+              : (tr.duration && tr.duration > 30
+                 ? ('<span class="sp-dur-text num" title="' + esc(t('track.fullCatalogDuration') || 'المدة الكاملة في الكتالوج') + '">' + fmt(tr.duration) + ' (' + (state.lang === 'ar' ? 'المدة الكاملة' : 'full') + ') · 0:30 (' + (state.lang === 'ar' ? 'معاينة' : 'preview') + ')</span>')
+                 : ('<span class="sp-dur-text num">' + fmt(tr.previewDuration || 30) + '</span>')
+                )
+            ) +
             '<span class="sp-sep">•</span>' +
             '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || 'معاينة رسمية · Apple Music')) + '</span>' +
           '</div>' +
@@ -1461,6 +1472,14 @@
             '<div class="sp-credit-row"><span>' + esc(t('track.mainArtist') || 'الفنان الرئيسي') + '</span><b>' + esc(artistName) + '</b></div>' +
             '<div class="sp-credit-row"><span>' + esc(t('hero.album') || 'الألبوم / الإصدار') + '</span><b>' + L(tr.album) + '</b></div>' +
             (tr.year ? ('<div class="sp-credit-row"><span>' + esc(t('track.releaseYear') || 'سنة النشر') + '</span><b>' + tr.year + '</b></div>') : '') +
+            (tr.source === 'file'
+              ? ('<div class="sp-credit-row"><span>' + esc(t('track.playDuration') || 'المدة الزمنية') + '</span><b>' + fmt(tr.duration) + '</b></div>')
+              : ((tr.fullDuration || tr.duration) > 30
+                 ? ('<div class="sp-credit-row"><span>' + esc(t('track.catalogDuration') || 'مدة الأغنية في الكتالوج') + '</span><b>' + fmt(tr.fullDuration || tr.duration) + '</b></div>' +
+                    '<div class="sp-credit-row"><span>' + esc(t('track.playableDuration') || 'مدة المعاينة المتاحة') + '</span><b class="badge-accent">' + (state.lang === 'ar' ? '٣٠ ثانية (معاينة رسمية)' : '30 seconds (official preview)') + '</b></div>')
+                 : ('<div class="sp-credit-row"><span>' + esc(t('track.playableDuration') || 'مدة المعاينة المتاحة') + '</span><b>' + fmt(tr.previewDuration || 30) + '</b></div>')
+                )
+            ) +
             '<div class="sp-credit-row"><span>' + esc(t('track.contentType') || 'نوع المحتوى') + '</span><b class="badge-accent">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف محلي من جهازك') : esc(t('track.previewNoteShort') || 'معاينة صوتية رسمية ٣٠ ثانية')) + '</b></div>' +
             '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Apple Music CDN') + '</b></div>' +
           '</div>' +
@@ -1698,8 +1717,7 @@
       return clamp((clientX - rect.left) / rect.width, 0, 1);
     };
     const preview = (ratio) => {
-      const tr = getTrack(state.trackId);
-      const dur = tr ? tr.duration : 0;
+      const dur = engine.getDuration();
       node.style.setProperty('--pct', (ratio * 100) + '%');
       const pos = ratio * dur;
       $('#pCur').textContent = fmt(pos);
@@ -1731,7 +1749,7 @@
     node.addEventListener('pointerup', finish);
     node.addEventListener('pointercancel', finish);
     node.addEventListener('keydown', (e) => {
-      const dur = (getTrack(state.trackId) || {}).duration || 0;
+      const dur = engine.getDuration();
       const cur = engine.getPosition();
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -2202,8 +2220,8 @@
     NG.applyTheme();
     NG.applyI18n();
     bind();
-    bindSeek($('#pSeek'), (ratio) => { engine.seek(ratio * (getTrack(state.trackId) || {}).duration); syncProgress(); });
-    bindSeek($('#shSeek'), (ratio) => { engine.seek(ratio * (getTrack(state.trackId) || {}).duration); syncProgress(); });
+    bindSeek($('#pSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
+    bindSeek($('#shSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     engine.load(getTrack(state.trackId));
     renderShortcuts();
     renderAll();

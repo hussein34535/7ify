@@ -7,7 +7,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const appPath = resolve(here, '..', '..', 'src', 'app.js');
 const appCode = readFileSync(appPath, 'utf8');
 
-export function loadAppInstance(initialStorage = {}) {
+export function loadAppInstance(initialStorage = {}, options = {}) {
   const store = new Map(Object.entries(initialStorage));
   const localStorage = {
     getItem: (k) => (store.has(k) ? store.get(k) : null),
@@ -20,7 +20,7 @@ export function loadAppInstance(initialStorage = {}) {
     constructor() {
       this.src = '';
       this.currentTime = 0;
-      this.duration = 30;
+      this.duration = NaN;
       this.paused = true;
       this._handlers = new Map();
     }
@@ -40,10 +40,12 @@ export function loadAppInstance(initialStorage = {}) {
     }
     play() {
       this.paused = false;
+      this.trigger('play');
       return Promise.resolve();
     }
     pause() {
       this.paused = true;
+      this.trigger('pause');
     }
     load() {}
   }
@@ -86,11 +88,11 @@ export function loadAppInstance(initialStorage = {}) {
     Array: globalThis.Array,
     Object: globalThis.Object,
     JSON: globalThis.JSON,
-    fetch: globalThis.fetch
+    fetch: options.fetch || globalThis.fetch
   };
 
   vm.createContext(context);
   vm.runInContext(appCode, context);
   const NG = context.window.NG;
-  return { NG, state: NG.state, TRACKS: NG.TRACKS, localStorage };
+  return { NG, state: NG.state, TRACKS: NG.TRACKS, localStorage, context };
 }

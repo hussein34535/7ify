@@ -161,6 +161,9 @@ window.NG = (function () {
       'track.techSource': 'المصدر التقني',
       'track.localNotice': 'ملف صوتي مخزن محليًا على هذا الجهاز.',
       'track.appleNotice': 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.',
+      'track.catalogDuration': 'مدة الأغنية في الكتالوج',
+      'track.playableDuration': 'مدة المعاينة المتاحة',
+      'track.fullCatalogDuration': 'المدة الكاملة في الكتالوج',
       'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
       'sec.popular': 'أشهر الأغاني', 'sec.albums': 'الألبومات والإصدارات',
       'sec.arabicMusic': 'الموسيقى العربية', 'sec.intlMusic': 'الموسيقى العالمية',
@@ -275,6 +278,9 @@ window.NG = (function () {
       'track.techSource': 'Technical Source',
       'track.localNotice': 'Local audio file stored on this device.',
       'track.appleNotice': 'Audio previews and artwork provided via Apple Music API for discovery.',
+      'track.catalogDuration': 'Full Catalog Duration',
+      'track.playableDuration': 'Playable Preview Duration',
+      'track.fullCatalogDuration': 'Full Catalog Duration',
       'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
       'sec.popular': 'Popular Tracks', 'sec.albums': 'Albums & Releases',
       'sec.arabicMusic': 'Arabic Music', 'sec.intlMusic': 'International Music',
@@ -641,7 +647,7 @@ window.NG = (function () {
       ]);
       const savedTracks = TRACKS.filter((tr) =>
         tr &&
-        referencedIds.has(tr.id) &&
+        (referencedIds.has(tr.id) || (Array.isArray(tr.lyrics) && tr.lyrics.length > 0) || (typeof tr.plainLyrics === 'string' && tr.plainLyrics.trim().length > 0)) &&
         !tr.id.startsWith('local-') &&
         !tr.id.startsWith('file-') &&
         tr.source !== 'file' &&
@@ -1179,28 +1185,69 @@ window.NG = (function () {
   }
 
   function fetchLyricsOnline(track, artist, onDone) {
-    const tit = typeof track === 'object' ? (track.title?.ar || track.title?.en || '') : String(track || '');
-    const art = typeof artist === 'object' ? (artist.name?.ar || artist.name?.en || '') : String(artist || '');
+    if (!track || typeof track !== 'object') {
+      if (typeof onDone === 'function') onDone(null);
+      return;
+    }
+    // Safety check: local files must never fetch or persist online lyrics
+    if (track.source === 'file' || (track.id && (track.id.startsWith('local-') || track.id.startsWith('file-')))) {
+      if (typeof onDone === 'function') onDone(null);
+      return;
+    }
+
+    const tit = (track.title?.ar || track.title?.en || (typeof track.title === 'string' ? track.title : ''));
+    const art = typeof artist === 'object' ? (artist.name?.ar || artist.name?.en || '') : String(artist || (track.artist?.ar || track.artist?.en || ''));
     if (!tit) {
       if (typeof onDone === 'function') onDone(null);
       return;
     }
+
+    const trackId = track.id;
+    track._lyricsReqSeq = (track._lyricsReqSeq || 0) + 1;
+    const currentSeq = track._lyricsReqSeq;
+
     const url = '/api/lyrics?track=' + encodeURIComponent(tit) + (art ? ('&artist=' + encodeURIComponent(art)) : '');
     fetch(url)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('lyrics_network_error');
+        return r.json();
+      })
       .then((d) => {
-        if (d && ((Array.isArray(d.lines) && d.lines.length) || d.plain)) {
-          if (typeof track === 'object') {
-            track.lyrics = d.lines || [];
-            track.plainLyrics = d.plain || null;
-            track._lyricsSynced = Boolean(d.synced);
+        // Prevent stale async response from overwriting newer track state
+        if (track.id !== trackId || track._lyricsReqSeq !== currentSeq) {
+          return;
+        }
+
+        const validLines = Array.isArray(d && d.lines) && d.lines.length > 0;
+        const validPlain = typeof (d && d.plain) === 'string' && d.plain.trim().length > 0;
+
+        if (validLines || validPlain) {
+          const newLines = validLines ? d.lines : [];
+          const newPlain = validPlain ? d.plain.trim() : null;
+          const newSynced = Boolean(d.synced && validLines);
+
+          // Change-detection guard: avoid unnecessary writes to localStorage if identical
+          const oldLinesStr = JSON.stringify(track.lyrics || []);
+          const newLinesStr = JSON.stringify(newLines);
+          const changed = (oldLinesStr !== newLinesStr) || (track.plainLyrics !== newPlain) || (track._lyricsSynced !== newSynced);
+
+          track.lyrics = newLines;
+          track.plainLyrics = newPlain;
+          track._lyricsSynced = newSynced;
+
+          if (changed) {
+            save();
+            emit('meta', { id: track.id, lyrics: track.lyrics, plainLyrics: track.plainLyrics, synced: track._lyricsSynced });
           }
+
           if (typeof onDone === 'function') onDone(d);
         } else {
+          // Do NOT corrupt or overwrite existing lyrics on empty/falsy responses
           if (typeof onDone === 'function') onDone(null);
         }
       })
       .catch(() => {
+        // Network/API error: do NOT corrupt existing lyrics, do NOT call save
         if (typeof onDone === 'function') onDone(null);
       });
   }
@@ -1240,6 +1287,28 @@ window.NG = (function () {
 
   /* ---------- audio engine (real audio + YouTube stream support) ------------ */
 
+  function getPlayableDuration(track) {
+    if (!track) return 0;
+    if (track.playbackType === 'unavailable' || (!track.preview && !track.url && track.source !== 'file')) {
+      return 0;
+    }
+    if (engine && engine.track && engine.track.id === track.id && engine.el && Number.isFinite(engine.el.duration) && engine.el.duration > 0) {
+      return engine.el.duration;
+    }
+    if (track.source === 'file') {
+      const d = Number(track.duration);
+      return Number.isFinite(d) && d > 0 ? d : 0;
+    }
+    if (track.previewDuration && Number.isFinite(Number(track.previewDuration)) && Number(track.previewDuration) > 0) {
+      return Number(track.previewDuration);
+    }
+    if (track.isAudioPreview || track.preview || track.playbackType === 'preview') {
+      return 30;
+    }
+    const d = Number(track.duration);
+    return Number.isFinite(d) && d > 0 ? d : 0;
+  }
+
   const bus = new EventTarget();
   const emit = (name, detail) => bus.dispatchEvent(new CustomEvent(name, { detail: detail }));
 
@@ -1263,15 +1332,18 @@ window.NG = (function () {
 
       el.addEventListener('timeupdate', () => {
         if (!this.track) return;
-        const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.previewDuration || this.track.duration || 30);
+        const dur = this.getDuration();
         emit('tick', { pos: el.currentTime, duration: dur });
       });
 
       el.addEventListener('loadedmetadata', () => {
         if (!this.track) return;
-        const realDur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.previewDuration || this.track.duration || 30);
-        emit('meta', { id: this.track.id, duration: realDur });
-        emit('tick', { pos: el.currentTime, duration: realDur });
+        const dur = this.getDuration();
+        if (this.track.source === 'file' && Number.isFinite(dur) && dur > 0 && (!this.track.duration || this.track.duration === 0)) {
+          this.track.duration = Math.round(dur);
+        }
+        emit('meta', { id: this.track.id, duration: dur });
+        emit('tick', { pos: el.currentTime, duration: dur });
       });
 
       el.addEventListener('play', () => {
@@ -1368,9 +1440,7 @@ window.NG = (function () {
       this.el.load();
       emit('state', { playing: false });
       emit('status', { status: 'idle' });
-      const initDur = isFinite(this.el.duration) && this.el.duration > 0
-        ? this.el.duration
-        : (track.previewDuration || track.duration || 30);
+      const initDur = this.getDuration();
       emit('tick', { pos: 0, duration: initDur });
     },
 
@@ -1446,7 +1516,8 @@ window.NG = (function () {
     },
 
     seek(sec) {
-      const dur = (this.track && (this.track.previewDuration || this.track.duration)) || 30;
+      const dur = this.getDuration();
+      if (!dur || dur <= 0) return;
       const target = clamp(Number(sec) || 0, 0, Math.max(0, dur - 0.05));
 
       try { this.el.currentTime = target; } catch (e) {}
@@ -1459,8 +1530,25 @@ window.NG = (function () {
     },
 
     getDuration() {
-      if (this.el && isFinite(this.el.duration) && this.el.duration > 0) return this.el.duration;
-      return (this.track && (this.track.previewDuration || this.track.duration)) || 30;
+      if (!this.track) return 0;
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file')) {
+        return 0;
+      }
+      if (this.el && Number.isFinite(this.el.duration) && this.el.duration > 0) {
+        return this.el.duration;
+      }
+      if (this.track.source === 'file') {
+        const d = Number(this.track.duration);
+        return Number.isFinite(d) && d > 0 ? d : 0;
+      }
+      if (this.track.previewDuration && Number.isFinite(Number(this.track.previewDuration)) && Number(this.track.previewDuration) > 0) {
+        return Number(this.track.previewDuration);
+      }
+      if (this.track.isAudioPreview || this.track.preview || this.track.playbackType === 'preview') {
+        return 30;
+      }
+      const d = Number(this.track.duration);
+      return Number.isFinite(d) && d > 0 ? d : 0;
     },
 
     getFullDuration() {
@@ -1609,7 +1697,7 @@ window.NG = (function () {
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
-    state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
+    state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack, getPlayableDuration,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
     trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
