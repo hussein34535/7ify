@@ -7,6 +7,8 @@
   "scripts": {
     "build": "node build.mjs",
     "start": "node serve.mjs",
+    "test:unit": "node --test test/unit/*.test.mjs",
+    "test:api": "node --test test/api/*.test.mjs",
     "test": "node test/runner.mjs"
   }
 }

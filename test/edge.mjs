@@ -2,12 +2,17 @@
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
-const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const here = dirname(fileURLToPath(import.meta.url));
+const projectRoot = resolve(here, '..');
+const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PORT = 9334;
-const FILE = 'file:///C:/Users/husso/Desktop/7ify/nagham-studio.html';
-const PROFILE = 'C:\\Users\\husso\\AppData\\Local\\Temp\\nagham-chrome-edge';
-const OUT = 'C:\\Users\\husso\\Desktop\\7ify\\shots';
+const FILE = pathToFileURL(join(projectRoot, 'nagham-studio.html')).href;
+const PROFILE = join(tmpdir(), 'nagham-chrome-edge-' + Date.now());
+const OUT = join(projectRoot, 'shots');
 
 try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* ignore */ }
 mkdirSync(OUT, { recursive: true });
@@ -155,7 +160,7 @@ try {
   await send('DOM.enable');
   const doc = await send('DOM.getDocument', { depth: -1, pierce: true });
   const inputNode = await send('DOM.querySelector', { nodeId: doc.root.nodeId, selector: '#fileInput' });
-  await send('DOM.setFileInputFiles', { nodeId: inputNode.nodeId, files: ['C:\\Users\\husso\\Desktop\\7ify\\test\\tone.wav'] });
+  await send('DOM.setFileInputFiles', { nodeId: inputNode.nodeId, files: [join(projectRoot, 'test', 'tone.wav')] });
   await sleep(1400);
   check('local file plays', (await ev('window.__nagham.state.trackId')).startsWith('local'));
   check('local duration read', (await ev('document.getElementById("pDur").textContent')) !== '0:00');
@@ -216,15 +221,21 @@ try {
   console.log('\nCHECKS');
   let failed = 0;
   for (const c of checks) { if (!c.ok) failed++; console.log((c.ok ? 'PASS ' : 'FAIL ') + c.name + (c.ok ? '' : '  << ' + c.info)); }
+  const hasRuntimeErrors = errors.length > 0;
   console.log(`\n${checks.length - failed}/${checks.length} passed; runtime errors: ${errors.length}`);
   if (errors.length) console.log(errors.join('\n'));
+
+  if (failed > 0 || hasRuntimeErrors) {
+    process.exitCode = 1;
+  }
 } catch (err) {
+  process.exitCode = 1;
   console.error('HARNESS ERROR', err.message);
   console.log('PAGE ERRORS:\n' + errors.join('\n'));
   console.log(checks.map((c) => (c.ok ? 'PASS ' : 'FAIL ') + c.name).join('\n'));
 } finally {
   try { if (ws) ws.close(); } catch { /* ignore */ }
-  chrome.kill();
+  try { chrome.kill(); } catch { /* ignore */ }
   await sleep(500);
   try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* ignore */ }
 }

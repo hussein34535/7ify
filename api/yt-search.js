@@ -7,10 +7,16 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
   const { q } = req.query || {};
-  const query = String(q || '').trim();
-  if (!query) {
-    return res.status(400).json({ error: 'missing_query' });
+  const query = String(Array.isArray(q) ? q[0] : (q || '')).trim();
+
+  if (!query || query.length > 120) {
+    return res.status(400).json({ error: 'invalid_query' });
   }
 
   try {
@@ -22,6 +28,11 @@ export default async function handler(req, res) {
       },
       signal: AbortSignal.timeout(4500)
     });
+
+    if (!r.ok) {
+      return res.status(502).json({ error: 'upstream_unavailable' });
+    }
+
     const html = await r.text();
     const m = html.match(/var ytInitialData = ({.*?});<\/script>/s) || html.match(/>var ytInitialData = ({.*?});</s);
     if (!m) return res.status(404).json({ error: 'not_found' });
@@ -43,6 +54,7 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('YouTube search error:', err.message);
+    return res.status(502).json({ error: 'upstream_unavailable' });
   }
 
   return res.status(404).json({ error: 'not_found' });

@@ -1,9 +1,11 @@
-import { spawnSync, fork } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 console.log('====================================================');
 console.log('       7ify NAGHAM STUDIO — TEST RUNNER             ');
 console.log('====================================================\n');
+
+let failed = 0;
 
 // 1. Build Verification
 console.log('Step 1: Building project bundle via build.mjs...');
@@ -14,49 +16,39 @@ if (buildRes.status !== 0) {
 }
 console.log('✅ Build successful.\n');
 
-// 2. Unit & Logic Verification
-console.log('Step 2: Testing Serverless & Core APIs logic...');
-
-// Test 2.1: api/search.js validation
-import searchHandler from '../api/search.js';
-
-let resData = null;
-let resStatus = 200;
-const mockRes = {
-  setHeader: () => mockRes,
-  status: (code) => { resStatus = code; return mockRes; },
-  json: (data) => { resData = data; return mockRes; },
-  end: () => mockRes
-};
-
-// Short query should return empty without hitting upstream
-await searchHandler({ method: 'GET', query: { q: 'a' } }, mockRes);
-if (!resData || resData.results.length !== 0) {
-  console.error('❌ Expected empty results for short query < 2 chars');
-  process.exit(1);
+// 2. Unit Tests
+console.log('----------------------------------------------------');
+console.log('Step 2: Running Unit Tests (node --test test/unit/*.test.mjs)...');
+console.log('----------------------------------------------------');
+const unitRes = spawnSync(process.execPath, ['--test', 'test/unit/lrc.test.mjs', 'test/unit/metadata.test.mjs', 'test/unit/state.test.mjs'], { stdio: 'inherit' });
+if (unitRes.status !== 0) {
+  console.error('\n❌ Unit tests failed!');
+  failed++;
+} else {
+  console.log('✅ All Unit Tests passed.\n');
 }
-console.log('✅ Search short query check passed.');
 
-// Test 2.2: api/lyrics.js plain vs synced distinction
-import lyricsHandler from '../api/lyrics.js';
-resData = null;
-await lyricsHandler({ method: 'GET', query: {} }, mockRes);
-if (resStatus !== 400 || resData.synced !== false) {
-  console.error('❌ Expected 400 for empty track name');
-  process.exit(1);
+// 3. API Contract & Security Tests
+console.log('----------------------------------------------------');
+console.log('Step 3: Running API Security & Contract Tests...');
+console.log('----------------------------------------------------');
+const apiRes = spawnSync(process.execPath, ['--test', 'test/api/search.test.mjs', 'test/api/lyrics.test.mjs', 'test/api/stream.test.mjs'], { stdio: 'inherit' });
+if (apiRes.status !== 0) {
+  console.error('\n❌ API tests failed!');
+  failed++;
+} else {
+  console.log('✅ All API tests passed.\n');
 }
-console.log('✅ Lyrics parameter check passed.');
 
-// 3. Automated Browser UI & Page Tests
-const tests = [
+// 4. Automated Browser UI & Page Tests
+const browserTests = [
   { name: 'Spotify Track Page Verification', file: 'test/verify-song-page.mjs' },
   { name: 'Dedicated Pages (Playlist/Artist/Album/Library) Verification', file: 'test/verify-pages.mjs' },
   { name: 'Edge Cases & Breakpoints Verification', file: 'test/edge.mjs' }
 ];
 
-let failed = 0;
-for (const t of tests) {
-  console.log(`\n----------------------------------------------------`);
+for (const t of browserTests) {
+  console.log(`----------------------------------------------------`);
   console.log(`Running: ${t.name} (${t.file})...`);
   console.log(`----------------------------------------------------`);
   const r = spawnSync(process.execPath, [t.file], { stdio: 'inherit' });
@@ -64,11 +56,11 @@ for (const t of tests) {
     console.error(`\n❌ Test failed: ${t.name}`);
     failed++;
   } else {
-    console.log(`\n✅ Passed: ${t.name}`);
+    console.log(`\n✅ Passed: ${t.name}\n`);
   }
 }
 
-console.log('\n====================================================');
+console.log('====================================================');
 if (failed === 0) {
   console.log('🎉 ALL TESTS PASSED SUCCESSFULLY! (100% PASS RATE)');
   console.log('====================================================');

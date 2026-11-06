@@ -1,42 +1,53 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  const { id, q, preview } = req.query || {};
-
-  // 1. Direct preview URL parameter: redirect 302 to the high-speed Apple Music CDN
-  if (preview && typeof preview === 'string' && preview.startsWith('http')) {
-    res.setHeader('Cache-Control', 'public, s-maxage=86400, max-age=86400');
-    return res.redirect(302, preview);
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  // 2. Query or track ID: dynamically resolve stream from iTunes Search API
-  const query = String(q || id || '').trim();
-  if (query) {
+  const { id, appleId } = req.query || {};
+  const rawId = String(appleId || id || '').trim();
+
+  // Only permit strict numeric Apple Track IDs (e.g. 1440857781)
+  if (rawId && /^\d{1,18}$/.test(rawId)) {
     try {
-      const itunesUrl = 'https://itunes.apple.com/search?term=' + encodeURIComponent(query) + '&media=music&entity=song&limit=1';
+      const itunesUrl = 'https://itunes.apple.com/lookup?id=' + encodeURIComponent(rawId);
       const r = await fetch(itunesUrl, {
         headers: { 'User-Agent': '7ify (https://7ify.vercel.app)' },
         signal: AbortSignal.timeout(4500)
       });
       if (r.ok) {
         const data = await r.json();
-        const found = data.results?.[0]?.previewUrl;
-        if (found) {
-          res.setHeader('Cache-Control', 'public, s-maxage=86400, max-age=86400');
-          return res.redirect(302, found);
+        const item = data.results && data.results[0];
+        if (item && item.trackId === Number(rawId) && typeof item.previewUrl === 'string') {
+          const parsed = new URL(item.previewUrl);
+          // Strict allowlist for verified Apple Music audio CDN hostnames
+          const isAppleHost = parsed.protocol === 'https:' && (
+            parsed.hostname === 'audio-ssl.itunes.apple.com' ||
+            parsed.hostname.endsWith('.mzstatic.com') ||
+            parsed.hostname.endsWith('.apple.com')
+          );
+          if (isAppleHost) {
+            res.setHeader('Cache-Control', 'public, s-maxage=86400, max-age=86400');
+            return res.redirect(302, item.previewUrl);
+          }
         }
       }
     } catch (err) {
-      console.error('Stream lookup error:', err.message);
+      console.error('Apple stream lookup error:', err.message);
     }
   }
 
-  // 3. Fallback: return 204 No Content with proper CORS (never 502 Bad Gateway)
-  return res.status(204).end();
+  // No arbitrary redirects. Return honest 404 when no authorized stream is configured.
+  return res.status(404).json({
+    error: 'authorized_stream_unavailable',
+    message: 'No authorized full-track source is configured.'
+  });
 }

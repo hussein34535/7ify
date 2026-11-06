@@ -7,9 +7,19 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
   const { q } = req.query || {};
-  const query = String(q || '').trim();
-  if (!query || query.length < 2) {
+  const query = String(Array.isArray(q) ? q[0] : (q || '')).trim();
+
+  if (query.length > 120) {
+    return res.status(400).json({ error: 'query_too_long', results: [], artists: [] });
+  }
+
+  if (query.length < 2) {
     return res.status(200).json({ results: [], artists: [] });
   }
 
@@ -48,7 +58,15 @@ export default async function handler(req, res) {
       const artHiRes = item.artworkUrl100
         ? item.artworkUrl100.replace(/100x100bb\.(jpg|png|webp)/, '600x600bb.$1')
         : '';
-      const durSec = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 180;
+
+      const durationMs = Number(item.trackTimeMillis);
+      const fullDuration = Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs / 1000) : null;
+
+      const releaseYear = item.releaseDate ? Number.parseInt(String(item.releaseDate).slice(0, 4), 10) : null;
+      const year = Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
+        ? releaseYear
+        : null;
+
       const palette = palettes[idx % palettes.length];
       const motif = motifs[idx % motifs.length];
 
@@ -71,12 +89,12 @@ export default async function handler(req, res) {
         album: { ar: item.collectionName || item.trackName || 'ألبوم', en: item.collectionName || item.trackName || 'Single' },
         art: artHiRes,
         preview: item.previewUrl || '',
-        duration: durSec,
-        fullDuration: durSec,
-        previewDuration: item.previewUrl ? 30 : 0,
+        duration: fullDuration,
+        fullDuration,
+        previewDuration: item.previewUrl ? 30 : null,
         playbackType: item.previewUrl ? 'preview' : 'unavailable',
         isAudioPreview: Boolean(item.previewUrl),
-        year: item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) || 2024 : 2024,
+        year,
         genre: (item.primaryGenreName || 'arabic').toLowerCase(),
         colors: palette,
         motif,
@@ -87,9 +105,9 @@ export default async function handler(req, res) {
     const artists = Array.from(artistMap.values()).slice(0, 8);
 
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-    return res.status(200).json({ results, artists });
+    return res.status(200).json({ ok: true, results, artists });
   } catch (err) {
     console.error('Online search API error:', err.message);
-    return res.status(200).json({ results: [], artists: [], error: err.message });
+    return res.status(502).json({ ok: false, error: 'upstream_unavailable', results: [], artists: [] });
   }
 }

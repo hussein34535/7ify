@@ -3122,8 +3122,23 @@ window.NG = (function () {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
   const pad2 = (n) => String(n).padStart(2, '0');
+  const formatDuration = (val) => {
+    const n = Number(val);
+    if (!Number.isFinite(n) || n <= 0) return '--:--';
+    const total = Math.floor(n);
+    return Math.floor(total / 60) + ':' + pad2(total % 60);
+  };
+  const formatPosition = (val) => {
+    const n = Number(val);
+    const safe = Number.isFinite(n) ? Math.max(0, n) : 0;
+    const total = Math.floor(safe);
+    return Math.floor(total / 60) + ':' + pad2(total % 60);
+  };
   const fmt = (sec) => {
-    const s = Math.max(0, Math.floor(Number(sec) || 0));
+    if (sec == null) return '--:--';
+    const n = Number(sec);
+    if (!Number.isFinite(n) || n < 0) return '--:--';
+    const s = Math.floor(n);
     return Math.floor(s / 60) + ':' + pad2(s % 60);
   };
   const uid = (p) => p + '-' + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 6);
@@ -3246,6 +3261,15 @@ window.NG = (function () {
       'track.quality': 'معاينة صوتية رسمية · Apple Music CDN',
       'track.copyLink': 'نسخ الرابط',
       'track.copied': 'تم نسخ رابط الأغنية إلى الحافظة',
+      'track.previewTag': 'معاينة رسمية · Apple Music',
+      'track.previewNoteShort': 'معاينة صوتية ٣٠ ثانية · Apple Music',
+      'track.localFile': 'ملف صوتي محلي',
+      'track.mainArtist': 'الفنان الرئيسي',
+      'track.releaseYear': 'سنة النشر',
+      'track.contentType': 'نوع المحتوى',
+      'track.techSource': 'المصدر التقني',
+      'track.localNotice': 'ملف صوتي مخزن محليًا على هذا الجهاز.',
+      'track.appleNotice': 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.',
       'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
       'sec.popular': 'أشهر الأغاني', 'sec.albums': 'الألبومات والإصدارات',
       'sec.arabicMusic': 'الموسيقى العربية', 'sec.intlMusic': 'الموسيقى العالمية',
@@ -3351,6 +3375,15 @@ window.NG = (function () {
       'track.quality': 'Official Audio Preview · Apple Music CDN',
       'track.copyLink': 'Copy Link',
       'track.copied': 'Track link copied to clipboard',
+      'track.previewTag': 'Official Preview · Apple Music',
+      'track.previewNoteShort': '30s Audio Preview · Apple Music',
+      'track.localFile': 'Local Audio File',
+      'track.mainArtist': 'Main Artist',
+      'track.releaseYear': 'Release Year',
+      'track.contentType': 'Content Type',
+      'track.techSource': 'Technical Source',
+      'track.localNotice': 'Local audio file stored on this device.',
+      'track.appleNotice': 'Audio previews and artwork provided via Apple Music API for discovery.',
       'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
       'sec.popular': 'Popular Tracks', 'sec.albums': 'Albums & Releases',
       'sec.arabicMusic': 'Arabic Music', 'sec.intlMusic': 'International Music',
@@ -3632,17 +3665,21 @@ window.NG = (function () {
     muted: false,
     repeat: 'off',
     shuffle: false,
-    favorites: ['t1', 't4', 't7', 't2'],
+    favorites: [],
     playlists: [],
     trackId: 't1',
     queue: ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'],
-    recent: ['t9', 't3', 't7', 't10']
+    recent: []
   };
 
   const clone = (v) => JSON.parse(JSON.stringify(v));
 
   function safeList(list, fallback) {
     return Array.isArray(list) ? list.filter((x) => typeof x === 'string') : fallback.slice();
+  }
+
+  function cleanSavedIds(list) {
+    return (list || []).filter((id) => typeof id === 'string' && !id.startsWith('local-') && !id.startsWith('file-'));
   }
 
   function loadState() {
@@ -3669,12 +3706,12 @@ window.NG = (function () {
       muted: typeof saved.muted === 'boolean' ? saved.muted : base.muted,
       repeat: okRepeat ? saved.repeat : base.repeat,
       shuffle: typeof saved.shuffle === 'boolean' ? saved.shuffle : base.shuffle,
-      favorites: safeList(saved.favorites, base.favorites),
-      trackId: typeof saved.trackId === 'string' ? saved.trackId : base.trackId,
-      queue: safeList(saved.queue, base.queue),
-      recent: safeList(saved.recent, base.recent)
+      favorites: cleanSavedIds(safeList(saved.favorites, base.favorites)),
+      trackId: typeof saved.trackId === 'string' && !saved.trackId.startsWith('local-') ? saved.trackId : base.trackId,
+      queue: cleanSavedIds(safeList(saved.queue, base.queue)),
+      recent: cleanSavedIds(safeList(saved.recent, base.recent))
     });
-    if (Array.isArray(saved.playlists) && saved.playlists.length) {
+    if (Array.isArray(saved.playlists)) {
       merged.playlists = saved.playlists.filter((p) => p && typeof p.id === 'string' && p.name && Array.isArray(p.trackIds))
         .map((p) => ({
           id: p.id,
@@ -3682,7 +3719,7 @@ window.NG = (function () {
           sub: { ar: String((p.sub && p.sub.ar) || ''), en: String((p.sub && p.sub.en) || '') },
           colors: Array.isArray(p.colors) && p.colors.length === 3 ? p.colors : ['#1B0B10', '#6B2430', '#E8A0A8'],
           motif: ['rings', 'orb', 'dots', 'arcs'].includes(p.motif) ? p.motif : 'rings',
-          trackIds: p.trackIds.filter((id) => typeof id === 'string')
+          trackIds: cleanSavedIds(p.trackIds)
         }));
     }
     return merged;
@@ -3702,6 +3739,9 @@ window.NG = (function () {
   }
 
   function reset() {
+    if (engine && typeof engine.revokeLocalUrls === 'function') {
+      try { engine.revokeLocalUrls(); } catch (e) {}
+    }
     const fresh = clone(DEFAULT_STATE);
     fresh.playlists = clone(SEED_PLAYLISTS);
     Object.keys(fresh).forEach((k) => { state[k] = fresh[k]; });
@@ -3958,23 +3998,46 @@ window.NG = (function () {
     });
   }
 
+  let searchRequestId = 0;
   let activeSearchScript = null;
   let searchDebounceTimer = null;
   let activeSearchAbort = null;
+  let activeSearchCleanup = null;
 
-  function searchOnline(query, onDone) {
-    const q = String(query || '').trim();
-    if (!q || q.length < 2) {
-      if (typeof onDone === 'function') onDone([], []);
-      return;
+  function cancelActiveSearch() {
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = null;
     }
-    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
     if (activeSearchAbort) {
       try { activeSearchAbort.abort(); } catch (e) {}
       activeSearchAbort = null;
     }
+    if (activeSearchCleanup) {
+      try { activeSearchCleanup(); } catch (e) {}
+      activeSearchCleanup = null;
+    }
+    if (activeSearchScript && activeSearchScript.parentNode) {
+      try { activeSearchScript.parentNode.removeChild(activeSearchScript); } catch (e) {}
+      activeSearchScript = null;
+    }
+  }
+
+  function searchOnline(query, onDone) {
+    const requestId = ++searchRequestId;
+    cancelActiveSearch();
+
+    const q = String(query || '').trim();
+    if (q.length < 2) {
+      if (requestId === searchRequestId && typeof onDone === 'function') {
+        onDone([], []);
+      }
+      return;
+    }
 
     searchDebounceTimer = setTimeout(async () => {
+      if (requestId !== searchRequestId) return;
+
       const abortCtrl = new AbortController();
       activeSearchAbort = abortCtrl;
 
@@ -3984,9 +4047,14 @@ window.NG = (function () {
           signal: abortCtrl.signal,
           headers: { 'Accept': 'application/json' }
         });
+
+        if (requestId !== searchRequestId) return;
+
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.results) && data.results.length) {
+          if (requestId !== searchRequestId) return;
+
+          if (Array.isArray(data.results)) {
             const mapped = data.results.map((tr) => {
               const existingIdx = TRACKS.findIndex((t) => t.id === tr.id);
               if (existingIdx === -1) TRACKS.push(tr);
@@ -3998,28 +4066,31 @@ window.NG = (function () {
           }
         }
       } catch (err) {
-        if (err.name === 'AbortError') return;
+        if (err.name === 'AbortError' || requestId !== searchRequestId) return;
       }
 
       // 2. Fallback to iTunes JSONP for offline or local file:// mode
-      if (activeSearchScript && activeSearchScript.parentNode) {
-        try { activeSearchScript.parentNode.removeChild(activeSearchScript); } catch (e) {}
-        activeSearchScript = null;
-      }
+      if (requestId !== searchRequestId) return;
 
-      const cbName = '__naghamJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const cbName = '__naghamJsonp_' + requestId + '_' + Math.floor(Math.random() * 10000);
       const script = document.createElement('script');
       activeSearchScript = script;
       let finished = false;
 
-      const finish = (results, artists) => {
-        if (finished) return;
-        finished = true;
+      const cleanup = () => {
         try { delete window[cbName]; } catch (e) {}
         if (script.parentNode) {
           try { script.parentNode.removeChild(script); } catch (e) {}
         }
         if (activeSearchScript === script) activeSearchScript = null;
+      };
+      activeSearchCleanup = cleanup;
+
+      const finish = (results, artists) => {
+        if (finished) return;
+        finished = true;
+        cleanup();
+        if (requestId !== searchRequestId) return;
         if (typeof onDone === 'function') onDone(results || [], artists || []);
       };
 
@@ -4027,6 +4098,10 @@ window.NG = (function () {
 
       window[cbName] = function (data) {
         clearTimeout(timer);
+        if (requestId !== searchRequestId) {
+          cleanup();
+          return;
+        }
         if (!data || !Array.isArray(data.results)) {
           finish([], []);
           return;
@@ -4046,7 +4121,15 @@ window.NG = (function () {
         const mapped = data.results.map((item, idx) => {
           const id = 'sp-' + (item.trackId || (Date.now() + '_' + idx));
           const artHiRes = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-          const durSec = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 180;
+
+          const durationMs = Number(item.trackTimeMillis);
+          const fullDuration = Number.isFinite(durationMs) && durationMs > 0 ? Math.round(durationMs / 1000) : null;
+
+          const releaseYear = item.releaseDate ? Number.parseInt(String(item.releaseDate).slice(0, 4), 10) : null;
+          const year = Number.isInteger(releaseYear) && releaseYear >= 1900 && releaseYear <= (new Date().getFullYear() + 1)
+            ? releaseYear
+            : null;
+
           const artName = item.artistName || 'فنان';
           const palette = palettes[idx % palettes.length];
 
@@ -4055,7 +4138,8 @@ window.NG = (function () {
               name: { ar: artName, en: artName },
               sub: { ar: item.primaryGenreName || 'موسيقى', en: item.primaryGenreName || 'Music' },
               track: id,
-              colors: palette
+              colors: palette,
+              source: 'apple-music'
             });
           }
 
@@ -4063,10 +4147,10 @@ window.NG = (function () {
             id,
             appleId: item.trackId,
             genre: (item.primaryGenreName || 'arabic').toLowerCase(),
-            year: item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) || 2024 : 2024,
-            duration: durSec,
-            fullDuration: durSec,
-            previewDuration: item.previewUrl ? 30 : 0,
+            year,
+            duration: fullDuration,
+            fullDuration,
+            previewDuration: item.previewUrl ? 30 : null,
             playbackType: item.previewUrl ? 'preview' : 'unavailable',
             isAudioPreview: Boolean(item.previewUrl),
             title: { ar: item.trackName || q, en: item.trackName || q },
@@ -4098,6 +4182,40 @@ window.NG = (function () {
       script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&entity=song&limit=25&callback=' + cbName;
       document.body.appendChild(script);
     }, 250);
+  }
+
+  function fetchArtistTracks(artistName, onDone) {
+    const art = String(artistName || '').trim();
+    if (!art) {
+      if (typeof onDone === 'function') onDone([]);
+      return;
+    }
+    const abortCtrl = new AbortController();
+    fetch('/api/search?q=' + encodeURIComponent(art), {
+      signal: abortCtrl.signal,
+      headers: { 'Accept': 'application/json' }
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !Array.isArray(data.results)) {
+          if (typeof onDone === 'function') onDone([]);
+          return;
+        }
+        const normArt = norm(art);
+        const filtered = data.results.filter((tr) => {
+          const itemArt = norm(tr.artist?.ar + ' ' + tr.artist?.en);
+          return itemArt.includes(normArt) || normArt.includes(itemArt);
+        });
+        filtered.forEach((tr) => {
+          const existingIdx = TRACKS.findIndex((t) => t.id === tr.id);
+          if (existingIdx === -1) TRACKS.push(tr);
+          else TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
+        });
+        if (typeof onDone === 'function') onDone(filtered);
+      })
+      .catch(() => {
+        if (typeof onDone === 'function') onDone([]);
+      });
   }
 
   function fetchLyricsOnline(track, artist, onDone) {
@@ -4302,14 +4420,14 @@ window.NG = (function () {
           this.el.src = this.url;
         }
       } else {
-        const q = this._trackQuery(track);
-        const streamUrl = '/api/stream?q=' + encodeURIComponent(q);
-        this.mode = 'stream';
-        this.url = streamUrl;
-        this.el.loop = false;
-        if (this.el.src !== streamUrl) {
-          this.el.src = streamUrl;
-        }
+        this.mode = 'unavailable';
+        this.url = '';
+        this.status = 'unavailable';
+        try { this.el.removeAttribute('src'); } catch (e) {}
+        emit('state', { playing: false });
+        emit('status', { status: 'unavailable' });
+        emit('error', { code: 'unavailable' });
+        return;
       }
 
       this.el.load();
@@ -4327,15 +4445,24 @@ window.NG = (function () {
         return;
       }
 
+      if (this.mode === 'unavailable' || this.track.playbackType === 'unavailable' || (!this.track.preview && !this.track.url && this.track.source !== 'file')) {
+        this.status = 'unavailable';
+        this.playing = false;
+        emit('state', { playing: false });
+        emit('status', { status: 'unavailable' });
+        emit('error', { code: 'unavailable' });
+        return;
+      }
+
       const reqId = this._reqId;
+      const audioAtStart = this.el;
       this.status = 'loading';
       emit('status', { status: 'loading' });
 
       this.el.volume = state.muted ? 0 : state.volume / 100;
       try {
-        await this.el.play();
-        if (this._reqId !== reqId) {
-          try { this.el.pause(); } catch (e) {}
+        await audioAtStart.play();
+        if (this._reqId !== reqId || audioAtStart !== this.el) {
           return;
         }
         this.playing = true;
@@ -4343,14 +4470,13 @@ window.NG = (function () {
         emit('state', { playing: true });
         emit('status', { status: 'playing' });
       } catch (e) {
-        if (this._reqId !== reqId) return;
+        if (this._reqId !== reqId || audioAtStart !== this.el) return;
         // Fallback for file:// or offline environments
         if (this.track && this.track.preview && this.el.src !== this.track.preview) {
           this.el.src = this.track.preview;
           try {
             await this.el.play();
-            if (this._reqId !== reqId) {
-              try { this.el.pause(); } catch (e2) {}
+            if (this._reqId !== reqId || audioAtStart !== this.el) {
               return;
             }
             this.playing = true;
@@ -4438,15 +4564,26 @@ window.NG = (function () {
       }
     },
 
+    activeBlobUrls: new Set(),
+
+    revokeLocalUrls() {
+      this.activeBlobUrls.forEach((u) => {
+        try { URL.revokeObjectURL(u); } catch (e) {}
+      });
+      this.activeBlobUrls.clear();
+    },
+
     loadFiles(fileList) {
       const files = Array.from(fileList || []).filter((f) => /^audio\//.test(f.type) || /\.(mp3|wav|m4a|ogg|flac|aac)$/i.test(f.name));
       const made = [];
       files.forEach((file) => {
         const name = file.name.replace(/\.[^.]+$/, '').slice(0, 80);
         const url = URL.createObjectURL(file);
+        this.activeBlobUrls.add(url);
         const tr = {
           id: uid('local'),
           source: 'file',
+          playbackType: 'local',
           genre: 'local',
           year: new Date().getFullYear(),
           duration: 0,
@@ -4535,11 +4672,11 @@ window.NG = (function () {
   }
 
   return {
-    $, $$, clamp, esc, fmt, uid, norm, clampText,
+    $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
     state, save, reset, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
-    trackMatches, searchTracks, searchArtists, searchOnline, fetchLyricsOnline, ensureFallbackTrack,
+    trackMatches, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline, ensureFallbackTrack,
     coverHTML, artStyle, paintCover,
     bus, emit, engine, STORAGE_KEY
   };
@@ -4554,7 +4691,7 @@ window.NG = (function () {
 
   const NG = window.NG;
   const {
-    $, $$, esc, fmt, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
+    $, $$, esc, fmt, norm, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks
   } = NG;
   const TRACKS = NG.TRACKS;
@@ -4641,9 +4778,10 @@ window.NG = (function () {
     const tr = getTrack(a.track);
     const src = tr ? (tr.art || tr.photo) : '';
     if (!src) {
-      return '<span class="avatar-art"><b>' + esc((a.name.ar || '?').slice(0, 1)) + '</b></span>';
+      const letter = typeof a.name === 'string' ? a.name.slice(0, 1) : ((a.name && (a.name.ar || a.name.en)) || '?').slice(0, 1);
+      return '<span class="avatar-art"><b>' + esc(letter) + '</b></span>';
     }
-    return '<span class="avatar-art has-photo"><img class="avatar-img" src="' + src + '" alt="" loading="lazy" decoding="async" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')"></span>';
+    return '<span class="avatar-art has-photo"><img class="avatar-img" src="' + esc(src) + '" alt="" loading="lazy" decoding="async" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')"></span>';
   }
 
   function eq() {
@@ -5807,7 +5945,12 @@ window.NG = (function () {
       ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
       : (state.lang === 'ar' ? 'كتالوج Apple Music الرسمي' : 'Official Apple Music Catalog');
 
-    const sameArtist = TRACKS.filter((t) => t.id !== tr.id && ((t.artist && t.artist.ar === tr.artist.ar) || t.genre === tr.genre)).slice(0, 5);
+    const curArt = norm(tr.artist?.ar || tr.artist?.en || '');
+    const sameArtist = TRACKS.filter((t) => {
+      if (t.id === tr.id) return false;
+      const itemArt = norm(t.artist?.ar || t.artist?.en || '');
+      return itemArt && itemArt === curArt;
+    }).slice(0, 5);
     const lyrics = tr.lyrics || [];
 
     // Dynamic lyrics fetching from LRCLIB if not available locally
@@ -5824,12 +5967,12 @@ window.NG = (function () {
       });
     }
 
-    // Dynamic more tracks by same artist
-    if (sameArtist.length < 3 && !tr._moreRequested && NG.searchOnline) {
+    // Dynamic more tracks by same artist using dedicated fetchArtistTracks (does not mutate Search UI)
+    if (sameArtist.length < 3 && !tr._moreRequested && NG.fetchArtistTracks) {
       tr._moreRequested = true;
       const qArt = tr.artist?.ar || tr.artist?.en || '';
       if (qArt) {
-        NG.searchOnline(qArt, (moreTracks) => {
+        NG.fetchArtistTracks(qArt, (moreTracks) => {
           if (moreTracks && moreTracks.length && ui.view === 'track') {
             renderTrackPage();
           }
@@ -5856,12 +5999,11 @@ window.NG = (function () {
             '</button>' +
             '<span class="sp-sep">•</span>' +
             '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
-            '<span class="sp-sep">•</span>' +
-            '<span class="sp-year-text">' + (tr.year || 2024) + '</span>' +
+            (tr.year ? ('<span class="sp-sep">•</span><span class="sp-year-text">' + tr.year + '</span>') : '') +
             '<span class="sp-sep">•</span>' +
             '<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>' +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-streams-text num">' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة رسمية · Apple Music') + '</span>' +
+            '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || 'معاينة رسمية · Apple Music')) + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -5876,7 +6018,7 @@ window.NG = (function () {
         '<button class="sp-icon-btn ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '" aria-label="' + esc(t('player.like')) + '">' +
           likeIcon(fav) +
         '</button>' +
-        '<button class="sp-icon-btn" data-action="new-playlist" aria-label="إضافة إلى قائمة تشغيل" title="إضافة لقائمة تشغيل">' +
+        '<button class="sp-icon-btn" data-action="new-playlist" aria-label="' + esc(t('rail.new') || 'قائمة جديدة') + '" title="' + esc(t('rail.new') || 'إضافة لقائمة تشغيل') + '">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>' +
         '</button>' +
         '<button class="sp-icon-btn" data-action="copy-song-link" data-id="' + tr.id + '" aria-label="' + esc(t('track.copyLink') || 'نسخ الرابط') + '" title="' + esc(t('track.copyLink') || 'نسخ رابط الأغنية') + '">' +
@@ -5886,14 +6028,17 @@ window.NG = (function () {
       '<div class="sp-actions-right">' +
         '<span class="sp-badge-hq">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> ' +
-          '<span>' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة صوتية ٣٠ ثانية · Apple Music') + '</span>' +
+          '<span>' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewNoteShort') || 'معاينة صوتية ٣٠ ثانية · Apple Music')) + '</span>' +
         '</span>' +
       '</div>' +
     '</div>';
 
     // 3. Two-Column Spotify Layout Grid
-    const isSynced = Boolean((tr._lyricsSynced || (lyrics.length && lyrics.some(l => typeof l.t === 'number' && isFinite(l.t)))));
-    const isVerified = Boolean(tr.source !== 'file' && (artistData || ARTISTS.some(a => (a.name?.ar === artistName || a.name?.en === artistName))));
+    const isSynced = Boolean(
+      tr._lyricsSynced === true ||
+      (lyrics.length > 0 && lyrics.some((l) => typeof l.t === 'number' && Number.isFinite(l.t)) && tr._lyricsSynced !== false)
+    );
+    const isVerified = Boolean(tr.verified === true);
 
     html += '<div class="sp-grid">' +
       '<div class="sp-col-main">' +
@@ -5910,24 +6055,26 @@ window.NG = (function () {
           '</div>' +
           '<div class="sp-lyrics-content">' +
             (isSynced ? (
-              '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) =>
-                '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
-                  '<span class="sp-lyric-main">' + esc(byLang(line)) + '</span>' +
-                  '<span class="sp-lyric-sub">' + esc(state.lang === 'ar' ? (line.en || '') : (line.ar || '')) + '</span>' +
-                '</button>'
-              ).join('') + '</div>'
+              '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) => {
+                const mainText = line.text || byLang(line);
+                const sub = (line.translation && line.translation !== mainText) ? line.translation : '';
+                return '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
+                  '<span class="sp-lyric-main">' + esc(mainText) + '</span>' +
+                  (sub ? ('<span class="sp-lyric-sub">' + esc(sub) + '</span>') : '') +
+                '</button>';
+              }).join('') + '</div>'
             ) : (lyrics.length || tr.plainLyrics) ? (
               '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
                 (tr.plainLyrics
-                  ? esc(tr.plainLyrics).split('\n').filter(Boolean).map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
-                  : lyrics.map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(byLang(line)) + '</p>').join('')
+                  ? esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
+                  : lyrics.map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line.text || byLang(line)) + '</p>').join('')
                 ) +
               '</div>'
             ) : (
               '<div class="sp-lyrics-empty">' +
                 '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
-                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? 'جاري جلب كلمات الأغنية...' : 'استمتع بالألحان والموسيقى') + '</p>' +
-                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'لا تتوفر كلمات لهذه الأغنية حالياً.') + '</p>' +
+                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'جاري جلب كلمات الأغنية...' : 'Searching for lyrics...') : (state.lang === 'ar' ? 'استمتع بالألحان والموسيقى' : 'Enjoy the music')) + '</p>' +
+                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'Querying open lyrics database.') : (state.lang === 'ar' ? 'لا تتوفر كلمات لهذه الأغنية حالياً.' : 'No lyrics available for this track.')) + '</p>' +
               '</div>'
             )) +
           '</div>' +
@@ -5969,13 +6116,9 @@ window.NG = (function () {
                     '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
                     '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
                   '</div>'
-                ) : (
-                  '<div class="sp-verified-tag" style="opacity:0.65;">' +
-                    '<span>' + (tr.source === 'file' ? 'ملف شخصي' : 'فنان في الكتالوج') + '</span>' +
-                  '</div>'
-                )) +
+                ) : '') +
               '</div>' +
-              '<h3 class="sp-artist-title">' + artistName + '</h3>' +
+              '<h3 class="sp-artist-title">' + esc(artistName) + '</h3>' +
               '<div class="sp-artist-listeners num">' + esc(listenersCount) + '</div>' +
             '</div>' +
           '</div>' +
@@ -5990,14 +6133,14 @@ window.NG = (function () {
         '<div class="sp-credits-card">' +
           '<h4>' + esc(t('track.credits') || 'بيانات الأغنية والإنتاج') + '</h4>' +
           '<div class="sp-credits-table">' +
-            '<div class="sp-credit-row"><span>الفنان الرئيسي</span><b>' + artistName + '</b></div>' +
-            '<div class="sp-credit-row"><span>الألبوم / الإصدار</span><b>' + L(tr.album) + '</b></div>' +
-            '<div class="sp-credit-row"><span>سنة النشر</span><b>' + (tr.year || 2024) + '</b></div>' +
-            '<div class="sp-credit-row"><span>نوع المحتوى</span><b class="badge-accent">' + (tr.source === 'file' ? 'ملف محلي من جهازك' : 'معاينة صوتية رسمية ٣٠ ثانية') + '</b></div>' +
-            '<div class="sp-credit-row"><span>المصدر التقني</span><b>' + (tr.source === 'file' ? 'ملف محلي (Local Audio)' : 'Apple Music CDN') + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('track.mainArtist') || 'الفنان الرئيسي') + '</span><b>' + esc(artistName) + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('hero.album') || 'الألبوم / الإصدار') + '</span><b>' + L(tr.album) + '</b></div>' +
+            (tr.year ? ('<div class="sp-credit-row"><span>' + esc(t('track.releaseYear') || 'سنة النشر') + '</span><b>' + tr.year + '</b></div>') : '') +
+            '<div class="sp-credit-row"><span>' + esc(t('track.contentType') || 'نوع المحتوى') + '</span><b class="badge-accent">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف محلي من جهازك') : esc(t('track.previewNoteShort') || 'معاينة صوتية رسمية ٣٠ ثانية')) + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Apple Music CDN') + '</b></div>' +
           '</div>' +
           '<div class="sp-copyright-notice">' +
-            (tr.source === 'file' ? 'ملف صوتي مخزن محليًا على هذا الجهاز.' : 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.') +
+            (tr.source === 'file' ? esc(t('track.localNotice') || 'ملف صوتي مخزن محليًا على هذا الجهاز.') : esc(t('track.appleNotice') || 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.')) +
           '</div>' +
         '</div>' +
       '</div>' +

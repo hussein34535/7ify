@@ -6,7 +6,7 @@
 
   const NG = window.NG;
   const {
-    $, $$, esc, fmt, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
+    $, $$, esc, fmt, norm, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks
   } = NG;
   const TRACKS = NG.TRACKS;
@@ -93,9 +93,10 @@
     const tr = getTrack(a.track);
     const src = tr ? (tr.art || tr.photo) : '';
     if (!src) {
-      return '<span class="avatar-art"><b>' + esc((a.name.ar || '?').slice(0, 1)) + '</b></span>';
+      const letter = typeof a.name === 'string' ? a.name.slice(0, 1) : ((a.name && (a.name.ar || a.name.en)) || '?').slice(0, 1);
+      return '<span class="avatar-art"><b>' + esc(letter) + '</b></span>';
     }
-    return '<span class="avatar-art has-photo"><img class="avatar-img" src="' + src + '" alt="" loading="lazy" decoding="async" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')"></span>';
+    return '<span class="avatar-art has-photo"><img class="avatar-img" src="' + esc(src) + '" alt="" loading="lazy" decoding="async" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')"></span>';
   }
 
   function eq() {
@@ -1259,7 +1260,12 @@
       ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
       : (state.lang === 'ar' ? 'كتالوج Apple Music الرسمي' : 'Official Apple Music Catalog');
 
-    const sameArtist = TRACKS.filter((t) => t.id !== tr.id && ((t.artist && t.artist.ar === tr.artist.ar) || t.genre === tr.genre)).slice(0, 5);
+    const curArt = norm(tr.artist?.ar || tr.artist?.en || '');
+    const sameArtist = TRACKS.filter((t) => {
+      if (t.id === tr.id) return false;
+      const itemArt = norm(t.artist?.ar || t.artist?.en || '');
+      return itemArt && itemArt === curArt;
+    }).slice(0, 5);
     const lyrics = tr.lyrics || [];
 
     // Dynamic lyrics fetching from LRCLIB if not available locally
@@ -1276,12 +1282,12 @@
       });
     }
 
-    // Dynamic more tracks by same artist
-    if (sameArtist.length < 3 && !tr._moreRequested && NG.searchOnline) {
+    // Dynamic more tracks by same artist using dedicated fetchArtistTracks (does not mutate Search UI)
+    if (sameArtist.length < 3 && !tr._moreRequested && NG.fetchArtistTracks) {
       tr._moreRequested = true;
       const qArt = tr.artist?.ar || tr.artist?.en || '';
       if (qArt) {
-        NG.searchOnline(qArt, (moreTracks) => {
+        NG.fetchArtistTracks(qArt, (moreTracks) => {
           if (moreTracks && moreTracks.length && ui.view === 'track') {
             renderTrackPage();
           }
@@ -1308,12 +1314,11 @@
             '</button>' +
             '<span class="sp-sep">•</span>' +
             '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
-            '<span class="sp-sep">•</span>' +
-            '<span class="sp-year-text">' + (tr.year || 2024) + '</span>' +
+            (tr.year ? ('<span class="sp-sep">•</span><span class="sp-year-text">' + tr.year + '</span>') : '') +
             '<span class="sp-sep">•</span>' +
             '<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>' +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-streams-text num">' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة رسمية · Apple Music') + '</span>' +
+            '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || 'معاينة رسمية · Apple Music')) + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1328,7 +1333,7 @@
         '<button class="sp-icon-btn ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '" aria-label="' + esc(t('player.like')) + '">' +
           likeIcon(fav) +
         '</button>' +
-        '<button class="sp-icon-btn" data-action="new-playlist" aria-label="إضافة إلى قائمة تشغيل" title="إضافة لقائمة تشغيل">' +
+        '<button class="sp-icon-btn" data-action="new-playlist" aria-label="' + esc(t('rail.new') || 'قائمة جديدة') + '" title="' + esc(t('rail.new') || 'إضافة لقائمة تشغيل') + '">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>' +
         '</button>' +
         '<button class="sp-icon-btn" data-action="copy-song-link" data-id="' + tr.id + '" aria-label="' + esc(t('track.copyLink') || 'نسخ الرابط') + '" title="' + esc(t('track.copyLink') || 'نسخ رابط الأغنية') + '">' +
@@ -1338,14 +1343,17 @@
       '<div class="sp-actions-right">' +
         '<span class="sp-badge-hq">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> ' +
-          '<span>' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة صوتية ٣٠ ثانية · Apple Music') + '</span>' +
+          '<span>' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewNoteShort') || 'معاينة صوتية ٣٠ ثانية · Apple Music')) + '</span>' +
         '</span>' +
       '</div>' +
     '</div>';
 
     // 3. Two-Column Spotify Layout Grid
-    const isSynced = Boolean((tr._lyricsSynced || (lyrics.length && lyrics.some(l => typeof l.t === 'number' && isFinite(l.t)))));
-    const isVerified = Boolean(tr.source !== 'file' && (artistData || ARTISTS.some(a => (a.name?.ar === artistName || a.name?.en === artistName))));
+    const isSynced = Boolean(
+      tr._lyricsSynced === true ||
+      (lyrics.length > 0 && lyrics.some((l) => typeof l.t === 'number' && Number.isFinite(l.t)) && tr._lyricsSynced !== false)
+    );
+    const isVerified = Boolean(tr.verified === true);
 
     html += '<div class="sp-grid">' +
       '<div class="sp-col-main">' +
@@ -1362,24 +1370,26 @@
           '</div>' +
           '<div class="sp-lyrics-content">' +
             (isSynced ? (
-              '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) =>
-                '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
-                  '<span class="sp-lyric-main">' + esc(byLang(line)) + '</span>' +
-                  '<span class="sp-lyric-sub">' + esc(state.lang === 'ar' ? (line.en || '') : (line.ar || '')) + '</span>' +
-                '</button>'
-              ).join('') + '</div>'
+              '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) => {
+                const mainText = line.text || byLang(line);
+                const sub = (line.translation && line.translation !== mainText) ? line.translation : '';
+                return '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
+                  '<span class="sp-lyric-main">' + esc(mainText) + '</span>' +
+                  (sub ? ('<span class="sp-lyric-sub">' + esc(sub) + '</span>') : '') +
+                '</button>';
+              }).join('') + '</div>'
             ) : (lyrics.length || tr.plainLyrics) ? (
               '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
                 (tr.plainLyrics
-                  ? esc(tr.plainLyrics).split('\n').filter(Boolean).map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
-                  : lyrics.map(line => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(byLang(line)) + '</p>').join('')
+                  ? esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
+                  : lyrics.map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line.text || byLang(line)) + '</p>').join('')
                 ) +
               '</div>'
             ) : (
               '<div class="sp-lyrics-empty">' +
                 '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
-                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? 'جاري جلب كلمات الأغنية...' : 'استمتع بالألحان والموسيقى') + '</p>' +
-                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'لا تتوفر كلمات لهذه الأغنية حالياً.') + '</p>' +
+                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'جاري جلب كلمات الأغنية...' : 'Searching for lyrics...') : (state.lang === 'ar' ? 'استمتع بالألحان والموسيقى' : 'Enjoy the music')) + '</p>' +
+                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'Querying open lyrics database.') : (state.lang === 'ar' ? 'لا تتوفر كلمات لهذه الأغنية حالياً.' : 'No lyrics available for this track.')) + '</p>' +
               '</div>'
             )) +
           '</div>' +
@@ -1421,13 +1431,9 @@
                     '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
                     '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
                   '</div>'
-                ) : (
-                  '<div class="sp-verified-tag" style="opacity:0.65;">' +
-                    '<span>' + (tr.source === 'file' ? 'ملف شخصي' : 'فنان في الكتالوج') + '</span>' +
-                  '</div>'
-                )) +
+                ) : '') +
               '</div>' +
-              '<h3 class="sp-artist-title">' + artistName + '</h3>' +
+              '<h3 class="sp-artist-title">' + esc(artistName) + '</h3>' +
               '<div class="sp-artist-listeners num">' + esc(listenersCount) + '</div>' +
             '</div>' +
           '</div>' +
@@ -1442,14 +1448,14 @@
         '<div class="sp-credits-card">' +
           '<h4>' + esc(t('track.credits') || 'بيانات الأغنية والإنتاج') + '</h4>' +
           '<div class="sp-credits-table">' +
-            '<div class="sp-credit-row"><span>الفنان الرئيسي</span><b>' + artistName + '</b></div>' +
-            '<div class="sp-credit-row"><span>الألبوم / الإصدار</span><b>' + L(tr.album) + '</b></div>' +
-            '<div class="sp-credit-row"><span>سنة النشر</span><b>' + (tr.year || 2024) + '</b></div>' +
-            '<div class="sp-credit-row"><span>نوع المحتوى</span><b class="badge-accent">' + (tr.source === 'file' ? 'ملف محلي من جهازك' : 'معاينة صوتية رسمية ٣٠ ثانية') + '</b></div>' +
-            '<div class="sp-credit-row"><span>المصدر التقني</span><b>' + (tr.source === 'file' ? 'ملف محلي (Local Audio)' : 'Apple Music CDN') + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('track.mainArtist') || 'الفنان الرئيسي') + '</span><b>' + esc(artistName) + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('hero.album') || 'الألبوم / الإصدار') + '</span><b>' + L(tr.album) + '</b></div>' +
+            (tr.year ? ('<div class="sp-credit-row"><span>' + esc(t('track.releaseYear') || 'سنة النشر') + '</span><b>' + tr.year + '</b></div>') : '') +
+            '<div class="sp-credit-row"><span>' + esc(t('track.contentType') || 'نوع المحتوى') + '</span><b class="badge-accent">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف محلي من جهازك') : esc(t('track.previewNoteShort') || 'معاينة صوتية رسمية ٣٠ ثانية')) + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Apple Music CDN') + '</b></div>' +
           '</div>' +
           '<div class="sp-copyright-notice">' +
-            (tr.source === 'file' ? 'ملف صوتي مخزن محليًا على هذا الجهاز.' : 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.') +
+            (tr.source === 'file' ? esc(t('track.localNotice') || 'ملف صوتي مخزن محليًا على هذا الجهاز.') : esc(t('track.appleNotice') || 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.')) +
           '</div>' +
         '</div>' +
       '</div>' +

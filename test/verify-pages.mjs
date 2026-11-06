@@ -1,12 +1,17 @@
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 
-const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const here = dirname(fileURLToPath(import.meta.url));
+const projectRoot = resolve(here, '..');
+const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PORT = 9339;
-const FILE = 'file:///C:/Users/husso/Desktop/7ify/nagham-studio.html';
-const PROFILE = 'C:\\Users\\husso\\AppData\\Local\\Temp\\nagham-pages-' + Date.now();
-const OUT = 'C:\\Users\\husso\\Desktop\\7ify\\shots';
+const FILE = pathToFileURL(join(projectRoot, 'nagham-studio.html')).href;
+const PROFILE = join(tmpdir(), 'nagham-pages-' + Date.now());
+const OUT = join(projectRoot, 'shots');
 
 try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* ignore */ }
 mkdirSync(OUT, { recursive: true });
@@ -133,9 +138,11 @@ try {
 
   console.log('\nALL SPOTIFY DEDICATED PAGES TESTS PASSED SUCCESSFULLY!');
 } catch (err) {
+  process.exitCode = 1;
   console.error('Test Failed:', err);
-  process.exit(1);
 } finally {
-  try { chrome.kill('SIGKILL'); } catch {}
-  process.exit(0);
+  try { if (ws) ws.close(); } catch {}
+  try { chrome.kill(); } catch {}
+  await sleep(300);
+  try { rmSync(PROFILE, { recursive: true, force: true }); } catch {}
 }
