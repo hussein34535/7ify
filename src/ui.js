@@ -54,6 +54,7 @@
     q: $('#q'),
     searchWrap: $('#searchWrap'),
     qClear: $('#qClear'),
+    searchAutocomplete: $('#searchAutocomplete'),
     newPlForm: $('#newPlForm'),
     newPlName: $('#newPlName'),
     newPlDlg: $('#newPlDlg'),
@@ -461,18 +462,317 @@
     return html;
   }
 
-  function triggerOnlineSearch(query) {
-    const q = String(query || '').trim();
-    if (!q) return;
-    ui.isSearchingOnline = true;
-    NG.searchOnline(q, (onlineSongs, onlineArtists) => {
-      ui.isSearchingOnline = false;
-      if (ui.q.trim() === q) {
-        ui.onlineSongs = onlineSongs || [];
-        ui.onlineArtists = onlineArtists || [];
-        if (ui.view === 'search') renderSearch();
-      }
+  let searchTimer = null;
+  let activeSearchController = null;
+  let searchSequence = 0;
+  let autocompleteItems = [];
+  let activeSuggestionIndex = -1;
+
+  function closeAutocomplete() {
+    if (el.searchAutocomplete) {
+      el.searchAutocomplete.hidden = true;
+      el.searchAutocomplete.innerHTML = '';
+    }
+    if (el.q) {
+      el.q.setAttribute('aria-expanded', 'false');
+      el.q.removeAttribute('aria-activedescendant');
+    }
+    activeSuggestionIndex = -1;
+    autocompleteItems = [];
+  }
+
+  function setActiveSuggestion(index) {
+    if (!el.searchAutocomplete || el.searchAutocomplete.hidden) return;
+    const nodes = Array.from(el.searchAutocomplete.querySelectorAll('[data-autocomplete-index]'));
+    if (!nodes.length) {
+      activeSuggestionIndex = -1;
+      return;
+    }
+
+    if (index >= nodes.length) {
+      activeSuggestionIndex = -1;
+    } else if (index < -1) {
+      activeSuggestionIndex = nodes.length - 1;
+    } else {
+      activeSuggestionIndex = index;
+    }
+
+    nodes.forEach((node, i) => {
+      const active = i === activeSuggestionIndex;
+      node.classList.toggle('is-active', active);
+      node.setAttribute('aria-selected', String(active));
     });
+
+    if (activeSuggestionIndex >= 0 && nodes[activeSuggestionIndex]) {
+      const activeNode = nodes[activeSuggestionIndex];
+      el.q.setAttribute('aria-activedescendant', activeNode.id);
+      activeNode.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.q.removeAttribute('aria-activedescendant');
+    }
+  }
+
+  function renderAutocomplete({ query, localSongs, remoteSongs, artists, albums, loading }) {
+    if (!el.searchAutocomplete) return;
+    const q = String(query || '').trim();
+
+    if (!q) {
+      const recent = ui.recentSearches.slice(0, 5);
+      if (!recent.length) {
+        closeAutocomplete();
+        return;
+      }
+      autocompleteItems = recent.map((term) => ({ type: 'recent', term, label: term }));
+      activeSuggestionIndex = -1;
+      let html = '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.recent') || 'عمليات البحث الأخيرة') + '</div>' +
+        recent.map((term, i) =>
+          '<button class="autocomplete-item" role="option" id="ac-item-' + i + '" data-autocomplete-index="' + i + '" data-type="recent" data-term="' + esc(term) + '">' +
+            '<span class="autocomplete-art"><svg class="ic" aria-hidden="true"><use href="#i-clock"></use></svg></span>' +
+            '<div class="autocomplete-info"><span class="autocomplete-title clamp-1">' + esc(term) + '</span></div>' +
+          '</button>'
+        ).join('') +
+      '</div>';
+      el.searchAutocomplete.innerHTML = html;
+      el.searchAutocomplete.hidden = false;
+      el.q.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
+    // Deduplicate songs for autocomplete (limit to top 4)
+    const combinedSongs = [];
+    const seenSongIds = new Set();
+    for (const tr of (localSongs || [])) {
+      seenSongIds.add(tr.id);
+      combinedSongs.push(tr);
+    }
+    for (const tr of (remoteSongs || [])) {
+      if (!seenSongIds.has(tr.id)) {
+        seenSongIds.add(tr.id);
+        combinedSongs.push(tr);
+      }
+    }
+    const songsSlice = combinedSongs.slice(0, 4);
+    const artistsSlice = (artists || []).slice(0, 3);
+    const albumsSlice = (albums || []).slice(0, 3);
+
+    autocompleteItems = [];
+    let html = '';
+
+    // 1. Query Item ("Search for...")
+    const queryIndex = autocompleteItems.length;
+    autocompleteItems.push({ type: 'query', term: q });
+    html += '<div class="autocomplete-section">' +
+      '<button class="autocomplete-item autocomplete-query-item" role="option" id="ac-item-' + queryIndex + '" data-autocomplete-index="' + queryIndex + '" data-type="query" data-term="' + esc(q) + '">' +
+        '<span class="autocomplete-art"><svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg></span>' +
+        '<div class="autocomplete-info">' +
+          '<span class="autocomplete-title clamp-1">' + (state.lang === 'ar' ? 'البحث عن «' + esc(q) + '»' : 'Search for "' + esc(q) + '"') + '</span>' +
+        '</div>' +
+        (loading ? '<span class="autocomplete-side"><svg class="ic" aria-hidden="true" style="animation:spin 1s linear infinite"><use href="#i-sparkle"></use></svg></span>' : '') +
+      '</button>' +
+    '</div>';
+
+    // 2. Songs Section
+    if (songsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.songs') || 'الأغاني') + '</div>';
+      songsSlice.forEach(tr => {
+        const itemIndex = autocompleteItems.length;
+        autocompleteItems.push({ type: 'track', id: tr.id, track: tr });
+        const provBadge = providerBadgeHTML(tr);
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="track" data-id="' + esc(tr.id) + '">' +
+          '<div class="autocomplete-art">' + trackArt(tr) + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(tr.title) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(tr.artist) + ' ' + provBadge + '</span>' +
+          '</div>' +
+          '<span class="autocomplete-side num">' + fmt(tr.duration) + '</span>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    // 3. Artists Section
+    if (artistsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.artists') || 'الفنانون') + '</div>';
+      artistsSlice.forEach(a => {
+        const itemIndex = autocompleteItems.length;
+        const artName = a.name?.ar || a.name?.en || a.name || '';
+        autocompleteItems.push({ type: 'artist', artistName: artName, artist: a });
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="artist" data-artist="' + esc(artName) + '">' +
+          '<div class="autocomplete-art is-avatar">' + artistAvatar(a) + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(a.name) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(a.sub || t('search.artists')) + '</span>' +
+          '</div>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    // 4. Albums Section
+    if (albumsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('library.tabAlbums') || 'الألبومات') + '</div>';
+      albumsSlice.forEach(alb => {
+        const itemIndex = autocompleteItems.length;
+        const albTitle = alb.title?.ar || alb.title?.en || alb.title || alb.name?.ar || alb.name?.en || alb.name || '';
+        autocompleteItems.push({ type: 'album', albumTitle: albTitle, album: alb });
+        const albArt = alb.art ? ('<img src="' + esc(alb.art) + '" alt="" loading="lazy">') : trackArt({ colors: alb.colors || ['#222','#444','#666'], motif: 'orb' });
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="album" data-album="' + esc(albTitle) + '">' +
+          '<div class="autocomplete-art">' + albArt + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(alb.title || alb.name) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(alb.artist) + '</span>' +
+          '</div>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    el.searchAutocomplete.innerHTML = html;
+    el.searchAutocomplete.hidden = false;
+    el.q.setAttribute('aria-expanded', 'true');
+    activeSuggestionIndex = -1;
+  }
+
+  function selectAutocompleteItem(item) {
+    if (!item) return;
+    if (item.type === 'query') {
+      const q = item.term.trim();
+      if (q) {
+        ui.recentSearches = [q].concat(ui.recentSearches.filter((x) => x !== q)).slice(0, 6);
+        el.q.value = q;
+        ui.q = q;
+        closeAutocomplete();
+        setView('search');
+        renderSearch();
+      }
+    } else if (item.type === 'recent') {
+      el.q.value = item.term;
+      ui.q = item.term;
+      closeAutocomplete();
+      runUnifiedSearch(item.term);
+      setView('search');
+    } else if (item.type === 'track') {
+      closeAutocomplete();
+      playTrack(item.id, 'search');
+    } else if (item.type === 'artist') {
+      closeAutocomplete();
+      openArtistPage(item.artistName);
+    } else if (item.type === 'album') {
+      closeAutocomplete();
+      openAlbumPage(item.albumTitle);
+    }
+  }
+
+  function runUnifiedSearch(rawQuery) {
+    const q = String(rawQuery || '').trim();
+    ui.q = rawQuery;
+    const requestId = ++searchSequence;
+
+    clearTimeout(searchTimer);
+    if (activeSearchController) {
+      try { activeSearchController.abort(); } catch (e) {}
+      activeSearchController = null;
+    }
+
+    // 1. Immediate Local Search
+    const localSongs = q ? NG.searchTracks(q) : [];
+    const localArtists = q ? NG.searchArtists(q) : [];
+    const localAlbums = q ? (NG.searchAlbums ? NG.searchAlbums(q) : []) : [];
+
+    // Render local matches to autocomplete and search view immediately
+    renderAutocomplete({
+      query: q,
+      localSongs,
+      remoteSongs: ui.onlineSongs || [],
+      artists: (localArtists.length ? localArtists : (ui.onlineArtists || [])),
+      albums: (localAlbums.length ? localAlbums : (ui.onlineAlbums || [])),
+      loading: q.length >= 2
+    });
+
+    if (ui.view === 'search') {
+      renderSearch();
+    }
+
+    if (q.length < 2) {
+      ui.isSearchingOnline = false;
+      return;
+    }
+
+    // 2. Debounced Remote Search (250ms)
+    ui.isSearchingOnline = true;
+    searchTimer = setTimeout(async () => {
+      if (requestId !== searchSequence) return;
+
+      const controller = new AbortController();
+      activeSearchController = controller;
+
+      try {
+        const response = await fetch('/api/search-multi?q=' + encodeURIComponent(q), {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (requestId !== searchSequence) return;
+
+        if (!response.ok) {
+          throw new Error('Search request failed: ' + response.status);
+        }
+
+        const payload = await response.json();
+        if (requestId !== searchSequence) return;
+
+        ui.isSearchingOnline = false;
+        const remoteResults = Array.isArray(payload.results) ? payload.results : [];
+        const remoteArtists = Array.isArray(payload.artists) ? payload.artists : [];
+        const remoteAlbums = Array.isArray(payload.albums) ? payload.albums : [];
+
+        // Save remote tracks to runtime TRACKS registry
+        remoteResults.forEach(tr => {
+          const existingIdx = NG.TRACKS.findIndex((t) => t.id === tr.id);
+          if (existingIdx === -1) NG.TRACKS.push(tr);
+          else NG.TRACKS[existingIdx] = Object.assign(NG.TRACKS[existingIdx], tr);
+        });
+
+        ui.onlineSongs = remoteResults;
+        ui.onlineArtists = remoteArtists;
+        ui.onlineAlbums = remoteAlbums;
+
+        // Update search view and autocomplete
+        if (ui.view === 'search') {
+          renderSearch();
+        }
+
+        renderAutocomplete({
+          query: q,
+          localSongs,
+          remoteSongs: remoteResults,
+          artists: (localArtists.length ? localArtists : remoteArtists),
+          albums: (localAlbums.length ? localAlbums : remoteAlbums),
+          loading: false
+        });
+      } catch (error) {
+        if (error.name === 'AbortError' || requestId !== searchSequence) return;
+        ui.isSearchingOnline = false;
+        // Keep local results intact on error
+        if (ui.view === 'search') renderSearch();
+        renderAutocomplete({
+          query: q,
+          localSongs,
+          remoteSongs: ui.onlineSongs || [],
+          artists: localArtists,
+          albums: localAlbums,
+          loading: false
+        });
+      }
+    }, 250);
+  }
+
+  function triggerOnlineSearch(query) {
+    runUnifiedSearch(query);
   }
 
   function renderSearch() {
@@ -819,8 +1119,10 @@
     if (muteIcon) muteIcon.querySelector('use').setAttribute('href', state.muted || state.volume === 0 ? '#i-mute' : '#i-volume');
     $('#bMute').setAttribute('aria-pressed', String(state.muted));
     $('#bMute').setAttribute('aria-label', t(state.muted ? 'player.unmute' : 'player.mute'));
-    el.vol.value = String(state.volume);
-    el.vol.style.setProperty('--vol', state.volume + '%');
+    if (el.vol) {
+      el.vol.value = String(state.volume);
+      if (el.vol.style) el.vol.style.setProperty('--vol', state.volume + '%');
+    }
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
   }
@@ -2277,70 +2579,119 @@
       onAction(action, node);
     });
 
-    el.q.addEventListener('input', () => {
-      ui.q = el.q.value;
-      el.qClear.hidden = !ui.q;
-      el.searchWrap.classList.toggle('has-value', !!ui.q);
-      if (ui.view !== 'search') setView('search');
-      else renderSearch();
-      triggerOnlineSearch(ui.q);
-    });
-
-    el.q.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const v = el.q.value.trim();
-        if (v) {
-          ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
-          triggerOnlineSearch(v);
-          renderSearch();
+    function handleAutocompleteKeydown(e) {
+      if (!el.searchAutocomplete || el.searchAutocomplete.hidden) {
+        if (e.key === 'ArrowDown' && el.q.value.trim()) {
+          e.preventDefault();
+          runUnifiedSearch(el.q.value);
         }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveSuggestion(activeSuggestionIndex + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveSuggestion(activeSuggestionIndex <= 0 ? autocompleteItems.length - 1 : activeSuggestionIndex - 1);
       } else if (e.key === 'Escape') {
-        el.q.value = '';
-        ui.q = '';
-        el.qClear.hidden = true;
-        el.searchWrap.classList.remove('has-value');
-        renderSearch();
-        el.q.blur();
+        e.preventDefault();
+        closeAutocomplete();
+      } else if (e.key === 'Enter') {
+        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
+          e.preventDefault();
+          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
+        } else {
+          const v = el.q.value.trim();
+          if (v) {
+            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
+            closeAutocomplete();
+            if (ui.view !== 'search') setView('search');
+            renderSearch();
+          }
+        }
+      }
+    }
+
+    if (el.q) {
+      el.q.addEventListener('input', () => {
+        ui.q = el.q.value;
+        if (el.qClear) el.qClear.hidden = !ui.q;
+        if (el.searchWrap) el.searchWrap.classList.toggle('has-value', !!ui.q);
+        runUnifiedSearch(el.q.value);
+      });
+
+      el.q.addEventListener('keydown', handleAutocompleteKeydown);
+
+      el.q.addEventListener('focus', () => {
+        if (el.q.value.trim() || ui.recentSearches.length) {
+          runUnifiedSearch(el.q.value);
+        }
+      });
+    }
+
+    if (el.searchAutocomplete) {
+      el.searchAutocomplete.addEventListener('click', (e) => {
+        const itemNode = e.target.closest('[data-autocomplete-index]');
+        if (!itemNode) return;
+        const idx = Number(itemNode.dataset.autocompleteIndex);
+        if (idx >= 0 && autocompleteItems[idx]) {
+          selectAutocompleteItem(autocompleteItems[idx]);
+        }
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (el.searchWrap && !el.searchWrap.contains(e.target)) {
+        closeAutocomplete();
       }
     });
 
-    el.newPlForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      createPlaylist(el.newPlName.value);
-    });
+    if (el.newPlForm) {
+      el.newPlForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        createPlaylist(el.newPlName.value);
+      });
+    }
 
-    el.fileInput.addEventListener('change', async () => {
-      const files = el.fileInput.files;
-      if (!files || !files.length) return;
-      engine.ensure();
-      try {
-        const made = await engine.loadFiles(files);
-        if (!made.length) { toast(t('toast.importError')); return; }
-        playTrack(made[0].id, made.map((x) => x.id));
-        toast(t('toast.imported'));
-      } catch (err) {
-        toast(t('toast.importError'));
-      }
-      el.fileInput.value = '';
-    });
+    if (el.fileInput) {
+      el.fileInput.addEventListener('change', async () => {
+        const files = el.fileInput.files;
+        if (!files || !files.length) return;
+        engine.ensure();
+        try {
+          const made = await engine.loadFiles(files);
+          if (!made.length) { toast(t('toast.importError')); return; }
+          playTrack(made[0].id, made.map((x) => x.id));
+          toast(t('toast.imported'));
+        } catch (err) {
+          toast(t('toast.importError'));
+        }
+        el.fileInput.value = '';
+      });
+    }
 
-    el.vol.addEventListener('input', () => {
-      state.volume = Number(el.vol.value);
-      if (state.volume > 0) state.muted = false;
-      engine.setVolume();
-      el.vol.style.setProperty('--vol', state.volume + '%');
-      refreshTransport();
-    });
-    el.vol.addEventListener('change', () => { save(); refreshTransport(); });
+    if (el.vol) {
+      el.vol.addEventListener('input', () => {
+        state.volume = Number(el.vol.value);
+        if (state.volume > 0) state.muted = false;
+        engine.setVolume();
+        if (el.vol.style) el.vol.style.setProperty('--vol', state.volume + '%');
+        refreshTransport();
+      });
+      el.vol.addEventListener('change', () => { save(); refreshTransport(); });
+    }
 
-    el.sheet.addEventListener('click', (e) => {
-      if (e.target === el.sheet) closeSheet();
-    });
-    el.sheet.addEventListener('close', () => { ui.dragging = false; });    el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
-    el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
+    if (el.sheet) {
+      el.sheet.addEventListener('click', (e) => {
+        if (e.target === el.sheet) closeSheet();
+      });
+      el.sheet.addEventListener('close', () => { ui.dragging = false; });
+    }
+    if (el.confirmDlg) el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
+    if (el.shortcutsDlg) el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
     if (el.sourcesDlg) el.sourcesDlg.addEventListener('click', (e) => { if (e.target === el.sourcesDlg) el.sourcesDlg.close(); });
-    el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
+    if (el.newPlDlg) el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
 
     bus.addEventListener('state', () => { refreshTransport(); renderView(); renderNowPanel(); });
     bus.addEventListener('tick', (e) => {
@@ -2467,6 +2818,13 @@
     openTrackPage, renderTrackPage,
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
-    openAlbumPage, renderAlbumPage
+    openAlbumPage, renderAlbumPage,
+    runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
+  if (window.NG) {
+    Object.assign(window.NG, {
+      ui,
+      runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
+    });
+  }
 })();

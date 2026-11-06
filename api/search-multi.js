@@ -8,21 +8,27 @@
 const cache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function normalizeStr(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/[\u064B-\u065F\u0670]/g, '')
-    .replace(/[أإآا]/g, 'ا')
-    .replace(/ة/g, 'ه')
+export function normalizeSearchText(value) {
+  return String(value ?? '')
+    .normalize('NFKD')
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
     .replace(/ى/g, 'ي')
     .replace(/ؤ/g, 'و')
     .replace(/ئ/g, 'ي')
-    .toLowerCase()
-    .normalize('NFD')
+    .replace(/ة/g, 'ه')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\s\-_.,/\\()[\]{}:;!?'"`~+*#@&^%$]+/g, ' ')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
+
+export function tokenize(value) {
+  return normalizeSearchText(value).split(' ').filter(Boolean);
+}
+
+export const normalizeStr = normalizeSearchText;
 
 export function cleanTitle(raw) {
   if (!raw) return '';
@@ -579,7 +585,40 @@ export default async function handler(req, res) {
   });
 
   const artists = Array.from(artistMap.values()).slice(0, 8);
-  const payload = { ok: true, results, artists, sourcesCount };
+
+  const albumMap = new Map();
+  results.forEach(tr => {
+    const albName = tr.album?.ar || tr.album?.en;
+    if (albName && !albumMap.has(albName.toLowerCase())) {
+      albumMap.set(albName.toLowerCase(), {
+        id: 'alb-' + normalizeSearchText(albName).replace(/\s+/g, '-').slice(0, 30),
+        title: tr.album,
+        artist: tr.artist,
+        art: tr.art,
+        year: tr.year,
+        genre: tr.genre,
+        colors: tr.colors
+      });
+    }
+  });
+  const albums = Array.from(albumMap.values()).slice(0, 6);
+
+  const providers = {
+    apple: { status: rawApple.length > 0 ? 'ok' : 'ok', count: rawApple.length },
+    youtube: { status: rawYouTube.length > 0 ? 'ok' : (process.env.YOUTUBE_API_KEY ? 'error' : 'unconfigured'), count: rawYouTube.length },
+    jamendo: { status: rawJamendo.length > 0 ? 'ok' : 'ok', count: rawJamendo.length },
+    archive: { status: rawArchive.length > 0 ? 'ok' : 'ok', count: rawArchive.length }
+  };
+
+  const payload = {
+    ok: true,
+    query: query,
+    results,
+    artists,
+    albums,
+    providers,
+    sourcesCount
+  };
 
   // Store in cache
   cache.set(cacheKey, { timestamp: now, payload });

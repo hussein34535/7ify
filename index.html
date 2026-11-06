@@ -2941,6 +2941,112 @@ html[data-motion="off"] *::after {
   border: 1px solid rgba(29, 185, 84, 0.3);
   white-space: nowrap;
 }
+
+/* ---------- search autocomplete dropdown ---------------------------------- */
+
+.search-autocomplete {
+  position: absolute;
+  z-index: 1000;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  top: calc(100% + 6px);
+  max-height: min(65vh, 480px);
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 14px;
+  background: #181818;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  padding: 6px 0;
+  overscroll-behavior: contain;
+}
+.search-autocomplete[hidden] {
+  display: none !important;
+}
+.autocomplete-section {
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.autocomplete-section:last-child {
+  border-bottom: none;
+}
+.autocomplete-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted, #aaa);
+  padding: 6px 14px 4px 14px;
+  letter-spacing: 0.5px;
+}
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: start;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--ink, #fff);
+  transition: background var(--dur-1) ease;
+  font-family: inherit;
+  user-select: none;
+}
+.autocomplete-item:hover,
+.autocomplete-item.is-active {
+  background: var(--hover-2, rgba(255, 255, 255, 0.08));
+}
+.autocomplete-item:focus-visible {
+  outline: 2px solid var(--accent, #1db954);
+  outline-offset: -2px;
+}
+.autocomplete-art {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--raised, #242424);
+}
+.autocomplete-art.is-avatar {
+  border-radius: 50%;
+}
+.autocomplete-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.autocomplete-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #fff);
+}
+.autocomplete-sub {
+  font-size: 11.5px;
+  color: var(--muted, #aaa);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.autocomplete-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted, #aaa);
+}
+.autocomplete-query-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent, #1db954);
+  font-size: 12.5px;
+  font-weight: 600;
+}
 </style>
 </head>
 <body>
@@ -3370,16 +3476,28 @@ window.NG = (function () {
   const uid = (p) => p + '-' + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 6);
 
   const AR_MARKS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
-  const norm = (s) => String(s == null ? '' : s).toLowerCase()
-    .replace(AR_MARKS, '')
-    .replace(/[\u0623\u0625\u0622\u0671]/g, '\u0627')
-    .replace(/\u0649/g, '\u064A')
-    .replace(/\u0629/g, '\u0647')
-    .replace(/\u0624/g, '\u0648')
-    .replace(/\u0626/g, '\u064A')
-    .replace(/[-–—_.,:;!؟?()[\]{}/\\|#@*&^%$+~`"']/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+
+  function normalizeSearchText(value) {
+    return String(value ?? '')
+      .normalize('NFKD')
+      .replace(AR_MARKS, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function tokenize(value) {
+    return normalizeSearchText(value).split(' ').filter(Boolean);
+  }
+
+  const norm = normalizeSearchText;
 
   const clampText = (s, n) => {
     const t = String(s || '').trim();
@@ -4260,82 +4378,142 @@ window.NG = (function () {
     });
   }
 
+  function includesAllTokens(queryTokens, fields) {
+    const fieldTokens = new Set(fields.flatMap(tokenize));
+    return queryTokens.every(token => fieldTokens.has(token));
+  }
+
+  function levenshteinDistance(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let diagonal = previous[0];
+      previous[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const old = previous[j];
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        previous[j] = Math.min(
+          previous[j] + 1,
+          previous[j - 1] + 1,
+          diagonal + cost
+        );
+        diagonal = old;
+      }
+    }
+    return previous[b.length];
+  }
+
+  function fuzzyTokenMatch(queryToken, candidateTokens) {
+    if (queryToken.length < 4) return false;
+    return candidateTokens.some(candidate => {
+      if (candidate.length < 4) return false;
+      const maxDistance = queryToken.length >= 5 ? 2 : 1;
+      return levenshteinDistance(queryToken, candidate) <= maxDistance;
+    });
+  }
+
+  function scoreTrack(tr, query) {
+    const q = normalizeSearchText(query);
+    const queryTokens = tokenize(q);
+    if (!q || !queryTokens.length) return 0;
+
+    const titleAr = normalizeSearchText(tr.title?.ar || '');
+    const titleEn = normalizeSearchText(tr.title?.en || '');
+    const title = normalizeSearchText([tr.title?.ar, tr.title?.en, tr.title].filter(Boolean).join(' '));
+
+    const artistAr = normalizeSearchText(tr.artist?.ar || '');
+    const artistEn = normalizeSearchText(tr.artist?.en || '');
+    const artist = normalizeSearchText([tr.artist?.ar, tr.artist?.en, tr.artist].filter(Boolean).join(' '));
+
+    const albumAr = normalizeSearchText(tr.album?.ar || '');
+    const albumEn = normalizeSearchText(tr.album?.en || '');
+    const album = normalizeSearchText([tr.album?.ar, tr.album?.en, tr.album].filter(Boolean).join(' '));
+
+    const titleTokens = tokenize(title);
+    const artistTokens = tokenize(artist);
+    const albumTokens = tokenize(album);
+    const allMetadata = [title, artist, album].join(' ');
+    const metadataTokens = tokenize(allMetadata);
+
+    let score = 0;
+
+    // Strict prefix matching for 1-2 character queries:
+    if (q.length <= 2) {
+      const matchPrefix = (tokens) => tokens.some((tok) => {
+        if (tok.startsWith(q)) return true;
+        if (tok.startsWith('ال') && tok.length > 2 && tok.slice(2).startsWith(q)) return true;
+        return false;
+      });
+
+      if (titleAr.startsWith(q) || titleEn.startsWith(q)) score += 2000;
+      else if (matchPrefix(titleTokens)) score += 1200;
+
+      if (artistAr.startsWith(q) || artistEn.startsWith(q)) score += 1500;
+      else if (matchPrefix(artistTokens)) score += 1000;
+
+      return score;
+    }
+
+    // Direct exact or prefix matches
+    if (title === q || titleAr === q || titleEn === q) score += 2500;
+    else if (titleAr.startsWith(q) || titleEn.startsWith(q)) score += 1500;
+    else if (titleAr.includes(q) || titleEn.includes(q) || title.includes(q)) score += 1000;
+
+    if (artist === q || artistAr === q || artistEn === q) score += 2000;
+    else if (artistAr.startsWith(q) || artistEn.startsWith(q)) score += 1300;
+    else if (artistAr.includes(q) || artistEn.includes(q) || artist.includes(q)) score += 800;
+
+    if (album === q || albumAr === q || albumEn === q) score += 450;
+    else if (albumAr.startsWith(q) || albumEn.startsWith(q)) score += 350;
+    else if (album.includes(q)) score += 300;
+
+    // Multi-token queries (>= 2 tokens): require strict coverage
+    if (queryTokens.length >= 2) {
+      const hitCount = queryTokens.filter(t => metadataTokens.some(m => m === t || m.startsWith(t) || (t.length >= 4 && levenshteinDistance(t, m) <= 1))).length;
+      const minHits = Math.ceil(queryTokens.length * 0.75);
+
+      if (hitCount === queryTokens.length) {
+        score += 500;
+      } else if (hitCount >= minHits) {
+        score += hitCount * 100;
+      }
+    } else {
+      // Single token query: token prefix or typo match on title/artist
+      if (titleTokens.some(t => t.startsWith(q))) score += 750;
+      else if (artistTokens.some(a => a.startsWith(q))) score += 600;
+      else if (queryTokens.some(token => fuzzyTokenMatch(token, titleTokens.concat(artistTokens)))) {
+        score += 150;
+      }
+    }
+
+    // Lyrics matching
+    const hay = getTrackHaystack(tr);
+    if (hay.includes(q)) {
+      score += 180;
+      const ml = findMatchedLyric(tr, query);
+      if (ml) tr._matchedLyric = ml;
+    } else if (includesAllTokens(queryTokens, [hay])) {
+      score += 100;
+      const ml = findMatchedLyric(tr, query);
+      if (ml) tr._matchedLyric = ml;
+    }
+
+    return score;
+  }
+
   function searchTracks(q) {
     const query = String(q || '').trim();
     if (!query) return [];
-    const nq = norm(query);
-    const qWords = nq.split(' ').filter(Boolean);
-    if (!qWords.length) return [];
-
-    const isShort = nq.length <= 2;
     const scored = [];
 
     for (const tr of TRACKS) {
       tr._matchedLyric = null;
-      let score = 0;
-      const titleAr = norm(tr.title.ar);
-      const titleEn = norm(tr.title.en);
-      const artistAr = norm(tr.artist.ar);
-      const artistEn = norm(tr.artist.en);
-
-      if (isShort) {
-        // Strict prefix matching for 1-2 character queries:
-        // ONLY match if Title or Artist has a word starting with the query (NO lyrics search!)
-        const tTokens = (titleAr + ' ' + titleEn).split(' ').filter(Boolean);
-        const aTokens = (artistAr + ' ' + artistEn).split(' ').filter(Boolean);
-        const matchPrefix = (tokens) => tokens.some((tok) => {
-          if (tok.startsWith(nq)) return true;
-          if (tok.startsWith('ال') && tok.length > 2 && tok.slice(2).startsWith(nq)) return true;
-          return false;
-        });
-
-        if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 2000;
-        else if (matchPrefix(tTokens)) score += 1200;
-
-        if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1500;
-        else if (matchPrefix(aTokens)) score += 1000;
-      } else {
-        // Full multi-character search
-        if (titleAr === nq || titleEn === nq) score += 2500;
-        else if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 1500;
-        else if (titleAr.includes(nq) || titleEn.includes(nq)) score += 1000;
-
-        if (artistAr === nq || artistEn === nq) score += 2000;
-        else if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1300;
-        else if (artistAr.includes(nq) || artistEn.includes(nq)) score += 800;
-
-        const hay = getTrackHaystack(tr);
-
-        // Phrase match in haystack (including lyrics)
-        if (hay.includes(nq)) {
-          score += 650;
-          const ml = findMatchedLyric(tr, query);
-          if (ml) tr._matchedLyric = ml;
-        }
-
-        // Multi-word stem matching for natural phrases
-        if (qWords.length >= 2) {
-          let hitCount = 0;
-          const hayTokens = hay.split(' ').filter(Boolean);
-          for (const w of qWords) {
-            const stems = arStems(w);
-            if (stems.some((st) => hayTokens.some((tok) => tok === st || tok.startsWith(st) || tok.endsWith(st)))) {
-              hitCount++;
-            }
-          }
-
-          const minHits = Math.ceil(qWords.length * 0.75);
-          if (hitCount === qWords.length) {
-            score += 600 + (hitCount * 50);
-            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
-          } else if (hitCount >= minHits) {
-            score += hitCount * 60;
-            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
-          }
-        }
+      const score = scoreTrack(tr, query);
+      if (score > 0) {
+        scored.push({ tr, score });
       }
-
-      if (score > 0) scored.push({ tr, score });
     }
 
     scored.sort((a, b) => b.score - a.score);
@@ -4344,9 +4522,38 @@ window.NG = (function () {
 
   function searchArtists(q) {
     if (!q) return [];
+    const nq = normalizeSearchText(q);
+    if (!nq) return [];
+    const qTokens = tokenize(nq);
     return ARTISTS.filter((a) => {
-      const hay = norm(a.name.ar + ' ' + a.name.en + ' ' + a.sub.ar + ' ' + a.sub.en);
-      return norm(q).split(' ').filter(Boolean).some((w) => w.length > 1 && hay.indexOf(w) !== -1);
+      const nameAr = normalizeSearchText(a.name?.ar || '');
+      const nameEn = normalizeSearchText(a.name?.en || '');
+      const subAr = normalizeSearchText(a.sub?.ar || '');
+      const subEn = normalizeSearchText(a.sub?.en || '');
+      const hay = `${nameAr} ${nameEn} ${subAr} ${subEn}`;
+      if (nameAr === nq || nameEn === nq) return true;
+      if (nameAr.startsWith(nq) || nameEn.startsWith(nq)) return true;
+      if (hay.includes(nq)) return true;
+      return qTokens.length > 0 && qTokens.every(tok => hay.includes(tok));
+    });
+  }
+
+  function searchAlbums(q) {
+    if (!q) return [];
+    const nq = normalizeSearchText(q);
+    if (!nq) return [];
+    const allAlbums = getAlbums();
+    const qTokens = tokenize(nq);
+    return allAlbums.filter(a => {
+      const nameAr = normalizeSearchText(a.name?.ar || '');
+      const nameEn = normalizeSearchText(a.name?.en || '');
+      const artAr = normalizeSearchText(a.artist?.ar || '');
+      const artEn = normalizeSearchText(a.artist?.en || '');
+      const hay = `${nameAr} ${nameEn} ${artAr} ${artEn}`;
+      if (nameAr === nq || nameEn === nq) return true;
+      if (nameAr.startsWith(nq) || nameEn.startsWith(nq)) return true;
+      if (hay.includes(nq)) return true;
+      return qTokens.length > 0 && qTokens.every(tok => hay.includes(tok));
     });
   }
 
@@ -6214,7 +6421,7 @@ window.NG = (function () {
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
     state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack, getPlayableDuration,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
-    trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
+    normalizeSearchText, tokenize, levenshteinDistance, scoreTrack, trackMatches, findMatchedLyric, searchTracks, searchArtists, searchAlbums, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
     PLAYBACK_MODES, ENGINE_STATES, musicProviders, ytDriver, loadYouTubeIframeAPI: () => ytDriver.loadAPI(),
     loadSpotifySDK, initializeSpotifyPlayer, playSpotifyTrack, spotifySeek, spotifyPause, spotifyResume, resolvePlaybackSource,
@@ -6279,6 +6486,7 @@ window.NG = (function () {
     q: $('#q'),
     searchWrap: $('#searchWrap'),
     qClear: $('#qClear'),
+    searchAutocomplete: $('#searchAutocomplete'),
     newPlForm: $('#newPlForm'),
     newPlName: $('#newPlName'),
     newPlDlg: $('#newPlDlg'),
@@ -6686,18 +6894,317 @@ window.NG = (function () {
     return html;
   }
 
-  function triggerOnlineSearch(query) {
-    const q = String(query || '').trim();
-    if (!q) return;
-    ui.isSearchingOnline = true;
-    NG.searchOnline(q, (onlineSongs, onlineArtists) => {
-      ui.isSearchingOnline = false;
-      if (ui.q.trim() === q) {
-        ui.onlineSongs = onlineSongs || [];
-        ui.onlineArtists = onlineArtists || [];
-        if (ui.view === 'search') renderSearch();
-      }
+  let searchTimer = null;
+  let activeSearchController = null;
+  let searchSequence = 0;
+  let autocompleteItems = [];
+  let activeSuggestionIndex = -1;
+
+  function closeAutocomplete() {
+    if (el.searchAutocomplete) {
+      el.searchAutocomplete.hidden = true;
+      el.searchAutocomplete.innerHTML = '';
+    }
+    if (el.q) {
+      el.q.setAttribute('aria-expanded', 'false');
+      el.q.removeAttribute('aria-activedescendant');
+    }
+    activeSuggestionIndex = -1;
+    autocompleteItems = [];
+  }
+
+  function setActiveSuggestion(index) {
+    if (!el.searchAutocomplete || el.searchAutocomplete.hidden) return;
+    const nodes = Array.from(el.searchAutocomplete.querySelectorAll('[data-autocomplete-index]'));
+    if (!nodes.length) {
+      activeSuggestionIndex = -1;
+      return;
+    }
+
+    if (index >= nodes.length) {
+      activeSuggestionIndex = -1;
+    } else if (index < -1) {
+      activeSuggestionIndex = nodes.length - 1;
+    } else {
+      activeSuggestionIndex = index;
+    }
+
+    nodes.forEach((node, i) => {
+      const active = i === activeSuggestionIndex;
+      node.classList.toggle('is-active', active);
+      node.setAttribute('aria-selected', String(active));
     });
+
+    if (activeSuggestionIndex >= 0 && nodes[activeSuggestionIndex]) {
+      const activeNode = nodes[activeSuggestionIndex];
+      el.q.setAttribute('aria-activedescendant', activeNode.id);
+      activeNode.scrollIntoView({ block: 'nearest' });
+    } else {
+      el.q.removeAttribute('aria-activedescendant');
+    }
+  }
+
+  function renderAutocomplete({ query, localSongs, remoteSongs, artists, albums, loading }) {
+    if (!el.searchAutocomplete) return;
+    const q = String(query || '').trim();
+
+    if (!q) {
+      const recent = ui.recentSearches.slice(0, 5);
+      if (!recent.length) {
+        closeAutocomplete();
+        return;
+      }
+      autocompleteItems = recent.map((term) => ({ type: 'recent', term, label: term }));
+      activeSuggestionIndex = -1;
+      let html = '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.recent') || 'عمليات البحث الأخيرة') + '</div>' +
+        recent.map((term, i) =>
+          '<button class="autocomplete-item" role="option" id="ac-item-' + i + '" data-autocomplete-index="' + i + '" data-type="recent" data-term="' + esc(term) + '">' +
+            '<span class="autocomplete-art"><svg class="ic" aria-hidden="true"><use href="#i-clock"></use></svg></span>' +
+            '<div class="autocomplete-info"><span class="autocomplete-title clamp-1">' + esc(term) + '</span></div>' +
+          '</button>'
+        ).join('') +
+      '</div>';
+      el.searchAutocomplete.innerHTML = html;
+      el.searchAutocomplete.hidden = false;
+      el.q.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
+    // Deduplicate songs for autocomplete (limit to top 4)
+    const combinedSongs = [];
+    const seenSongIds = new Set();
+    for (const tr of (localSongs || [])) {
+      seenSongIds.add(tr.id);
+      combinedSongs.push(tr);
+    }
+    for (const tr of (remoteSongs || [])) {
+      if (!seenSongIds.has(tr.id)) {
+        seenSongIds.add(tr.id);
+        combinedSongs.push(tr);
+      }
+    }
+    const songsSlice = combinedSongs.slice(0, 4);
+    const artistsSlice = (artists || []).slice(0, 3);
+    const albumsSlice = (albums || []).slice(0, 3);
+
+    autocompleteItems = [];
+    let html = '';
+
+    // 1. Query Item ("Search for...")
+    const queryIndex = autocompleteItems.length;
+    autocompleteItems.push({ type: 'query', term: q });
+    html += '<div class="autocomplete-section">' +
+      '<button class="autocomplete-item autocomplete-query-item" role="option" id="ac-item-' + queryIndex + '" data-autocomplete-index="' + queryIndex + '" data-type="query" data-term="' + esc(q) + '">' +
+        '<span class="autocomplete-art"><svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg></span>' +
+        '<div class="autocomplete-info">' +
+          '<span class="autocomplete-title clamp-1">' + (state.lang === 'ar' ? 'البحث عن «' + esc(q) + '»' : 'Search for "' + esc(q) + '"') + '</span>' +
+        '</div>' +
+        (loading ? '<span class="autocomplete-side"><svg class="ic" aria-hidden="true" style="animation:spin 1s linear infinite"><use href="#i-sparkle"></use></svg></span>' : '') +
+      '</button>' +
+    '</div>';
+
+    // 2. Songs Section
+    if (songsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.songs') || 'الأغاني') + '</div>';
+      songsSlice.forEach(tr => {
+        const itemIndex = autocompleteItems.length;
+        autocompleteItems.push({ type: 'track', id: tr.id, track: tr });
+        const provBadge = providerBadgeHTML(tr);
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="track" data-id="' + esc(tr.id) + '">' +
+          '<div class="autocomplete-art">' + trackArt(tr) + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(tr.title) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(tr.artist) + ' ' + provBadge + '</span>' +
+          '</div>' +
+          '<span class="autocomplete-side num">' + fmt(tr.duration) + '</span>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    // 3. Artists Section
+    if (artistsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('search.artists') || 'الفنانون') + '</div>';
+      artistsSlice.forEach(a => {
+        const itemIndex = autocompleteItems.length;
+        const artName = a.name?.ar || a.name?.en || a.name || '';
+        autocompleteItems.push({ type: 'artist', artistName: artName, artist: a });
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="artist" data-artist="' + esc(artName) + '">' +
+          '<div class="autocomplete-art is-avatar">' + artistAvatar(a) + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(a.name) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(a.sub || t('search.artists')) + '</span>' +
+          '</div>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    // 4. Albums Section
+    if (albumsSlice.length) {
+      html += '<div class="autocomplete-section">' +
+        '<div class="autocomplete-header">' + esc(t('library.tabAlbums') || 'الألبومات') + '</div>';
+      albumsSlice.forEach(alb => {
+        const itemIndex = autocompleteItems.length;
+        const albTitle = alb.title?.ar || alb.title?.en || alb.title || alb.name?.ar || alb.name?.en || alb.name || '';
+        autocompleteItems.push({ type: 'album', albumTitle: albTitle, album: alb });
+        const albArt = alb.art ? ('<img src="' + esc(alb.art) + '" alt="" loading="lazy">') : trackArt({ colors: alb.colors || ['#222','#444','#666'], motif: 'orb' });
+        html += '<button class="autocomplete-item" role="option" id="ac-item-' + itemIndex + '" data-autocomplete-index="' + itemIndex + '" data-type="album" data-album="' + esc(albTitle) + '">' +
+          '<div class="autocomplete-art">' + albArt + '</div>' +
+          '<div class="autocomplete-info">' +
+            '<span class="autocomplete-title clamp-1">' + L(alb.title || alb.name) + '</span>' +
+            '<span class="autocomplete-sub clamp-1">' + L(alb.artist) + '</span>' +
+          '</div>' +
+        '</button>';
+      });
+      html += '</div>';
+    }
+
+    el.searchAutocomplete.innerHTML = html;
+    el.searchAutocomplete.hidden = false;
+    el.q.setAttribute('aria-expanded', 'true');
+    activeSuggestionIndex = -1;
+  }
+
+  function selectAutocompleteItem(item) {
+    if (!item) return;
+    if (item.type === 'query') {
+      const q = item.term.trim();
+      if (q) {
+        ui.recentSearches = [q].concat(ui.recentSearches.filter((x) => x !== q)).slice(0, 6);
+        el.q.value = q;
+        ui.q = q;
+        closeAutocomplete();
+        setView('search');
+        renderSearch();
+      }
+    } else if (item.type === 'recent') {
+      el.q.value = item.term;
+      ui.q = item.term;
+      closeAutocomplete();
+      runUnifiedSearch(item.term);
+      setView('search');
+    } else if (item.type === 'track') {
+      closeAutocomplete();
+      playTrack(item.id, 'search');
+    } else if (item.type === 'artist') {
+      closeAutocomplete();
+      openArtistPage(item.artistName);
+    } else if (item.type === 'album') {
+      closeAutocomplete();
+      openAlbumPage(item.albumTitle);
+    }
+  }
+
+  function runUnifiedSearch(rawQuery) {
+    const q = String(rawQuery || '').trim();
+    ui.q = rawQuery;
+    const requestId = ++searchSequence;
+
+    clearTimeout(searchTimer);
+    if (activeSearchController) {
+      try { activeSearchController.abort(); } catch (e) {}
+      activeSearchController = null;
+    }
+
+    // 1. Immediate Local Search
+    const localSongs = q ? NG.searchTracks(q) : [];
+    const localArtists = q ? NG.searchArtists(q) : [];
+    const localAlbums = q ? (NG.searchAlbums ? NG.searchAlbums(q) : []) : [];
+
+    // Render local matches to autocomplete and search view immediately
+    renderAutocomplete({
+      query: q,
+      localSongs,
+      remoteSongs: ui.onlineSongs || [],
+      artists: (localArtists.length ? localArtists : (ui.onlineArtists || [])),
+      albums: (localAlbums.length ? localAlbums : (ui.onlineAlbums || [])),
+      loading: q.length >= 2
+    });
+
+    if (ui.view === 'search') {
+      renderSearch();
+    }
+
+    if (q.length < 2) {
+      ui.isSearchingOnline = false;
+      return;
+    }
+
+    // 2. Debounced Remote Search (250ms)
+    ui.isSearchingOnline = true;
+    searchTimer = setTimeout(async () => {
+      if (requestId !== searchSequence) return;
+
+      const controller = new AbortController();
+      activeSearchController = controller;
+
+      try {
+        const response = await fetch('/api/search-multi?q=' + encodeURIComponent(q), {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (requestId !== searchSequence) return;
+
+        if (!response.ok) {
+          throw new Error('Search request failed: ' + response.status);
+        }
+
+        const payload = await response.json();
+        if (requestId !== searchSequence) return;
+
+        ui.isSearchingOnline = false;
+        const remoteResults = Array.isArray(payload.results) ? payload.results : [];
+        const remoteArtists = Array.isArray(payload.artists) ? payload.artists : [];
+        const remoteAlbums = Array.isArray(payload.albums) ? payload.albums : [];
+
+        // Save remote tracks to runtime TRACKS registry
+        remoteResults.forEach(tr => {
+          const existingIdx = NG.TRACKS.findIndex((t) => t.id === tr.id);
+          if (existingIdx === -1) NG.TRACKS.push(tr);
+          else NG.TRACKS[existingIdx] = Object.assign(NG.TRACKS[existingIdx], tr);
+        });
+
+        ui.onlineSongs = remoteResults;
+        ui.onlineArtists = remoteArtists;
+        ui.onlineAlbums = remoteAlbums;
+
+        // Update search view and autocomplete
+        if (ui.view === 'search') {
+          renderSearch();
+        }
+
+        renderAutocomplete({
+          query: q,
+          localSongs,
+          remoteSongs: remoteResults,
+          artists: (localArtists.length ? localArtists : remoteArtists),
+          albums: (localAlbums.length ? localAlbums : remoteAlbums),
+          loading: false
+        });
+      } catch (error) {
+        if (error.name === 'AbortError' || requestId !== searchSequence) return;
+        ui.isSearchingOnline = false;
+        // Keep local results intact on error
+        if (ui.view === 'search') renderSearch();
+        renderAutocomplete({
+          query: q,
+          localSongs,
+          remoteSongs: ui.onlineSongs || [],
+          artists: localArtists,
+          albums: localAlbums,
+          loading: false
+        });
+      }
+    }, 250);
+  }
+
+  function triggerOnlineSearch(query) {
+    runUnifiedSearch(query);
   }
 
   function renderSearch() {
@@ -7044,8 +7551,10 @@ window.NG = (function () {
     if (muteIcon) muteIcon.querySelector('use').setAttribute('href', state.muted || state.volume === 0 ? '#i-mute' : '#i-volume');
     $('#bMute').setAttribute('aria-pressed', String(state.muted));
     $('#bMute').setAttribute('aria-label', t(state.muted ? 'player.unmute' : 'player.mute'));
-    el.vol.value = String(state.volume);
-    el.vol.style.setProperty('--vol', state.volume + '%');
+    if (el.vol) {
+      el.vol.value = String(state.volume);
+      if (el.vol.style) el.vol.style.setProperty('--vol', state.volume + '%');
+    }
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
   }
@@ -8502,70 +9011,119 @@ window.NG = (function () {
       onAction(action, node);
     });
 
-    el.q.addEventListener('input', () => {
-      ui.q = el.q.value;
-      el.qClear.hidden = !ui.q;
-      el.searchWrap.classList.toggle('has-value', !!ui.q);
-      if (ui.view !== 'search') setView('search');
-      else renderSearch();
-      triggerOnlineSearch(ui.q);
-    });
-
-    el.q.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const v = el.q.value.trim();
-        if (v) {
-          ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
-          triggerOnlineSearch(v);
-          renderSearch();
+    function handleAutocompleteKeydown(e) {
+      if (!el.searchAutocomplete || el.searchAutocomplete.hidden) {
+        if (e.key === 'ArrowDown' && el.q.value.trim()) {
+          e.preventDefault();
+          runUnifiedSearch(el.q.value);
         }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveSuggestion(activeSuggestionIndex + 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveSuggestion(activeSuggestionIndex <= 0 ? autocompleteItems.length - 1 : activeSuggestionIndex - 1);
       } else if (e.key === 'Escape') {
-        el.q.value = '';
-        ui.q = '';
-        el.qClear.hidden = true;
-        el.searchWrap.classList.remove('has-value');
-        renderSearch();
-        el.q.blur();
+        e.preventDefault();
+        closeAutocomplete();
+      } else if (e.key === 'Enter') {
+        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
+          e.preventDefault();
+          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
+        } else {
+          const v = el.q.value.trim();
+          if (v) {
+            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
+            closeAutocomplete();
+            if (ui.view !== 'search') setView('search');
+            renderSearch();
+          }
+        }
+      }
+    }
+
+    if (el.q) {
+      el.q.addEventListener('input', () => {
+        ui.q = el.q.value;
+        if (el.qClear) el.qClear.hidden = !ui.q;
+        if (el.searchWrap) el.searchWrap.classList.toggle('has-value', !!ui.q);
+        runUnifiedSearch(el.q.value);
+      });
+
+      el.q.addEventListener('keydown', handleAutocompleteKeydown);
+
+      el.q.addEventListener('focus', () => {
+        if (el.q.value.trim() || ui.recentSearches.length) {
+          runUnifiedSearch(el.q.value);
+        }
+      });
+    }
+
+    if (el.searchAutocomplete) {
+      el.searchAutocomplete.addEventListener('click', (e) => {
+        const itemNode = e.target.closest('[data-autocomplete-index]');
+        if (!itemNode) return;
+        const idx = Number(itemNode.dataset.autocompleteIndex);
+        if (idx >= 0 && autocompleteItems[idx]) {
+          selectAutocompleteItem(autocompleteItems[idx]);
+        }
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (el.searchWrap && !el.searchWrap.contains(e.target)) {
+        closeAutocomplete();
       }
     });
 
-    el.newPlForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      createPlaylist(el.newPlName.value);
-    });
+    if (el.newPlForm) {
+      el.newPlForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        createPlaylist(el.newPlName.value);
+      });
+    }
 
-    el.fileInput.addEventListener('change', async () => {
-      const files = el.fileInput.files;
-      if (!files || !files.length) return;
-      engine.ensure();
-      try {
-        const made = await engine.loadFiles(files);
-        if (!made.length) { toast(t('toast.importError')); return; }
-        playTrack(made[0].id, made.map((x) => x.id));
-        toast(t('toast.imported'));
-      } catch (err) {
-        toast(t('toast.importError'));
-      }
-      el.fileInput.value = '';
-    });
+    if (el.fileInput) {
+      el.fileInput.addEventListener('change', async () => {
+        const files = el.fileInput.files;
+        if (!files || !files.length) return;
+        engine.ensure();
+        try {
+          const made = await engine.loadFiles(files);
+          if (!made.length) { toast(t('toast.importError')); return; }
+          playTrack(made[0].id, made.map((x) => x.id));
+          toast(t('toast.imported'));
+        } catch (err) {
+          toast(t('toast.importError'));
+        }
+        el.fileInput.value = '';
+      });
+    }
 
-    el.vol.addEventListener('input', () => {
-      state.volume = Number(el.vol.value);
-      if (state.volume > 0) state.muted = false;
-      engine.setVolume();
-      el.vol.style.setProperty('--vol', state.volume + '%');
-      refreshTransport();
-    });
-    el.vol.addEventListener('change', () => { save(); refreshTransport(); });
+    if (el.vol) {
+      el.vol.addEventListener('input', () => {
+        state.volume = Number(el.vol.value);
+        if (state.volume > 0) state.muted = false;
+        engine.setVolume();
+        if (el.vol.style) el.vol.style.setProperty('--vol', state.volume + '%');
+        refreshTransport();
+      });
+      el.vol.addEventListener('change', () => { save(); refreshTransport(); });
+    }
 
-    el.sheet.addEventListener('click', (e) => {
-      if (e.target === el.sheet) closeSheet();
-    });
-    el.sheet.addEventListener('close', () => { ui.dragging = false; });    el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
-    el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
+    if (el.sheet) {
+      el.sheet.addEventListener('click', (e) => {
+        if (e.target === el.sheet) closeSheet();
+      });
+      el.sheet.addEventListener('close', () => { ui.dragging = false; });
+    }
+    if (el.confirmDlg) el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
+    if (el.shortcutsDlg) el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
     if (el.sourcesDlg) el.sourcesDlg.addEventListener('click', (e) => { if (e.target === el.sourcesDlg) el.sourcesDlg.close(); });
-    el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
+    if (el.newPlDlg) el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
 
     bus.addEventListener('state', () => { refreshTransport(); renderView(); renderNowPanel(); });
     bus.addEventListener('tick', (e) => {
@@ -8692,8 +9250,15 @@ window.NG = (function () {
     openTrackPage, renderTrackPage,
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
-    openAlbumPage, renderAlbumPage
+    openAlbumPage, renderAlbumPage,
+    runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
+  if (window.NG) {
+    Object.assign(window.NG, {
+      ui,
+      runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
+    });
+  }
 })();
 </script>
 </body>

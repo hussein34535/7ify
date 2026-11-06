@@ -5,7 +5,9 @@ import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const appPath = resolve(here, '..', '..', 'src', 'app.js');
+const uiPath = resolve(here, '..', '..', 'src', 'ui.js');
 const appCode = readFileSync(appPath, 'utf8');
+const uiCode = readFileSync(uiPath, 'utf8');
 
 export function loadAppInstance(initialStorage = {}, options = {}) {
   const store = new Map(Object.entries(initialStorage));
@@ -75,6 +77,14 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
   const context = {
     window: windowObj,
     document: {
+      readyState: options.readyState || 'loading',
+      documentElement: {
+        setAttribute: () => {},
+        getAttribute: () => null,
+        removeAttribute: () => {},
+        style: { setProperty: () => {}, getPropertyValue: () => '' },
+        classList: { add: () => {}, remove: () => {}, toggle: () => {}, contains: () => false }
+      },
       createElement: (tag) => {
         if (tag === 'audio') return new MockAudio();
         return {
@@ -85,9 +95,16 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
       },
       head: { appendChild: () => {}, removeChild: () => {} },
       body: { appendChild: () => {}, removeChild: () => {} },
-      getElementById: (id) => null,
-      querySelector: (sel) => null,
-      querySelectorAll: (sel) => [],
+      getElementById: (id) => (options.elements && options.elements[id]) || null,
+      querySelector: (sel) => {
+        if (!options.elements) return null;
+        const key = sel.replace(/^[#.]/, '');
+        return options.elements[key] || options.elements[sel] || null;
+      },
+      querySelectorAll: (sel) => {
+        if (options.querySelectorAll) return options.querySelectorAll(sel);
+        return [];
+      },
       addEventListener: (ev, fn) => {
         if (!listeners.has(ev)) listeners.set(ev, []);
         listeners.get(ev).push(fn);
@@ -100,6 +117,8 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
     localStorage,
     sessionStorage,
     crypto: globalThis.crypto,
+    AbortController: globalThis.AbortController,
+    AbortSignal: globalThis.AbortSignal,
     btoa: globalThis.btoa,
     atob: globalThis.atob,
     TextEncoder: globalThis.TextEncoder,
@@ -125,6 +144,9 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
 
   vm.createContext(context);
   vm.runInContext(appCode, context);
+  if (options.loadUI) {
+    try { vm.runInContext(uiCode, context); } catch (e) {}
+  }
   const NG = context.window.NG;
   return { NG, state: NG.state, TRACKS: NG.TRACKS, localStorage, context };
 }

@@ -35,16 +35,28 @@ window.NG = (function () {
   const uid = (p) => p + '-' + Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 6);
 
   const AR_MARKS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g;
-  const norm = (s) => String(s == null ? '' : s).toLowerCase()
-    .replace(AR_MARKS, '')
-    .replace(/[\u0623\u0625\u0622\u0671]/g, '\u0627')
-    .replace(/\u0649/g, '\u064A')
-    .replace(/\u0629/g, '\u0647')
-    .replace(/\u0624/g, '\u0648')
-    .replace(/\u0626/g, '\u064A')
-    .replace(/[-–—_.,:;!؟?()[\]{}/\\|#@*&^%$+~`"']/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+
+  function normalizeSearchText(value) {
+    return String(value ?? '')
+      .normalize('NFKD')
+      .replace(AR_MARKS, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/ئ/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function tokenize(value) {
+    return normalizeSearchText(value).split(' ').filter(Boolean);
+  }
+
+  const norm = normalizeSearchText;
 
   const clampText = (s, n) => {
     const t = String(s || '').trim();
@@ -925,82 +937,142 @@ window.NG = (function () {
     });
   }
 
+  function includesAllTokens(queryTokens, fields) {
+    const fieldTokens = new Set(fields.flatMap(tokenize));
+    return queryTokens.every(token => fieldTokens.has(token));
+  }
+
+  function levenshteinDistance(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      let diagonal = previous[0];
+      previous[0] = i;
+      for (let j = 1; j <= b.length; j++) {
+        const old = previous[j];
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        previous[j] = Math.min(
+          previous[j] + 1,
+          previous[j - 1] + 1,
+          diagonal + cost
+        );
+        diagonal = old;
+      }
+    }
+    return previous[b.length];
+  }
+
+  function fuzzyTokenMatch(queryToken, candidateTokens) {
+    if (queryToken.length < 4) return false;
+    return candidateTokens.some(candidate => {
+      if (candidate.length < 4) return false;
+      const maxDistance = queryToken.length >= 5 ? 2 : 1;
+      return levenshteinDistance(queryToken, candidate) <= maxDistance;
+    });
+  }
+
+  function scoreTrack(tr, query) {
+    const q = normalizeSearchText(query);
+    const queryTokens = tokenize(q);
+    if (!q || !queryTokens.length) return 0;
+
+    const titleAr = normalizeSearchText(tr.title?.ar || '');
+    const titleEn = normalizeSearchText(tr.title?.en || '');
+    const title = normalizeSearchText([tr.title?.ar, tr.title?.en, tr.title].filter(Boolean).join(' '));
+
+    const artistAr = normalizeSearchText(tr.artist?.ar || '');
+    const artistEn = normalizeSearchText(tr.artist?.en || '');
+    const artist = normalizeSearchText([tr.artist?.ar, tr.artist?.en, tr.artist].filter(Boolean).join(' '));
+
+    const albumAr = normalizeSearchText(tr.album?.ar || '');
+    const albumEn = normalizeSearchText(tr.album?.en || '');
+    const album = normalizeSearchText([tr.album?.ar, tr.album?.en, tr.album].filter(Boolean).join(' '));
+
+    const titleTokens = tokenize(title);
+    const artistTokens = tokenize(artist);
+    const albumTokens = tokenize(album);
+    const allMetadata = [title, artist, album].join(' ');
+    const metadataTokens = tokenize(allMetadata);
+
+    let score = 0;
+
+    // Strict prefix matching for 1-2 character queries:
+    if (q.length <= 2) {
+      const matchPrefix = (tokens) => tokens.some((tok) => {
+        if (tok.startsWith(q)) return true;
+        if (tok.startsWith('ال') && tok.length > 2 && tok.slice(2).startsWith(q)) return true;
+        return false;
+      });
+
+      if (titleAr.startsWith(q) || titleEn.startsWith(q)) score += 2000;
+      else if (matchPrefix(titleTokens)) score += 1200;
+
+      if (artistAr.startsWith(q) || artistEn.startsWith(q)) score += 1500;
+      else if (matchPrefix(artistTokens)) score += 1000;
+
+      return score;
+    }
+
+    // Direct exact or prefix matches
+    if (title === q || titleAr === q || titleEn === q) score += 2500;
+    else if (titleAr.startsWith(q) || titleEn.startsWith(q)) score += 1500;
+    else if (titleAr.includes(q) || titleEn.includes(q) || title.includes(q)) score += 1000;
+
+    if (artist === q || artistAr === q || artistEn === q) score += 2000;
+    else if (artistAr.startsWith(q) || artistEn.startsWith(q)) score += 1300;
+    else if (artistAr.includes(q) || artistEn.includes(q) || artist.includes(q)) score += 800;
+
+    if (album === q || albumAr === q || albumEn === q) score += 450;
+    else if (albumAr.startsWith(q) || albumEn.startsWith(q)) score += 350;
+    else if (album.includes(q)) score += 300;
+
+    // Multi-token queries (>= 2 tokens): require strict coverage
+    if (queryTokens.length >= 2) {
+      const hitCount = queryTokens.filter(t => metadataTokens.some(m => m === t || m.startsWith(t) || (t.length >= 4 && levenshteinDistance(t, m) <= 1))).length;
+      const minHits = Math.ceil(queryTokens.length * 0.75);
+
+      if (hitCount === queryTokens.length) {
+        score += 500;
+      } else if (hitCount >= minHits) {
+        score += hitCount * 100;
+      }
+    } else {
+      // Single token query: token prefix or typo match on title/artist
+      if (titleTokens.some(t => t.startsWith(q))) score += 750;
+      else if (artistTokens.some(a => a.startsWith(q))) score += 600;
+      else if (queryTokens.some(token => fuzzyTokenMatch(token, titleTokens.concat(artistTokens)))) {
+        score += 150;
+      }
+    }
+
+    // Lyrics matching
+    const hay = getTrackHaystack(tr);
+    if (hay.includes(q)) {
+      score += 180;
+      const ml = findMatchedLyric(tr, query);
+      if (ml) tr._matchedLyric = ml;
+    } else if (includesAllTokens(queryTokens, [hay])) {
+      score += 100;
+      const ml = findMatchedLyric(tr, query);
+      if (ml) tr._matchedLyric = ml;
+    }
+
+    return score;
+  }
+
   function searchTracks(q) {
     const query = String(q || '').trim();
     if (!query) return [];
-    const nq = norm(query);
-    const qWords = nq.split(' ').filter(Boolean);
-    if (!qWords.length) return [];
-
-    const isShort = nq.length <= 2;
     const scored = [];
 
     for (const tr of TRACKS) {
       tr._matchedLyric = null;
-      let score = 0;
-      const titleAr = norm(tr.title.ar);
-      const titleEn = norm(tr.title.en);
-      const artistAr = norm(tr.artist.ar);
-      const artistEn = norm(tr.artist.en);
-
-      if (isShort) {
-        // Strict prefix matching for 1-2 character queries:
-        // ONLY match if Title or Artist has a word starting with the query (NO lyrics search!)
-        const tTokens = (titleAr + ' ' + titleEn).split(' ').filter(Boolean);
-        const aTokens = (artistAr + ' ' + artistEn).split(' ').filter(Boolean);
-        const matchPrefix = (tokens) => tokens.some((tok) => {
-          if (tok.startsWith(nq)) return true;
-          if (tok.startsWith('ال') && tok.length > 2 && tok.slice(2).startsWith(nq)) return true;
-          return false;
-        });
-
-        if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 2000;
-        else if (matchPrefix(tTokens)) score += 1200;
-
-        if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1500;
-        else if (matchPrefix(aTokens)) score += 1000;
-      } else {
-        // Full multi-character search
-        if (titleAr === nq || titleEn === nq) score += 2500;
-        else if (titleAr.startsWith(nq) || titleEn.startsWith(nq)) score += 1500;
-        else if (titleAr.includes(nq) || titleEn.includes(nq)) score += 1000;
-
-        if (artistAr === nq || artistEn === nq) score += 2000;
-        else if (artistAr.startsWith(nq) || artistEn.startsWith(nq)) score += 1300;
-        else if (artistAr.includes(nq) || artistEn.includes(nq)) score += 800;
-
-        const hay = getTrackHaystack(tr);
-
-        // Phrase match in haystack (including lyrics)
-        if (hay.includes(nq)) {
-          score += 650;
-          const ml = findMatchedLyric(tr, query);
-          if (ml) tr._matchedLyric = ml;
-        }
-
-        // Multi-word stem matching for natural phrases
-        if (qWords.length >= 2) {
-          let hitCount = 0;
-          const hayTokens = hay.split(' ').filter(Boolean);
-          for (const w of qWords) {
-            const stems = arStems(w);
-            if (stems.some((st) => hayTokens.some((tok) => tok === st || tok.startsWith(st) || tok.endsWith(st)))) {
-              hitCount++;
-            }
-          }
-
-          const minHits = Math.ceil(qWords.length * 0.75);
-          if (hitCount === qWords.length) {
-            score += 600 + (hitCount * 50);
-            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
-          } else if (hitCount >= minHits) {
-            score += hitCount * 60;
-            if (!tr._matchedLyric) tr._matchedLyric = findMatchedLyric(tr, query);
-          }
-        }
+      const score = scoreTrack(tr, query);
+      if (score > 0) {
+        scored.push({ tr, score });
       }
-
-      if (score > 0) scored.push({ tr, score });
     }
 
     scored.sort((a, b) => b.score - a.score);
@@ -1009,9 +1081,38 @@ window.NG = (function () {
 
   function searchArtists(q) {
     if (!q) return [];
+    const nq = normalizeSearchText(q);
+    if (!nq) return [];
+    const qTokens = tokenize(nq);
     return ARTISTS.filter((a) => {
-      const hay = norm(a.name.ar + ' ' + a.name.en + ' ' + a.sub.ar + ' ' + a.sub.en);
-      return norm(q).split(' ').filter(Boolean).some((w) => w.length > 1 && hay.indexOf(w) !== -1);
+      const nameAr = normalizeSearchText(a.name?.ar || '');
+      const nameEn = normalizeSearchText(a.name?.en || '');
+      const subAr = normalizeSearchText(a.sub?.ar || '');
+      const subEn = normalizeSearchText(a.sub?.en || '');
+      const hay = `${nameAr} ${nameEn} ${subAr} ${subEn}`;
+      if (nameAr === nq || nameEn === nq) return true;
+      if (nameAr.startsWith(nq) || nameEn.startsWith(nq)) return true;
+      if (hay.includes(nq)) return true;
+      return qTokens.length > 0 && qTokens.every(tok => hay.includes(tok));
+    });
+  }
+
+  function searchAlbums(q) {
+    if (!q) return [];
+    const nq = normalizeSearchText(q);
+    if (!nq) return [];
+    const allAlbums = getAlbums();
+    const qTokens = tokenize(nq);
+    return allAlbums.filter(a => {
+      const nameAr = normalizeSearchText(a.name?.ar || '');
+      const nameEn = normalizeSearchText(a.name?.en || '');
+      const artAr = normalizeSearchText(a.artist?.ar || '');
+      const artEn = normalizeSearchText(a.artist?.en || '');
+      const hay = `${nameAr} ${nameEn} ${artAr} ${artEn}`;
+      if (nameAr === nq || nameEn === nq) return true;
+      if (nameAr.startsWith(nq) || nameEn.startsWith(nq)) return true;
+      if (hay.includes(nq)) return true;
+      return qTokens.length > 0 && qTokens.every(tok => hay.includes(tok));
     });
   }
 
@@ -2879,7 +2980,7 @@ window.NG = (function () {
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
     state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack, getPlayableDuration,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
-    trackMatches, findMatchedLyric, searchTracks, searchArtists, searchOnline, fetchArtistTracks, fetchLyricsOnline,
+    normalizeSearchText, tokenize, levenshteinDistance, scoreTrack, trackMatches, findMatchedLyric, searchTracks, searchArtists, searchAlbums, searchOnline, fetchArtistTracks, fetchLyricsOnline,
     coverHTML, artStyle, paintCover,
     PLAYBACK_MODES, ENGINE_STATES, musicProviders, ytDriver, loadYouTubeIframeAPI: () => ytDriver.loadAPI(),
     loadSpotifySDK, initializeSpotifyPlayer, playSpotifyTrack, spotifySeek, spotifyPause, spotifyResume, resolvePlaybackSource,
