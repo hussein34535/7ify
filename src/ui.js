@@ -6,24 +6,30 @@
 
   const NG = window.NG;
   const {
-    $, $$, esc, fmt, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save
+    $, $$, esc, fmt, t, state, getTrack, byLang, coverHTML, paintCover, clamp, clampText, bus, engine, save,
+    getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks
   } = NG;
   const TRACKS = NG.TRACKS;
 
   const ui = {
     view: 'home',
     viewTrackId: null,
+    activePlaylistId: null,
+    activeArtistName: null,
+    activeAlbumName: null,
     hist: ['home'],
     histIdx: 0,
     genre: 'all',
     libTab: 'playlists',
+    libFilter: '',
+    libView: 'grid',
     q: '',
     isSearchingOnline: false,
     recentSearches: [],
     npTab: 'now',
     sheetTab: 'player',
     dragging: false,
-    ctx: { home: [], search: [], lib: [] },
+    ctx: { home: [], search: [], lib: [], playlist: [], artist: [], album: [] },
     activePl: null,
     following: new Set(['amrDiab'])
   };
@@ -36,6 +42,9 @@
     library: $('#view-library'),
     studio: $('#view-studio'),
     track: $('#view-track'),
+    playlist: $('#view-playlist'),
+    artist: $('#view-artist'),
+    album: $('#view-album'),
     scroll: $('#scroll'),
     np: $('#npBody'),
     npPanel: $('#nowPanel'),
@@ -220,7 +229,8 @@
   }
 
   function artistCard(a) {
-    return '<button class="artist" data-action="play" data-id="' + a.track + '">' +
+    const artName = a.name?.ar || a.name?.en || '';
+    return '<button class="artist" data-action="artist" data-artist="' + esc(artName) + '">' +
       artistAvatar(a) +
       '<span class="artist-name clamp-1">' + L(a.name) + '</span>' +
       '<span class="artist-sub clamp-1">' + L(a.sub) + '</span></button>';
@@ -246,8 +256,8 @@
       '<div class="hero-content">' +
       '<span class="hero-tag">' + ic('sparkle') + ' ' + esc(featured.source === 'file' ? t('player.local') : t('hero.badge')) + ' · ' + featured.year + '</span>' +
       '<h1 id="heroTitle">' + L(featured.title) + '</h1>' +
-      '<div class="hero-meta"><span class="hero-artist">' + L(featured.artist) + '</span>' +
-      '<span class="sep hero-sep-1"></span><span class="hero-album">' + esc(t('hero.album')) + ' · ' + L(featured.album) + '</span>' +
+      '<div class="hero-meta"><span class="hero-artist" data-action="artist" data-artist="' + esc(featured.artist?.ar || featured.artist?.en || '') + '" style="cursor:pointer">' + L(featured.artist) + '</span>' +
+      '<span class="sep hero-sep-1"></span><span class="hero-album" data-action="album" data-album="' + esc(featured.album?.ar || featured.album?.en || '') + '" style="cursor:pointer">' + esc(t('hero.album')) + ' · ' + L(featured.album) + '</span>' +
       '<span class="sep hero-sep-2"></span><span class="hero-genre">' + esc(NG.genreLabel(featured.genre)) + '</span></div>' +
       '<div class="hero-cta">' +
       '<button class="hero-play" data-action="play" data-id="' + featured.id + '" data-ctx="home">' +
@@ -276,7 +286,7 @@
           const current = ui.activePl === pl.id;
           return '<button class="card' + (current ? ' is-current' : '') + '" data-action="playlist" data-id="' + pl.id + '">' +
             '<span class="card-art">' + playlistCover(pl) +
-            '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></span>' +
+            '<span class="fab play-btn" data-action="play-playlist" data-id="' + pl.id + '" aria-hidden="true">' + ic('play') + '</span></span>' +
             '<span class="card-title clamp-1">' + L(pl.name) + '</span>' +
             '<span class="card-sub clamp-2">' + L(pl.sub) + ' · ' + esc(countLabel(count, 'songs')) + '</span></button>';
         }).join('') + '</div></section>';
@@ -287,6 +297,30 @@
 
     html += '<section class="section">' + sectionHead(t('sec.artists'), t('sec.artistsSub'), 'search') +
       '<div class="artist-grid">' + NG.ARTISTS.slice(0, 6).map(artistCard).join('') + '</div></section>';
+
+    const albums = getAlbums ? getAlbums().slice(0, 6) : [];
+    if (albums.length) {
+      html += '<section class="section">' + sectionHead(t('sec.featuredAlbums') || 'أحدث الألبومات', '') +
+        '<div class="shelf">' + albums.map((alb) =>
+          '<button class="card" data-action="album" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '">' +
+          '<span class="card-art">' + coverHTML(alb) +
+          '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
+          '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
+          '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span></button>'
+        ).join('') + '</div></section>';
+    }
+
+    const arabicTracks = TRACKS.filter((tr) => tr.genre === 'arabic').slice(0, 6);
+    if (arabicTracks.length) {
+      html += '<section class="section">' + sectionHead(t('sec.arabicMusic') || 'الموسيقى العربية', '') +
+        '<div class="rows">' + arabicTracks.map((tr, i) => rowHTML(tr, i, 'home')).join('') + '</div></section>';
+    }
+
+    const intlTracks = TRACKS.filter((tr) => tr.genre !== 'arabic').slice(0, 6);
+    if (intlTracks.length) {
+      html += '<section class="section">' + sectionHead(t('sec.intlMusic') || 'الموسيقى العالمية', '') +
+        '<div class="rows">' + intlTracks.map((tr, i) => rowHTML(tr, i, 'home')).join('') + '</div></section>';
+    }
 
     el.home.innerHTML = html;
   }
@@ -437,9 +471,14 @@
   /* ---------- library ----------------------------------------------------- */
 
   function libTabs() {
-    const tabs = [['playlists', 'library.tabPlaylists'], ['liked', 'library.tabLiked'], ['artists', 'library.tabArtists']];
+    const tabs = [
+      ['playlists', 'library.tabPlaylists'],
+      ['liked', 'library.tabLiked'],
+      ['artists', 'library.tabArtists'],
+      ['albums', 'library.tabAlbums']
+    ];
     return '<div class="lib-tabs" role="tablist" aria-label="' + esc(t('library.title')) + '">' + tabs.map(([id, key]) =>
-      '<button class="lib-tab" role="tab" data-action="library-tab" data-tab="' + id + '" aria-selected="' + (ui.libTab === id) + '">' + esc(t(key)) + '</button>'
+      '<button class="lib-tab' + (ui.libTab === id ? ' is-active' : '') + '" role="tab" data-action="library-tab" data-tab="' + id + '" aria-selected="' + (ui.libTab === id) + '">' + esc(t(key)) + '</button>'
     ).join('') + '</div>';
   }
 
@@ -475,7 +514,7 @@
           const items = playlistTracks(pl);
           return '<button class="card' + (ui.activePl === pl.id ? ' is-current' : '') + '" data-action="playlist" data-id="' + pl.id + '">' +
             '<span class="card-art">' + playlistCover(pl) +
-            '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></span>' +
+            '<span class="fab play-btn" data-action="play-playlist" data-id="' + pl.id + '" aria-hidden="true">' + ic('play') + '</span></span>' +
             '<span class="card-title clamp-1">' + L(pl.name) + '</span>' +
             '<span class="card-sub clamp-1">' + L(pl.sub) + '</span>' +
             '<span class="card-sub">' + esc(countLabel(items.length, 'songs')) + '</span></button>';
@@ -486,6 +525,20 @@
       else {
         ui.ctx.lib = favs.map((tr) => tr.id);
         html += '<div class="rows">' + favs.map((tr, i) => rowHTML(tr, i, 'lib')).join('') + '</div>';
+      }
+    } else if (ui.libTab === 'albums') {
+      const albums = getAlbums ? getAlbums() : [];
+      if (!albums.length) {
+        html += emptyState('disc', 'لا توجد ألبومات', 'استكشف ألبومات الكتالوج أو أضف ملفاتك المحلية.');
+      } else {
+        html += '<div class="card-grid">' + albums.map((alb) =>
+          '<button class="card" data-action="album" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '">' +
+            '<span class="card-art">' + coverHTML(alb) +
+            '<span class="fab play-btn" data-action="play-album-all" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '" aria-hidden="true">' + ic('play') + '</span></span>' +
+            '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
+            '<span class="card-sub clamp-1">' + L(alb.artist) + ' · ' + (alb.year || 2024) + '</span>' +
+            '<span class="card-sub">' + esc(countLabel(alb.tracks.length, 'songs')) + '</span></button>'
+        ).join('') + '</div>';
       }
     } else {
       html += '<div class="artist-grid">' + NG.ARTISTS.map(artistCard).join('') + '</div>';
@@ -841,6 +894,260 @@
     updateLyricHighlight(engine.getPosition());
   }
 
+  function fmtDurationTotal(totalSec) {
+    const s = Math.round(Number(totalSec) || 0);
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    if (m >= 60) {
+      const h = Math.floor(m / 60);
+      const remM = m % 60;
+      return state.lang === 'ar' ? (h + ' ساعة و ' + remM + ' دقيقة') : (h + ' hr ' + remM + ' min');
+    }
+    return state.lang === 'ar' ? (m + ' دقيقة و ' + rem + ' ثانية') : (m + ' min ' + rem + ' sec');
+  }
+
+  function openPlaylistPage(plId) {
+    ui.activePlaylistId = plId;
+    ui.activePl = plId;
+    setView('playlist');
+  }
+
+  function renderPlaylistPage() {
+    const plId = ui.activePlaylistId || ui.activePl || (state.playlists[0] && state.playlists[0].id);
+    const pl = state.playlists.find((p) => p.id === plId);
+    if (!pl) {
+      if (el.playlist) el.playlist.innerHTML = emptyState('music', t('library.emptyPl'), t('library.emptyPlBody'));
+      return;
+    }
+    const tracks = playlistTracks(pl);
+    ui.ctx.playlist = tracks.map((tr) => tr.id);
+    const totalSec = tracks.reduce((acc, tr) => acc + (tr.duration || 30), 0);
+    const durationText = fmtDurationTotal(totalSec);
+    const isPlaying = tracks.some((tr) => tr.id === state.trackId && engine.playing);
+    const isCustom = !NG.SEED_PLAYLISTS.some((p) => p.id === pl.id);
+
+    let html = '<div class="sp-playlist-page">' +
+      '<div class="pl-hero">' +
+        '<div class="pl-hero-art">' + playlistCover(pl, 'pl-hero-cover') + '</div>' +
+        '<div class="pl-hero-meta">' +
+          '<div class="pl-kicker">' + esc(t('page.playlist') || 'قائمة تشغيل') + '</div>' +
+          '<h1 class="pl-title clamp-2">' + L(pl.name) + '</h1>' +
+          (pl.sub ? ('<p class="pl-desc clamp-2">' + L(pl.sub) + '</p>') : '') +
+          '<div class="pl-info">' +
+            '<span class="pl-owner"><b>7ify</b></span>' +
+            '<span class="pl-sep">•</span>' +
+            '<span class="pl-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
+            (tracks.length ? ('<span class="pl-sep">•</span><span class="pl-dur num">' + esc(durationText) + '</span>') : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pl-action-bar">' +
+        '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="play-playlist" data-id="' + pl.id + '" aria-label="' + esc(t('library.playAll')) + '">' +
+          '<svg class="ic" aria-hidden="true"><use href="#i-' + (isPlaying ? 'pause' : 'play') + '"></use></svg>' +
+        '</button>' +
+        '<button class="sp-icon-btn ' + (state.shuffle ? 'is-active' : '') + '" data-action="shuffle-playlist" data-id="' + pl.id + '" title="' + esc(t('player.shuffle')) + '">' +
+          ic('shuffle') +
+        '</button>' +
+        (isCustom ? (
+          '<button class="sp-icon-btn is-danger" data-action="delete-playlist" data-id="' + pl.id + '" title="' + esc(t('playlist.delete') || 'حذف القائمة') + '">' +
+            ic('trash') +
+          '</button>'
+        ) : '') +
+      '</div>';
+
+    if (!tracks.length) {
+      html += emptyState('music', t('toast.playlistEmpty'), 'أضف أغانٍ إلى هذه القائمة من خلال زر + بجوار أي أغنية.');
+    } else {
+      html += '<div class="pl-table">' +
+        '<div class="pl-th">' +
+          '<span class="pl-th-idx">#</span>' +
+          '<span class="pl-th-title">العنوان</span>' +
+          '<span class="pl-th-album">الألبوم</span>' +
+          '<span class="pl-th-dur">' + ic('clock') + '</span>' +
+          '<span class="pl-th-actions"></span>' +
+        '</div>' +
+        '<div class="pl-rows">' +
+          tracks.map((tr, i) => {
+            const current = state.trackId === tr.id;
+            const playing = current && engine.playing;
+            const fav = isFav(tr.id);
+            return '<div class="pl-row' + (current ? ' is-current' : '') + '">' +
+              '<button class="pl-row-hit" data-action="play" data-id="' + tr.id + '" data-ctx="playlist">' +
+                '<span class="pl-row-idx">' + (playing ? eq() : (i + 1)) + '</span>' +
+                '<span class="pl-row-art">' + trackArt(tr) + '</span>' +
+                '<span class="pl-row-main">' +
+                  '<span class="pl-row-title clamp-1">' + L(tr.title) + '</span>' +
+                  '<span class="pl-row-artist clamp-1" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' + L(tr.artist) + '</span>' +
+                '</span>' +
+                '<span class="pl-row-album clamp-1" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '">' + L(tr.album) + '</span>' +
+                '<span class="pl-row-dur num">' + fmt(tr.duration) + '</span>' +
+              '</button>' +
+              '<div class="pl-row-tools">' +
+                '<button class="row-like ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '">' + likeIcon(fav) + '</button>' +
+                (isCustom ? ('<button class="pl-remove-btn" data-action="remove-from-playlist" data-pl="' + pl.id + '" data-id="' + tr.id + '" title="إزالة من القائمة">' + ic('trash') + '</button>') : '') +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    }
+
+    html += '</div>';
+    if (el.playlist) el.playlist.innerHTML = html;
+  }
+
+  function openArtistPage(artistName) {
+    if (!artistName) return;
+    ui.activeArtistName = artistName;
+    setView('artist');
+  }
+
+  function renderArtistPage() {
+    const artistName = ui.activeArtistName || (TRACKS[0] && (TRACKS[0].artist?.ar || TRACKS[0].artist?.en)) || 'عمرو دياب';
+    const tracks = NG.getArtistTracks(artistName);
+    const albums = NG.getArtistAlbums(artistName);
+    ui.ctx.artist = tracks.map((tr) => tr.id);
+    const artistKey = 'artist:' + artistName.split('&')[0].trim();
+    const isFollowing = ui.following.has(artistKey);
+    const t0 = tracks[0] || TRACKS[0];
+    const colors = t0.colors || ['#121212', '#282828', '#1ED760'];
+    const accentCol = colors[1] || colors[0] || '#1ED760';
+    const bgCol = colors[0] || '#121212';
+    const isPlaying = tracks.some((tr) => tr.id === state.trackId && engine.playing);
+
+    let html = '<div class="sp-artist-page" style="--sp-accent:' + accentCol + ';--sp-bg:' + bgCol + ';">' +
+      '<div class="artist-hero">' +
+        '<div class="artist-hero-glow" style="background: radial-gradient(circle at 20% 40%, ' + accentCol + ' 0%, transparent 70%);" aria-hidden="true"></div>' +
+        '<div class="artist-hero-wrap">' +
+          '<div class="artist-avatar-wrap">' +
+            artistAvatar({ name: { ar: artistName, en: artistName }, track: t0.id }) +
+          '</div>' +
+          '<div class="artist-hero-meta">' +
+            '<div class="sp-verified-tag">' +
+              '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
+              '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
+            '</div>' +
+            '<h1 class="artist-hero-name clamp-1">' + esc(artistName) + '</h1>' +
+            '<div class="artist-hero-subline">' +
+              '<span class="artist-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
+              (albums.length ? ('<span class="sp-sep">•</span><span class="num">' + esc(countLabel(albums.length, 'albums')) + '</span>') : '') +
+              '<span class="sp-sep">•</span><span class="sp-artist-listeners">' + esc(t('about.sourceApple')) + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="artist-action-bar">' +
+        '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="play-artist-all" aria-label="' + esc(t('library.playAll')) + '">' +
+          '<svg class="ic" aria-hidden="true"><use href="#i-' + (isPlaying ? 'pause' : 'play') + '"></use></svg>' +
+        '</button>' +
+        '<button class="sp-follow-btn ' + (isFollowing ? 'is-following' : '') + '" data-action="follow" data-id="' + esc(artistKey) + '" aria-pressed="' + isFollowing + '">' +
+          esc(t(isFollowing ? 'artist.following' : 'artist.follow')) +
+        '</button>' +
+      '</div>' +
+      '<section class="section">' +
+        sectionHead(t('sec.popular') || 'أشهر الأغاني', '') +
+        '<div class="rows">' +
+          tracks.slice(0, 10).map((tr, i) => rowHTML(tr, i, 'artist')).join('') +
+        '</div>' +
+      '</section>';
+
+    if (albums.length) {
+      html += '<section class="section">' +
+        sectionHead(t('sec.albums') || 'الألبومات والإصدارات', '') +
+        '<div class="card-grid">' +
+          albums.map((alb) =>
+            '<button class="card" data-action="album" data-album="' + esc(alb.name?.ar || alb.name?.en || '') + '">' +
+              '<span class="card-art">' + coverHTML(alb) +
+              '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></span>' +
+              '<span class="card-title clamp-1">' + L(alb.name) + '</span>' +
+              '<span class="card-sub clamp-1">' + (alb.year || 2024) + ' · ' + esc(countLabel(alb.tracks.length, 'songs')) + '</span>' +
+            '</button>'
+          ).join('') +
+        '</div>' +
+      '</section>';
+    }
+
+    html += '</div>';
+    if (el.artist) el.artist.innerHTML = html;
+  }
+
+  function openAlbumPage(albumName) {
+    if (!albumName) return;
+    ui.activeAlbumName = albumName;
+    setView('album');
+  }
+
+  function renderAlbumPage() {
+    const albumName = ui.activeAlbumName || (TRACKS[0] && (TRACKS[0].album?.ar || TRACKS[0].album?.en)) || 'تملي معاك';
+    const tracks = NG.getAlbumTracks(albumName);
+    const t0 = tracks[0] || TRACKS[0];
+    ui.ctx.album = tracks.map((tr) => tr.id);
+    const totalSec = tracks.reduce((acc, tr) => acc + (tr.duration || 30), 0);
+    const durationText = fmtDurationTotal(totalSec);
+    const isPlaying = tracks.some((tr) => tr.id === state.trackId && engine.playing);
+    const colors = t0.colors || ['#121212', '#282828', '#1ED760'];
+    const accentCol = colors[1] || colors[0] || '#1ED760';
+    const bgCol = colors[0] || '#121212';
+    const artistName = t0.artist ? (t0.artist.ar || t0.artist.en) : '';
+
+    let html = '<div class="sp-album-page" style="--sp-accent:' + accentCol + ';--sp-bg:' + bgCol + ';">' +
+      '<div class="pl-hero">' +
+        '<div class="pl-hero-art">' + trackArt(t0, 'pl-hero-cover', true) + '</div>' +
+        '<div class="pl-hero-meta">' +
+          '<div class="pl-kicker">' + esc(t('page.album') || 'ألبوم') + '</div>' +
+          '<h1 class="pl-title clamp-2">' + L(t0.album) + '</h1>' +
+          '<div class="pl-info">' +
+            '<button class="sp-artist-chip" data-action="artist" data-artist="' + esc(artistName) + '">' +
+              artistAvatar({ name: t0.artist, track: t0.id }) +
+              '<span class="sp-artist-link">' + L(t0.artist) + '</span>' +
+            '</button>' +
+            '<span class="pl-sep">•</span>' +
+            '<span class="num">' + (t0.year || 2024) + '</span>' +
+            '<span class="pl-sep">•</span>' +
+            '<span class="pl-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
+            '<span class="pl-sep">•</span>' +
+            '<span class="pl-dur num">' + esc(durationText) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pl-action-bar">' +
+        '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="play-album-all" aria-label="' + esc(t('library.playAll')) + '">' +
+          '<svg class="ic" aria-hidden="true"><use href="#i-' + (isPlaying ? 'pause' : 'play') + '"></use></svg>' +
+        '</button>' +
+      '</div>' +
+      '<div class="pl-table">' +
+        '<div class="pl-th">' +
+          '<span class="pl-th-idx">#</span>' +
+          '<span class="pl-th-title">العنوان</span>' +
+          '<span class="pl-th-dur">' + ic('clock') + '</span>' +
+          '<span class="pl-th-actions"></span>' +
+        '</div>' +
+        '<div class="pl-rows">' +
+          tracks.map((tr, i) => {
+            const current = state.trackId === tr.id;
+            const playing = current && engine.playing;
+            const fav = isFav(tr.id);
+            return '<div class="pl-row' + (current ? ' is-current' : '') + '">' +
+              '<button class="pl-row-hit" data-action="play" data-id="' + tr.id + '" data-ctx="album">' +
+                '<span class="pl-row-idx">' + (playing ? eq() : (i + 1)) + '</span>' +
+                '<span class="pl-row-main" style="grid-column:2/4">' +
+                  '<span class="pl-row-title clamp-1">' + L(tr.title) + '</span>' +
+                  '<span class="pl-row-artist clamp-1" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' + L(tr.artist) + '</span>' +
+                '</span>' +
+                '<span class="pl-row-dur num">' + fmt(tr.duration) + '</span>' +
+              '</button>' +
+              '<div class="pl-row-tools">' +
+                '<button class="row-like ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '">' + likeIcon(fav) + '</button>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    if (el.album) el.album.innerHTML = html;
+  }
+
   /* ---------- spotify track page ------------------------------------------ */
 
   const ARTIST_BIOS = {
@@ -1006,18 +1313,18 @@
           '<div class="sp-kicker">' + esc(t('track.kicker') || 'أغنية') + '</div>' +
           '<h1 class="sp-title clamp-2" title="' + L(tr.title) + '">' + L(tr.title) + '</h1>' +
           '<div class="sp-subline">' +
-            '<button class="sp-artist-chip" data-action="filter-artist" data-artist="' + esc(tr.artist.ar || tr.artist.en) + '">' +
+            '<button class="sp-artist-chip" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' +
               artistAvatar({ name: tr.artist, track: tr.id }) +
               '<span class="sp-artist-link">' + L(tr.artist) + '</span>' +
             '</button>' +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-album-text">' + L(tr.album) + '</span>' +
+            '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
             '<span class="sp-sep">•</span>' +
             '<span class="sp-year-text">' + (tr.year || 2024) + '</span>' +
             '<span class="sp-sep">•</span>' +
             '<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>' +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-streams-text num">' + getStreamsCount(tr) + ' ' + esc(t('track.streams') || 'استماع') + '</span>' +
+            '<span class="sp-streams-text num">' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة رسمية · Apple Music') + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1042,7 +1349,7 @@
       '<div class="sp-actions-right">' +
         '<span class="sp-badge-hq">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> ' +
-          '<span>HQ 320kbps Master Stream</span>' +
+          '<span>' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'معاينة صوتية ٣٠ ثانية · Apple Music') + '</span>' +
         '</span>' +
       '</div>' +
     '</div>';
@@ -1103,14 +1410,14 @@
             '</div>' +
             '<div class="sp-artist-header-info">' +
               '<div class="sp-artist-kicker-row">' +
-                '<span class="sp-artist-kicker">فنان</span>' +
+                '<span class="sp-artist-kicker">' + esc(t('page.artist') || 'فنان') + '</span>' +
                 '<div class="sp-verified-tag">' +
                   '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
                   '<span>' + esc(t('track.verified') || 'فنان موثق') + '</span>' +
                 '</div>' +
               '</div>' +
               '<h3 class="sp-artist-title">' + artistName + '</h3>' +
-              '<div class="sp-artist-listeners num">' + listenersCount + ' ' + esc(t('track.monthlyListeners') || 'مستمع شهرياً') + '</div>' +
+              '<div class="sp-artist-listeners num">' + (tr.source === 'file' ? 'ملف صوتي محلي' : 'كتالوج Apple Music الرسمي') + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="sp-artist-body">' +
@@ -1127,11 +1434,11 @@
             '<div class="sp-credit-row"><span>الفنان الرئيسي</span><b>' + artistName + '</b></div>' +
             '<div class="sp-credit-row"><span>الألبوم / الإصدار</span><b>' + L(tr.album) + '</b></div>' +
             '<div class="sp-credit-row"><span>سنة النشر</span><b>' + (tr.year || 2024) + '</b></div>' +
-            '<div class="sp-credit-row"><span>جودة البث</span><b class="badge-accent">Master 320kbps Lossless</b></div>' +
-            '<div class="sp-credit-row"><span>المصدر التقني</span><b>' + (tr.source === 'file' ? 'ملف محلي (Local Storage)' : (tr.ytId ? 'YouTube HQ Audio' : 'Apple Music Master')) + '</b></div>' +
+            '<div class="sp-credit-row"><span>نوع المحتوى</span><b class="badge-accent">' + (tr.source === 'file' ? 'ملف محلي من جهازك' : 'معاينة صوتية رسمية ٣٠ ثانية') + '</b></div>' +
+            '<div class="sp-credit-row"><span>المصدر التقني</span><b>' + (tr.source === 'file' ? 'ملف محلي (Local Audio)' : 'Apple Music CDN') + '</b></div>' +
           '</div>' +
           '<div class="sp-copyright-notice">' +
-            '© 2026 NAGHAM Records. All Rights Reserved. مرخص للاستماع التفاعلي الكامل.' +
+            (tr.source === 'file' ? 'ملف صوتي مخزن محليًا على هذا الجهاز.' : 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.') +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1156,11 +1463,14 @@
 
   function renderView() {
     const stageBar = $('.stage-bar');
-    if (stageBar) stageBar.hidden = ui.view === 'track';
+    if (stageBar) stageBar.hidden = ui.view === 'track' || ui.view === 'playlist' || ui.view === 'artist' || ui.view === 'album';
     if (ui.view === 'home') renderHome();
     else if (ui.view === 'search') renderSearch();
     else if (ui.view === 'library') renderLibrary();
     else if (ui.view === 'track') renderTrackPage();
+    else if (ui.view === 'playlist') renderPlaylistPage();
+    else if (ui.view === 'artist') renderArtistPage();
+    else if (ui.view === 'album') renderAlbumPage();
     else renderStudio();
     if (el.sheet.open) renderSheet();
   }
@@ -1201,7 +1511,7 @@
   }
 
   function setView(view, push) {
-    if (['home', 'search', 'library', 'studio', 'track'].indexOf(view) === -1) return;
+    if (['home', 'search', 'library', 'studio', 'track', 'playlist', 'artist', 'album'].indexOf(view) === -1) return;
     if (push !== false && ui.hist[ui.histIdx] !== view) {
       ui.hist = ui.hist.slice(0, ui.histIdx + 1);
       ui.hist.push(view);
@@ -1440,7 +1750,47 @@
         if (ui.histIdx < ui.hist.length - 1) { ui.histIdx += 1; setView(ui.hist[ui.histIdx], false); }
         break;
       case 'play': playTrack(node.dataset.id, ui.ctx[node.dataset.ctx]); break;
-      case 'playlist': playPlaylist(node.dataset.id); break;
+      case 'playlist': openPlaylistPage(node.dataset.id); break;
+      case 'play-playlist': playPlaylist(node.dataset.id); break;
+      case 'shuffle-playlist': {
+        state.shuffle = true;
+        refreshTransport();
+        playPlaylist(node.dataset.id);
+        break;
+      }
+      case 'artist': openArtistPage(node.dataset.artist); break;
+      case 'play-artist-all': {
+        const trs = NG.getArtistTracks(ui.activeArtistName);
+        if (trs.length) playTrack(trs[0].id, trs.map((t) => t.id));
+        break;
+      }
+      case 'album': openAlbumPage(node.dataset.album); break;
+      case 'play-album-all': {
+        const trs = NG.getAlbumTracks(ui.activeAlbumName);
+        if (trs.length) playTrack(trs[0].id, trs.map((t) => t.id));
+        break;
+      }
+      case 'delete-playlist': {
+        const id = node.dataset.id;
+        state.playlists = state.playlists.filter((p) => p.id !== id);
+        save();
+        renderRail();
+        setView('library');
+        toast(t('toast.resetDone'));
+        break;
+      }
+      case 'remove-from-playlist': {
+        const plId = node.dataset.pl;
+        const trId = node.dataset.id;
+        const pl = state.playlists.find((p) => p.id === plId);
+        if (pl && pl.tracks) {
+          pl.tracks = pl.tracks.filter((x) => x !== trId);
+          save();
+          renderPlaylistPage();
+          renderRail();
+        }
+        break;
+      }
       case 'play-favorites': {
         const ids = state.favorites.filter((id) => getTrack(id));
         if (!ids.length) { toast(t('library.emptyLiked')); break; }
@@ -1582,6 +1932,7 @@
         if (ui.following.has(key)) ui.following.delete(key); else ui.following.add(key);
         renderNowPanel();
         if (ui.view === 'track') renderTrackPage();
+        if (ui.view === 'artist') renderArtistPage();
         break;
       }
       case 'toggle-panel': {
@@ -1838,5 +2189,11 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 
-  window.__nagham = { ui, state, playTrack, stepTrack, setView, openSheet, closeSheet, openTrackPage, renderTrackPage };
+  window.__nagham = {
+    ui, state, playTrack, stepTrack, setView, openSheet, closeSheet,
+    openTrackPage, renderTrackPage,
+    openPlaylistPage, renderPlaylistPage,
+    openArtistPage, renderArtistPage,
+    openAlbumPage, renderAlbumPage
+  };
 })();

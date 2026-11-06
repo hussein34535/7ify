@@ -136,7 +136,13 @@ window.NG = (function () {
       'track.credits': 'بيانات الأغنية والإنتاج',
       'track.quality': 'HQ 320kbps Master Stream',
       'track.copyLink': 'نسخ الرابط',
-      'track.copied': 'تم نسخ رابط الأغنية إلى الحافظة'
+      'track.copied': 'تم نسخ رابط الأغنية إلى الحافظة',
+      'page.playlist': 'قائمة تشغيل', 'page.artist': 'فنان', 'page.album': 'ألبوم',
+      'sec.popular': 'أشهر الأغاني', 'sec.albums': 'الألبومات والإصدارات',
+      'sec.arabicMusic': 'الموسيقى العربية', 'sec.intlMusic': 'الموسيقى العالمية',
+      'sec.featuredAlbums': 'أحدث الألبومات', 'library.tabAlbums': 'الألبومات',
+      'library.searchPh': 'ابحث في مكتبتك...', 'playlist.delete': 'حذف القائمة',
+      'playlist.totalDuration': 'إجمالي التشغيل'
     },
     en: {
       'a11y.skip': 'Skip to content',
@@ -235,7 +241,13 @@ window.NG = (function () {
       'track.credits': 'Track Credits & Audio Specs',
       'track.quality': 'HQ 320kbps Master Stream',
       'track.copyLink': 'Copy Link',
-      'track.copied': 'Track link copied to clipboard'
+      'track.copied': 'Track link copied to clipboard',
+      'page.playlist': 'Playlist', 'page.artist': 'Artist', 'page.album': 'Album',
+      'sec.popular': 'Popular Tracks', 'sec.albums': 'Albums & Releases',
+      'sec.arabicMusic': 'Arabic Music', 'sec.intlMusic': 'International Music',
+      'sec.featuredAlbums': 'Featured Albums', 'library.tabAlbums': 'Albums',
+      'library.searchPh': 'Search in your library...', 'playlist.delete': 'Delete playlist',
+      'playlist.totalDuration': 'Total duration'
     }
   };
 
@@ -1287,10 +1299,78 @@ window.NG = (function () {
   };
   engine.init();
 
+  function getAlbums() {
+    const map = new Map();
+    TRACKS.forEach((tr) => {
+      const name = tr.album ? (tr.album.ar || tr.album.en) : null;
+      if (!name) return;
+      const key = norm(name);
+      if (!map.has(key)) {
+        map.set(key, {
+          id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
+          name: tr.album,
+          artist: tr.artist,
+          year: tr.year || 2024,
+          art: tr.art,
+          colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
+          motif: tr.motif || 'rings',
+          tracks: []
+        });
+      }
+      map.get(key).tracks.push(tr);
+    });
+    return Array.from(map.values());
+  }
+
+  function getArtistTracks(artistName) {
+    if (!artistName) return [];
+    const n = norm(artistName);
+    return TRACKS.filter((tr) => {
+      const ar = norm(tr.artist?.ar || '');
+      const en = norm(tr.artist?.en || '');
+      return ar.includes(n) || en.includes(n) || n.includes(ar) || n.includes(en);
+    });
+  }
+
+  function getArtistAlbums(artistName) {
+    const tracks = getArtistTracks(artistName);
+    const map = new Map();
+    tracks.forEach((tr) => {
+      const name = tr.album ? (tr.album.ar || tr.album.en) : null;
+      if (!name) return;
+      const key = norm(name);
+      if (!map.has(key)) {
+        map.set(key, {
+          id: 'alb_' + key.replace(/[^a-z0-9]/gi, '_'),
+          name: tr.album,
+          artist: tr.artist,
+          year: tr.year || 2024,
+          art: tr.art,
+          colors: tr.colors || ['#1B1F26', '#2A2F3A', '#6C7683'],
+          motif: tr.motif || 'rings',
+          tracks: []
+        });
+      }
+      map.get(key).tracks.push(tr);
+    });
+    return Array.from(map.values());
+  }
+
+  function getAlbumTracks(albumName) {
+    if (!albumName) return [];
+    const n = norm(albumName);
+    return TRACKS.filter((tr) => {
+      const ar = norm(tr.album?.ar || '');
+      const en = norm(tr.album?.en || '');
+      return ar.includes(n) || en.includes(n) || n.includes(ar) || n.includes(en);
+    });
+  }
+
   return {
     $, $$, clamp, esc, fmt, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
     state, save, reset, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
+    getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
     trackMatches, searchTracks, searchArtists, searchOnline, fetchLyricsOnline, ensureFallbackTrack,
     coverHTML, artStyle, paintCover,
     bus, emit, engine, STORAGE_KEY
