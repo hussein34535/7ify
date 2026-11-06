@@ -1893,27 +1893,16 @@
         el.shortcutsDlg.showModal();
         break;
       case 'connect-spotify': {
-        const entered = prompt(
-          state.lang === 'ar'
-            ? 'أدخل مفتاح Spotify Access Token أو Client ID الخاص بك (حساب Premium مطلوب للبث الكامل):'
-            : 'Enter your Spotify Access Token or Client ID (Premium account required for full playback):'
-        );
-        if (entered && entered.trim()) {
-          if (providers && typeof providers.setSpotifyAuth === 'function') {
-            providers.setSpotifyAuth({
-              accessToken: entered.trim(),
-              expiresAt: Date.now() + 3600 * 1000,
-              user: { product: 'premium', display_name: 'Spotify User' }
-            });
-          }
-          toast(t('toast.spotifyConnected'));
-          renderStudio();
-          renderPlayer();
-        }
+        providers.connectSpotify().catch(error => {
+          console.error(error);
+          toast(t('studio.spotifyConnectFailed') || 'Failed to connect to Spotify');
+        });
         break;
       }
       case 'disconnect-spotify': {
-        if (providers && typeof providers.setSpotifyAuth === 'function') {
+        if (providers && typeof providers.disconnectSpotify === 'function') {
+          providers.disconnectSpotify();
+        } else if (providers && typeof providers.setSpotifyAuth === 'function') {
           providers.setSpotifyAuth(null);
         }
         toast(t('toast.spotifyDisconnected'));
@@ -2282,6 +2271,32 @@
     el.vol.value = String(state.volume);
     el.vol.style.setProperty('--vol', state.volume + '%');
     $$('[data-view-section]').forEach((s) => { s.hidden = s.dataset.viewSection !== ui.view; });
+
+    if (providers && typeof providers.handleCallback === 'function') {
+      providers.handleCallback().catch(err => {
+        console.warn('Spotify callback handling error:', err);
+      }).finally(() => {
+        const spotifyStatus = providers.getProviderStatus().spotify;
+        if (spotifyStatus.connected && spotifyStatus.isPremium && !engine._spotifyPlayer) {
+          providers.getValidAccessToken().then(token => {
+            if (token && typeof NG.initializeSpotifyPlayer === 'function') {
+              NG.initializeSpotifyPlayer(token).catch(() => {});
+            }
+          });
+        }
+        renderStudio();
+        renderPlayer();
+      });
+    } else {
+      const spotifyStatus = providers?.getProviderStatus?.()?.spotify;
+      if (spotifyStatus?.connected && spotifyStatus?.isPremium && !engine._spotifyPlayer) {
+        providers.getValidAccessToken().then(token => {
+          if (token && typeof NG.initializeSpotifyPlayer === 'function') {
+            NG.initializeSpotifyPlayer(token).catch(() => {});
+          }
+        });
+      }
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

@@ -16,6 +16,14 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
     clear: () => store.clear()
   };
 
+  const sessionStore = new Map();
+  const sessionStorage = {
+    getItem: (k) => (sessionStore.has(k) ? sessionStore.get(k) : null),
+    setItem: (k, v) => sessionStore.set(k, String(v)),
+    removeItem: (k) => sessionStore.delete(k),
+    clear: () => sessionStore.clear()
+  };
+
   class MockAudio {
     constructor() {
       this.src = '';
@@ -51,8 +59,21 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
   }
 
   const listeners = new Map();
+  const windowObj = {
+    location: {
+      origin: 'https://7ify.test',
+      pathname: '/',
+      search: '',
+      href: 'https://7ify.test/'
+    },
+    history: {
+      replaceState: () => {}
+    },
+    ...(options.window || {})
+  };
+
   const context = {
-    window: {},
+    window: windowObj,
     document: {
       createElement: (tag) => {
         if (tag === 'audio') return new MockAudio();
@@ -74,6 +95,14 @@ export function loadAppInstance(initialStorage = {}, options = {}) {
       }
     },
     localStorage,
+    sessionStorage,
+    crypto: globalThis.crypto,
+    btoa: globalThis.btoa,
+    atob: globalThis.atob,
+    TextEncoder: globalThis.TextEncoder,
+    TextDecoder: globalThis.TextDecoder,
+    URL: globalThis.URL,
+    URLSearchParams: globalThis.URLSearchParams,
     Audio: MockAudio,
     EventTarget: globalThis.EventTarget,
     CustomEvent: globalThis.CustomEvent || class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } },

@@ -30,6 +30,7 @@ const unitRes = spawnSync(process.execPath, [
   'test/unit/timeline.test.mjs',
   'test/unit/lyrics-persistence.test.mjs',
   'test/unit/provider-sources.test.mjs',
+  'test/unit/spotify-playback.test.mjs',
   'test/unit/track-matching.test.mjs',
   'test/unit/end-of-track.test.mjs'
 ], { stdio: 'inherit' });

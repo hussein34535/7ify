@@ -190,9 +190,7 @@ export default async function handler(req, res) {
                   id: candidate.id,
                   title: candidate.title,
                   artist: candidate.artist,
-                  duration: candidate.duration,
-                  playbackType: 'full',
-                  isFullTrack: true
+                  duration: candidate.duration
                 }
               });
             }
