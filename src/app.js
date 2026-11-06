@@ -815,16 +815,48 @@ window.NG = (function () {
 
   let activeSearchScript = null;
   let searchDebounceTimer = null;
+  let activeSearchAbort = null;
 
   function searchOnline(query, onDone) {
     const q = String(query || '').trim();
     if (!q || q.length < 2) {
-      if (typeof onDone === 'function') onDone([]);
+      if (typeof onDone === 'function') onDone([], []);
       return;
     }
     if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    if (activeSearchAbort) {
+      try { activeSearchAbort.abort(); } catch (e) {}
+      activeSearchAbort = null;
+    }
 
-    searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = setTimeout(async () => {
+      const abortCtrl = new AbortController();
+      activeSearchAbort = abortCtrl;
+
+      // 1. Try serverless search endpoint first (fast, clean JSON, CORS-free)
+      try {
+        const res = await fetch('/api/search?q=' + encodeURIComponent(q), {
+          signal: abortCtrl.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.results) && data.results.length) {
+            const mapped = data.results.map((tr) => {
+              const existingIdx = TRACKS.findIndex((t) => t.id === tr.id);
+              if (existingIdx === -1) TRACKS.push(tr);
+              else TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
+              return tr;
+            });
+            if (typeof onDone === 'function') onDone(mapped, data.artists || []);
+            return;
+          }
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+
+      // 2. Fallback to iTunes JSONP for offline or local file:// mode
       if (activeSearchScript && activeSearchScript.parentNode) {
         try { activeSearchScript.parentNode.removeChild(activeSearchScript); } catch (e) {}
         activeSearchScript = null;
@@ -835,7 +867,7 @@ window.NG = (function () {
       activeSearchScript = script;
       let finished = false;
 
-      const finish = (results) => {
+      const finish = (results, artists) => {
         if (finished) return;
         finished = true;
         try { delete window[cbName]; } catch (e) {}
@@ -843,15 +875,15 @@ window.NG = (function () {
           try { script.parentNode.removeChild(script); } catch (e) {}
         }
         if (activeSearchScript === script) activeSearchScript = null;
-        if (typeof onDone === 'function') onDone(results || []);
+        if (typeof onDone === 'function') onDone(results || [], artists || []);
       };
 
-      const timer = setTimeout(() => finish([]), 4000);
+      const timer = setTimeout(() => finish([], []), 4000);
 
       window[cbName] = function (data) {
         clearTimeout(timer);
         if (!data || !Array.isArray(data.results)) {
-          finish([]);
+          finish([], []);
           return;
         }
 
@@ -864,45 +896,85 @@ window.NG = (function () {
           ['#14030A', '#6B0F2A', '#FF7A93']
         ];
         const motifs = ['rings', 'arcs', 'dots', 'orb'];
+        const artistMap = new Map();
 
         const mapped = data.results.map((item, idx) => {
-          const id = 'api-' + (item.trackId || (Date.now() + '_' + idx));
+          const id = 'sp-' + (item.trackId || (Date.now() + '_' + idx));
           const artHiRes = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : '';
-          const durSec = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 30;
+          const durSec = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 180;
+          const artName = item.artistName || 'فنان';
+          const palette = palettes[idx % palettes.length];
+
+          if (!artistMap.has(artName)) {
+            artistMap.set(artName, {
+              name: { ar: artName, en: artName },
+              sub: { ar: item.primaryGenreName || 'موسيقى', en: item.primaryGenreName || 'Music' },
+              track: id,
+              colors: palette
+            });
+          }
+
           const tr = {
             id,
+            appleId: item.trackId,
             genre: (item.primaryGenreName || 'arabic').toLowerCase(),
             year: item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) || 2024 : 2024,
             duration: durSec,
             title: { ar: item.trackName || q, en: item.trackName || q },
-            artist: { ar: item.artistName || 'فنان', en: item.artistName || 'Artist' },
+            artist: { ar: artName, en: artName },
             album: { ar: item.collectionName || item.trackName || 'ألبوم', en: item.collectionName || item.trackName || 'Single' },
             art: artHiRes,
             preview: item.previewUrl || '',
-            colors: palettes[idx % palettes.length],
+            colors: palette,
             motif: motifs[idx % motifs.length],
-            source: 'apple'
+            source: 'online'
           };
           const existingIdx = TRACKS.findIndex((t) => t.id === id);
           if (existingIdx === -1) {
             TRACKS.push(tr);
           } else {
-            TRACKS[existingIdx] = tr;
+            TRACKS[existingIdx] = Object.assign(TRACKS[existingIdx], tr);
           }
           return tr;
         });
 
-        finish(mapped);
+        finish(mapped, Array.from(artistMap.values()).slice(0, 6));
       };
 
       script.onerror = () => {
         clearTimeout(timer);
-        finish([]);
+        finish([], []);
       };
 
-      script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&entity=song&limit=15&callback=' + cbName;
+      script.src = 'https://itunes.apple.com/search?term=' + encodeURIComponent(q) + '&media=music&entity=song&limit=25&callback=' + cbName;
       document.body.appendChild(script);
-    }, 280);
+    }, 250);
+  }
+
+  function fetchLyricsOnline(track, artist, onDone) {
+    const tit = typeof track === 'object' ? (track.title?.ar || track.title?.en || '') : String(track || '');
+    const art = typeof artist === 'object' ? (artist.name?.ar || artist.name?.en || '') : String(artist || '');
+    if (!tit) {
+      if (typeof onDone === 'function') onDone(null);
+      return;
+    }
+    const url = '/api/lyrics?track=' + encodeURIComponent(tit) + (art ? ('&artist=' + encodeURIComponent(art)) : '');
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && Array.isArray(d.lines) && d.lines.length) {
+          if (typeof track === 'object') {
+            track.lyrics = d.lines;
+            track._lyricsSynced = !!d.synced;
+          }
+          if (typeof onDone === 'function') onDone(d);
+        } else {
+          if (typeof onDone === 'function') onDone(null);
+        }
+      })
+      .catch(() => {
+        if (typeof onDone === 'function') onDone(null);
+      });
   }
 
   function ensureFallbackTrack(query) {
@@ -986,23 +1058,15 @@ window.NG = (function () {
 
       el.addEventListener('timeupdate', () => {
         if (!this.track) return;
-        if (this.mode === 'preview') return;
-        const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : this.track.duration;
+        const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.duration || 30);
         emit('tick', { pos: el.currentTime, duration: dur });
       });
 
       el.addEventListener('loadedmetadata', () => {
         if (!this.track) return;
         const realDur = isFinite(el.duration) && el.duration > 0 ? el.duration : (this.track.duration || 30);
-        if (this.mode === 'preview') {
-          this._previewDur = realDur;
-          emit('meta', { id: this.track.id, duration: this.track.duration });
-          emit('tick', { pos: this._vPos, duration: this.track.duration });
-        } else {
-          this.track.duration = Math.round(realDur);
-          emit('meta', { id: this.track.id, duration: this.track.duration });
-          emit('tick', { pos: el.currentTime, duration: this.track.duration });
-        }
+        emit('meta', { id: this.track.id, duration: realDur });
+        emit('tick', { pos: el.currentTime, duration: realDur });
       });
 
       el.addEventListener('play', () => {
@@ -1011,37 +1075,24 @@ window.NG = (function () {
       });
 
       el.addEventListener('pause', () => {
-        if (this.mode === 'preview' && el.loop) return;
         this.playing = false;
         emit('state', { playing: false });
       });
 
       el.addEventListener('ended', () => {
-        if (this.mode === 'preview' && this._looping) return;
         this.playing = false;
         emit('state', { playing: false });
         emit('ended', {});
       });
 
       el.addEventListener('error', () => {
-        // Graceful preview fallback if stream fails (e.g. running under file:// or offline)
-        if (this.mode === 'stream' && this.track && this.track.preview) {
+        if (this.track && this.track.preview && this.el.src !== this.track.preview) {
           const shouldPlay = this.playing;
-          this.mode = 'preview';
-          this._looping = true;
-          this.el.loop = true;
           this.el.src = this.track.preview;
-          if (shouldPlay) {
-            this.el.play().catch(() => {});
-            this._startVirtualTimer();
-          } else {
-            this.playing = false;
-            this._stopVirtualTimer();
-            emit('state', { playing: false });
-          }
+          this.el.load();
+          if (shouldPlay) this.el.play().catch(() => {});
           return;
         }
-        this._stopVirtualTimer();
         this.playing = false;
         emit('state', { playing: false });
         emit('error', { code: 'audio' });
@@ -1058,69 +1109,40 @@ window.NG = (function () {
       return (art + ' ' + tit).trim();
     },
 
-    async _resolveYT(track) {
-      if (!track) return null;
-      if (track.ytId) return track.ytId;
-      try {
-        const q = norm(this._trackQuery(track));
-        const r = await fetch('/api/yt-search?q=' + encodeURIComponent(q), { signal: AbortSignal.timeout(3500) });
-        const d = await r.json();
-        if (d && d.videoId) {
-          track.ytId = d.videoId;
-          return d.videoId;
-        }
-      } catch (e) {}
-      return null;
-    },
-
-    _startVirtualTimer() {
-      this._stopVirtualTimer();
-      const fullDur = (this.track && this.track.duration) || 180;
-      this._vTimer = setInterval(() => {
-        this._vPos += 1;
-        emit('tick', { pos: this._vPos, duration: fullDur });
-        if (this._vPos >= fullDur) {
-          this._stopVirtualTimer();
-          this.el.loop = false;
-          try { this.el.pause(); } catch (e) {}
-          this.playing = false;
-          emit('state', { playing: false });
-          emit('ended', {});
-        }
-      }, 1000);
-    },
-
-    _stopVirtualTimer() {
-      if (this._vTimer) { clearInterval(this._vTimer); this._vTimer = null; }
-    },
-
     load(track) {
       if (!track) return;
-      this._stopVirtualTimer();
       try { this.el.pause(); } catch (e) {}
 
       this.track = track;
       this.playing = false;
-      this._vPos = 0;
-      this._previewDur = 0;
 
       const isLocal = track.source === 'file';
       if (isLocal) {
         this.mode = 'file';
-        this._looping = false;
         this.url = track.url || '';
         this.el.loop = false;
         this.el.src = this.url;
-      } else {
-        // Online track: stream full audio via backend endpoint
+      } else if (track.preview) {
+        // Direct CDN stream (Apple Music / Deezer CDN) - instant playback, zero 502 errors!
         this.mode = 'stream';
-        this._looping = false;
+        this.url = track.preview;
         this.el.loop = false;
+        if (this.el.src !== this.url) {
+          this.el.src = this.url;
+        }
+      } else if (track.url) {
+        this.mode = 'stream';
+        this.url = track.url;
+        this.el.loop = false;
+        if (this.el.src !== this.url) {
+          this.el.src = this.url;
+        }
+      } else {
         const q = this._trackQuery(track);
-        const streamUrl = track.ytId
-          ? ('/api/stream?id=' + encodeURIComponent(track.ytId))
-          : ('/api/stream?q=' + encodeURIComponent(q));
+        const streamUrl = '/api/stream?q=' + encodeURIComponent(q);
+        this.mode = 'stream';
         this.url = streamUrl;
+        this.el.loop = false;
         if (this.el.src !== streamUrl) {
           this.el.src = streamUrl;
         }
@@ -1140,19 +1162,12 @@ window.NG = (function () {
       this.el.volume = state.muted ? 0 : state.volume / 100;
       try {
         await this.el.play();
-        if (this.mode === 'preview' && this._looping) {
-          this._startVirtualTimer();
-        }
       } catch (e) {
         // Fallback for file:// or offline environments
-        if (this.mode === 'stream' && this.track && this.track.preview) {
-          this.mode = 'preview';
-          this._looping = true;
-          this.el.loop = true;
+        if (this.track && this.track.preview && this.el.src !== this.track.preview) {
           this.el.src = this.track.preview;
           try {
             await this.el.play();
-            this._startVirtualTimer();
             return;
           } catch (e2) {}
         }
@@ -1162,8 +1177,10 @@ window.NG = (function () {
       }
     },
 
+    _stopVirtualTimer() {},
+    _startVirtualTimer() {},
+
     pause() {
-      this._stopVirtualTimer();
       try { this.el.pause(); } catch (e) {}
     },
 
@@ -1250,7 +1267,7 @@ window.NG = (function () {
     $, $$, clamp, esc, fmt, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
     state, save, reset, applyTheme, applyI18n, t, byLang, genreLabel, getTrack,
-    trackMatches, searchTracks, searchArtists, searchOnline, ensureFallbackTrack,
+    trackMatches, searchTracks, searchArtists, searchOnline, fetchLyricsOnline, ensureFallbackTrack,
     coverHTML, artStyle, paintCover,
     bus, emit, engine, STORAGE_KEY
   };

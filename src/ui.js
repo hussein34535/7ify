@@ -318,10 +318,12 @@
     const q = String(query || '').trim();
     if (!q || q.length < 2) return;
     ui.isSearchingOnline = true;
-    NG.searchOnline(q, (results) => {
+    NG.searchOnline(q, (onlineSongs, onlineArtists) => {
       ui.isSearchingOnline = false;
       if (ui.q.trim() === q) {
-        if (!NG.searchTracks(q).length && (!results || results.length === 0)) {
+        ui.onlineSongs = onlineSongs || [];
+        ui.onlineArtists = onlineArtists || [];
+        if (!NG.searchTracks(q).length && !ui.onlineSongs.length) {
           NG.ensureFallbackTrack(q);
         }
         if (ui.view === 'search') renderSearch();
@@ -331,10 +333,53 @@
 
   function renderSearch() {
     const q = ui.q.trim();
-    if (!q) { el.search.innerHTML = searchIntro(); return; }
+    if (!q) {
+      ui.onlineSongs = [];
+      ui.onlineArtists = [];
+      el.search.innerHTML = searchIntro();
+      return;
+    }
 
-    const songs = NG.searchTracks(q);
-    const artists = NG.searchArtists(q);
+    const localSongs = NG.searchTracks(q);
+    const localArtists = NG.searchArtists(q);
+    const onlineSongs = ui.onlineSongs || [];
+    const onlineArtists = ui.onlineArtists || [];
+
+    // Deduplicate songs
+    const seenSongIds = new Set();
+    const songs = [];
+    for (const tr of localSongs) {
+      seenSongIds.add(tr.id);
+      songs.push(tr);
+    }
+    for (const tr of onlineSongs) {
+      if (!seenSongIds.has(tr.id)) {
+        const normTitle = norm(tr.title?.ar || tr.title?.en);
+        const normArt = norm(tr.artist?.ar || tr.artist?.en);
+        const isDup = songs.some(s => norm(s.title?.ar || s.title?.en) === normTitle && norm(s.artist?.ar || s.artist?.en) === normArt);
+        if (!isDup) {
+          seenSongIds.add(tr.id);
+          songs.push(tr);
+        }
+      }
+    }
+
+    // Deduplicate artists
+    const seenArtists = new Set();
+    const artists = [];
+    for (const a of localArtists) {
+      const k = norm(a.name.ar || a.name.en);
+      seenArtists.add(k);
+      artists.push(a);
+    }
+    for (const a of onlineArtists) {
+      const k = norm(a.name.ar || a.name.en);
+      if (!seenArtists.has(k)) {
+        seenArtists.add(k);
+        artists.push(a);
+      }
+    }
+
     ui.ctx.search = songs.map((tr) => tr.id);
 
     const statusBadge = ui.isSearchingOnline
@@ -374,12 +419,12 @@
         (top._matchedLyric ? ('<span class="top-lyric-match clamp-1"><svg class="ic" aria-hidden="true" style="width:12px;height:12px;fill:var(--accent);display:inline-block;vertical-align:middle;margin-inline-end:4px;"><use href="#i-lyrics"></use></svg>مطابقة من الكلمات: «... ' + esc(top._matchedLyric) + ' ...»</span>') : '') +
         '<span class="fab play-btn" aria-hidden="true">' + ic('play') + '</span></button></div>' +
         '<div class="section"><h2 style="font-size:15px;font-weight:700;margin-bottom:10px">' + esc(t('search.songs')) + '</h2>' +
-        '<div class="rows">' + songs.slice(0, 10).map((tr, i) => rowHTML(tr, i, 'search')).join('') + '</div></div></div>';
+        '<div class="rows">' + songs.slice(0, 20).map((tr, i) => rowHTML(tr, i, 'search')).join('') + '</div></div></div>';
     }
 
     if (artists.length && songs.length) {
       html += '<section class="section">' + sectionHead(t('search.artists'), '') +
-        '<div class="artist-grid">' + artists.slice(0, 6).map(artistCard).join('') + '</div></section>';
+        '<div class="artist-grid">' + artists.slice(0, 8).map(artistCard).join('') + '</div></section>';
     }
 
     if (songs.length + artists.length < 5) {
@@ -917,6 +962,33 @@
     const sameArtist = TRACKS.filter((t) => t.id !== tr.id && ((t.artist && t.artist.ar === tr.artist.ar) || t.genre === tr.genre)).slice(0, 5);
     const lyrics = tr.lyrics || [];
 
+    // Dynamic lyrics fetching from LRCLIB if not available locally
+    if ((!tr.lyrics || !tr.lyrics.length) && !tr._lyricsRequested && NG.fetchLyricsOnline) {
+      tr._lyricsRequested = true;
+      NG.fetchLyricsOnline(tr, tr.artist, (data) => {
+        if (data && data.lines && data.lines.length) {
+          tr.lyrics = data.lines;
+          tr._lyricsSynced = data.synced;
+          if (ui.view === 'track' && (ui.viewTrackId === tr.id || state.trackId === tr.id)) {
+            renderTrackPage();
+          }
+        }
+      });
+    }
+
+    // Dynamic more tracks by same artist
+    if (sameArtist.length < 3 && !tr._moreRequested && NG.searchOnline) {
+      tr._moreRequested = true;
+      const qArt = tr.artist?.ar || tr.artist?.en || '';
+      if (qArt) {
+        NG.searchOnline(qArt, (moreTracks) => {
+          if (moreTracks && moreTracks.length && ui.view === 'track') {
+            renderTrackPage();
+          }
+        });
+      }
+    }
+
     let html = '<div class="sp-page" style="--sp-accent: ' + accentCol + '; --sp-bg: ' + bgCol + ';">';
 
     // 1. Spotify Dynamic Ambient Hero
@@ -990,8 +1062,8 @@
             ) : (
               '<div class="sp-lyrics-empty">' +
                 '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
-                '<p class="sp-lyrics-empty-title">استمتع بالألحان والموسيقى النقية</p>' +
-                '<p class="sp-lyrics-empty-sub">يتم تحديث كلمات الأغاني وتزامنها بشكل مستمر عبر مكتبة نغم ستوديو.</p>' +
+                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? 'جاري جلب كلمات الأغنية ومزامنتها...' : 'استمتع بالألحان والموسيقى النقية') + '</p>' +
+                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? 'يتم الاستعلام من قاعدة البيانات العالمية للكلمات.' : 'يتم تحديث كلمات الأغاني وتزامنها بشكل مستمر عبر مكتبة نغم ستوديو.') + '</p>' +
               '</div>'
             )) +
           '</div>' +

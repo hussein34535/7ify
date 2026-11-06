@@ -108,6 +108,60 @@ createServer(async (req, res) => {
       return;
     }
 
+    // API endpoint: /api/search?q=...
+    if (url.pathname === '/api/search') {
+      const { default: searchHandler } = await import('./api/search.js');
+      const apiReq = {
+        method: req.method,
+        query: Object.fromEntries(url.searchParams.entries()),
+        headers: req.headers
+      };
+      const apiRes = {
+        statusCode: 200,
+        headers: {},
+        setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+        status(code) { this.statusCode = code; return this; },
+        json(data) {
+          res.writeHead(this.statusCode, {
+            'content-type': 'application/json; charset=utf-8',
+            'access-control-allow-origin': '*',
+            ...this.headers
+          });
+          res.end(JSON.stringify(data));
+        },
+        end() { res.writeHead(this.statusCode, this.headers); res.end(); }
+      };
+      await searchHandler(apiReq, apiRes);
+      return;
+    }
+
+    // API endpoint: /api/lyrics?track=...&artist=...
+    if (url.pathname === '/api/lyrics') {
+      const { default: lyricsHandler } = await import('./api/lyrics.js');
+      const apiReq = {
+        method: req.method,
+        query: Object.fromEntries(url.searchParams.entries()),
+        headers: req.headers
+      };
+      const apiRes = {
+        statusCode: 200,
+        headers: {},
+        setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+        status(code) { this.statusCode = code; return this; },
+        json(data) {
+          res.writeHead(this.statusCode, {
+            'content-type': 'application/json; charset=utf-8',
+            'access-control-allow-origin': '*',
+            ...this.headers
+          });
+          res.end(JSON.stringify(data));
+        },
+        end() { res.writeHead(this.statusCode, this.headers); res.end(); }
+      };
+      await lyricsHandler(apiReq, apiRes);
+      return;
+    }
+
     // API endpoint: /api/yt-search?q=...
     if (url.pathname === '/api/yt-search') {
       const q = url.searchParams.get('q') || '';

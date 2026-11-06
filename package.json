@@ -2,6 +2,7 @@
   "name": "7ify-nagham",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "NAGHAM Studio - Next-Gen Arabic Music Streaming Platform (Spotify Clone)",
   "scripts": {
     "build": "node build.mjs",
