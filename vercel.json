@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/yt-search", "destination": "/api/yt-search" },
+    { "source": "/api/stream", "destination": "/api/stream" },
+    { "source": "/nagham-studio.html", "destination": "/nagham-studio.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

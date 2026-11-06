@@ -1,0 +1,112 @@
+﻿[
+    {
+        "id":  "t1",
+        "track":  "Tamly Maak",
+        "artist":  "Amr Diab",
+        "album":  "Tamally Maak",
+        "year":  2000,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music69/v4/31/4d/d4/314dd42d-3246-e7a3-107a-3d521fa9a7e2/dj.iiicnpub.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/5e/df/09/5edf0981-ce52-4740-f0b2-f6ad0760afcb/mzaf_17144740537777531434.plus.aac.p.m4a",
+        "ms":  269232
+    },
+    {
+        "id":  "t2",
+        "track":  "Noor Al Ain",
+        "artist":  "Amr Diab",
+        "album":  "Noor Al Ain",
+        "year":  1996,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/ee/b0/df/eeb0df18-b02d-b836-e153-7f4aa9811f62/dj.oftobggl.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ae/19/51/ae1951e7-fb94-f734-d68f-8a5955c8c6d9/mzaf_14930287996363580653.plus.aac.p.m4a",
+        "ms":  307763
+    },
+    {
+        "id":  "t3",
+        "track":  "Masherbtesh Men Nelha",
+        "artist":  "Sherine",
+        "album":  "Masherbtesh Men Nelha - Single",
+        "year":  2007,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music71/v4/44/13/b6/4413b679-9517-4a2e-8dd0-d05332f14ef8/634493.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a7/80/2b/a7802b8d-a5eb-755a-ffa6-cebba6aa7113/mzaf_1948264393112996426.plus.aac.p.m4a",
+        "ms":  227135
+    },
+    {
+        "id":  "t4",
+        "track":  "Roma",
+        "artist":  "Cairokee",
+        "album":  "Roma",
+        "year":  2022,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/46/81/82/468182bd-6914-bf7d-2f4a-4cb4bd5175cd/196925215671.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/af/07/8e/af078e6b-d37b-9afb-10b5-ddc7e87e0e9f/mzaf_16684328295975108671.plus.aac.p.m4a",
+        "ms":  270985
+    },
+    {
+        "id":  "t5",
+        "track":  "البخت",
+        "artist":  "Wegz",
+        "album":  "البخت - Single",
+        "year":  2022,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/e2/07/3b/e2073b69-e9a9-0377-2a37-8eabccbc8ef5/6221216329950.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e2/b0/1d/e2b01d30-7b5f-d520-4f3e-e1e250899b12/mzaf_2863315495467483634.plus.aac.p.m4a",
+        "ms":  206113
+    },
+    {
+        "id":  "t6",
+        "track":  "CTRL",
+        "artist":  "Marwan Pablo",
+        "album":  "CTRL - EP",
+        "year":  2021,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/25/99/06/25990612-bcc8-f286-57ea-c7cdb0aabe75/198588228821.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7f/7f/11/7f7f11bf-b041-b65c-42fc-ab9d815b3d81/mzaf_4774286064207966473.plus.aac.p.m4a",
+        "ms":  185342
+    },
+    {
+        "id":  "t7",
+        "track":  "Anta Oumri",
+        "artist":  "Umm Kulthum",
+        "album":  "Anta Oumri",
+        "year":  1998,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/38/61/f6/3861f6c5-a877-3f8c-46ae-425ebb18f750/5055373545134.png/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e0/6f/1a/e06f1a78-b283-5190-eba5-9caa30136019/mzaf_9876832350041264636.plus.aac.p.m4a",
+        "ms":  929278
+    },
+    {
+        "id":  "t8",
+        "track":  "Nassam Alayna El Hawa",
+        "artist":  "Fairouz",
+        "album":  "Fairouz World, Pt. 2",
+        "year":  1995,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/6c/b0/5b/6cb05b57-0b74-ffca-fee2-2c5696d323ad/cover.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3f/2e/f8/3f2ef802-d10a-7d2a-15a6-bd91c6fb3649/mzaf_16513161257104839560.plus.aac.p.m4a",
+        "ms":  237192
+    },
+    {
+        "id":  "t9",
+        "track":  "Ah W Noss",
+        "artist":  "Nancy Ajram",
+        "album":  "Ah W Noss",
+        "year":  1997,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/3e/b3/18/3eb318aa-42d3-ecb1-93e2-8353d9c80747/00724357665056.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3a/81/1e/3a811ea5-5fd4-f215-073f-a32d08a6d3bb/mzaf_6839834683079102557.plus.aac.p.m4a",
+        "ms":  281053
+    },
+    {
+        "id":  "t10",
+        "track":  "Blinding Lights",
+        "artist":  "The Weeknd",
+        "album":  "After Hours",
+        "year":  2019,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/6f/bc/e6/6fbce6c4-c38c-72d8-4fd0-66cfff32f679/20UMGIM12176.rgb.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/19/d6/60/19d660ff-e3a9-8377-15a3-ce4b28e89cac/mzaf_18422426156481158187.plus.aac.p.m4a",
+        "ms":  200046
+    },
+    {
+        "id":  "t11",
+        "track":  "Get Lucky",
+        "artist":  "Daft Punk, Pharrell Williams \u0026 Nile Rodgers",
+        "album":  "Random Access Memories",
+        "year":  2013,
+        "art":  "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e8/43/5f/e8435ffa-b6b9-b171-40ab-4ff3959ab661/886443919266.jpg/600x600bb.jpg",
+        "preview":  "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/57/a5/85/57a585aa-f1bc-7619-881b-f8a04a5541d5/mzaf_6906185026678279401.plus.aac.p.m4a",
+        "ms":  369629
+    }
+]
