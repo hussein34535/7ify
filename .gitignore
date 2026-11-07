@@ -1,5 +1,8 @@
 .vercel
 node_modules/
 shots/
+scratch/
+tmp-*/
 .DS_Store
 Thumbs.db
+

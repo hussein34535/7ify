@@ -36,7 +36,8 @@ const unitRes = spawnSync(process.execPath, [
   'test/unit/multi-source-engine.test.mjs',
   'test/unit/normalization.test.mjs',
   'test/unit/local-scoring.test.mjs',
-  'test/unit/autocomplete-search.test.mjs'
+  'test/unit/autocomplete-search.test.mjs',
+  'test/unit/spotify-library-sync.test.mjs'
 ], { stdio: 'inherit' });
 if (unitRes.status !== 0) {
   console.error('\n❌ Unit tests failed!');

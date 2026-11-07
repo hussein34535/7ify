@@ -5965,6 +5965,383 @@ html, body {
   height: 18px !important;
   fill: currentColor !important;
 }
+
+
+/* ==========================================================================
+   SPOTIFY PROFILE & ACCOUNT INTEGRATION STYLES
+   ========================================================================== */
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 32px 48px;
+  animation: fadeIn 0.25s ease;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  padding: 32px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(180deg, rgba(30, 215, 96, 0.22) 0%, rgba(18, 18, 18, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-avatar-wrap {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  background: #181818;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 54px;
+  font-weight: 800;
+  color: #1ed760;
+  background: #242424;
+}
+
+.profile-hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-kicker {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b3b3b3;
+}
+
+.profile-name {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.profile-badges-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-premium {
+  background: #1ed760;
+  color: #000000;
+}
+
+.badge-free {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.badge-subdued {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b3b3b3;
+}
+
+.profile-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-sync {
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(30, 215, 96, 0.3);
+}
+
+.sp-sync-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(30, 215, 96, 0.1);
+  border: 1px solid rgba(30, 215, 96, 0.25);
+  color: #1ed760;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.sp-sync-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(30, 215, 96, 0.3);
+  border-top-color: #1ed760;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.profile-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: right;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-stat-card:hover {
+  background: #242424;
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.profile-stat-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.profile-stat-icon.is-heart { color: #1ed760; }
+.profile-stat-icon.is-pl { color: #8A2E11; }
+.profile-stat-icon.is-art { color: #4A2E91; }
+.profile-stat-icon.is-alb { color: #F0D07B; }
+
+.profile-stat-num {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--font-num);
+  color: #ffffff;
+}
+
+.profile-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b3b3b3;
+}
+
+/* Onboarding & Connection Form */
+.connect-onboarding-hero {
+  text-align: center;
+  padding: 48px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.spotify-badge-icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(30, 215, 96, 0.12);
+  border: 1px solid rgba(30, 215, 96, 0.28);
+  margin-bottom: 8px;
+}
+
+.sp-big-logo {
+  width: 44px;
+  height: 44px;
+}
+
+.onboarding-sub {
+  font-size: 16px;
+  color: #b3b3b3;
+  max-width: 580px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.onboarding-steps-card {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.onboarding-steps-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.steps-list {
+  padding-inline-start: 20px;
+  margin: 0 0 16px 0;
+  color: #b3b3b3;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.link-accent {
+  color: #1ed760;
+  text-decoration: none;
+  font-weight: 600;
+}
+.link-accent:hover { text-decoration: underline; }
+
+.uri-copy-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sp-input {
+  flex: 1;
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.sp-input:focus {
+  border-color: #1ed760;
+}
+
+.connect-form-card {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: right;
+}
+
+/* Modal Connection Styles */
+.sp-dlg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sp-conn-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(30, 215, 96, 0.1);
+  border: 1px solid rgba(30, 215, 96, 0.25);
+}
+
+.sp-conn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1ed760;
+  color: #000;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Avatar Image in Header */
+.avatar.has-img {
+  padding: 0;
+  background: transparent;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+
+@media (max-width: 640px) {
+  .profile-page {
+    padding: 16px 12px 32px;
+    gap: 16px;
+  }
+  .profile-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+  .profile-avatar-wrap {
+    width: 110px;
+    height: 110px;
+  }
+  .profile-hero-meta {
+    align-items: center;
+    text-align: center;
+  }
+  .profile-badges-row {
+    justify-content: center;
+  }
+  .profile-actions-bar {
+    justify-content: center;
+  }
+  .profile-stat-card {
+    text-align: center;
+  }
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -6059,7 +6436,7 @@ html, body {
         <span class="pill-label" data-i18n="top.import">استيراد</span>
       </button>
       <button class="pill pill-ghost lang-pill hide-md" id="langBtn" data-action="lang" aria-label="Switch to English" data-i18n-aria="top.lang">EN</button>
-      <button class="avatar" id="avatarBtn" data-action="go" data-view="library" aria-label="حسابك والمكتبة" data-i18n-aria="top.profile">M</button>
+      <button class="avatar" id="avatarBtn" data-action="go" data-view="profile" aria-label="حسابك والملف الشخصي" data-i18n-aria="top.profile">M</button>
     </div>
   </header>
 
@@ -6133,6 +6510,7 @@ html, body {
         <section class="view" data-view-section="playlist" id="view-playlist" aria-label="قائمة التشغيل" hidden></section>
         <section class="view" data-view-section="artist" id="view-artist" aria-label="صفحة الفنان" hidden></section>
         <section class="view" data-view-section="album" id="view-album" aria-label="صفحة الألبوم" hidden></section>
+        <section class="view" data-view-section="profile" id="view-profile" aria-label="الملف الشخصي والحساب" hidden></section>
       </div>
     </main>
 
@@ -6690,6 +7068,16 @@ html, body {
   </div>
 </dialog>
 
+<dialog class="dlg" id="spotifyConnectDlg" aria-labelledby="spConnectTitle">
+  <div class="dlg-head">
+    <h2 id="spConnectTitle">ربط حساب Spotify الرسمي</h2>
+    <button class="icon-btn is-small" data-action="close-dlg" aria-label="إغلاق" data-i18n-aria="common.close">
+      <svg aria-hidden="true"><use href="#i-x"></use></svg>
+    </button>
+  </div>
+  <div class="dlg-body" id="spotifyConnectBody"></div>
+</dialog>
+
 <div class="toasts" id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <div id="ytPlayerContainer" style="position:fixed;bottom:-9999px;left:-9999px;width:320px;height:240px;pointer-events:none;opacity:0.001;" aria-hidden="true">
@@ -6808,6 +7196,29 @@ window.NG = (function () {
       'about.album': 'الألبوم', 'about.year': 'السنة', 'about.genre': 'النوع',
       'about.length': 'المدة', 'about.source': 'المصدر', 'about.sourceApple': '٥,٨٩٢,١٠٤ مستمع شهرياً', 'artist.monthlyListeners': '٥,٨٩٢,١٠٤ مستمع شهرياً',
       'about.previewNote': 'استمع إلى أحدث الأغاني والمقاطع بدقة عالية، أو قم باستيراد ملفاتك المفضلة من جهازك.',
+            'profile.title': 'الملف الشخصي',
+      'profile.sub': 'بيانات حسابك ومكتبتك الموسيقية على Spotify',
+      'profile.connect': 'ربط حساب Spotify الرسمي',
+      'profile.connectedAs': 'متصل بحساب',
+      'profile.syncNow': 'مزامنة المكتبة الآن',
+      'profile.syncing': 'جاري مزامنة المكتبة الموسيقية...',
+      'profile.syncDone': 'تمت مزامنة مكتبة Spotify بنجاح!',
+      'profile.disconnect': 'تسجيل الخروج وإلغاء الربط',
+      'profile.topTracks': 'أكثر أغانيك استماعاً على Spotify',
+      'profile.topArtists': 'أكثر الفنانين استماعاً لديك',
+      'profile.recentlyPlayed': 'سجل الاستماع الأخير على Spotify',
+      'profile.notConnected': 'لم يتم ربط حساب Spotify بعد',
+      'profile.notConnectedBody': 'اربط حسابك الرسمي لمزامنة مكتبتك: أغانيك المفضلة، قوائمك، وفنانيك المفضلين داخل 7ify.',
+      'profile.clientIdLabel': 'معرف العميل (Client ID)',
+      'profile.redirectUriLabel': 'عنوان إعادة التوجيه (Redirect URI)',
+      'profile.dashboardGuide': 'يمكنك الحصول على معرف العميل وإضافة عنوان إعادة التوجيه من لوحة تحكم مطوري Spotify.',
+      'profile.loginBtn': 'تسجيل الدخول وربط الحساب عبر Spotify',
+      'profile.followers': 'متابع',
+      'profile.premium': 'اشتراك Premium',
+      'profile.free': 'حساب مجاني',
+      'profile.settings': 'إعدادات الربط',
+      'profile.followedArtists': 'فنانون تتابعهم على Spotify',
+      'profile.savedAlbums': 'ألبومات محفوظة من Spotify',
       'search.title': 'بحث', 'search.resultsFor': 'نتائج البحث عن «{q}»', 'search.count': '{n} نتيجة',
       'search.top': 'أفضل نتيجة', 'search.songs': 'أغانٍ', 'search.artists': 'فنانون',
       'search.emptyTitle': 'لا يوجد شيء بهذا الاسم',
@@ -6948,6 +7359,29 @@ window.NG = (function () {
       'about.album': 'Album', 'about.year': 'Year', 'about.genre': 'Genre',
       'about.length': 'Length', 'about.source': 'Source', 'about.sourceApple': '5,892,104 monthly listeners', 'artist.monthlyListeners': '5,892,104 monthly listeners',
       'about.previewNote': 'High-fidelity audio stream. For full-length playback, enjoy directly.',
+            'profile.title': 'Profile',
+      'profile.sub': 'Your Spotify account profile and library',
+      'profile.connect': 'Connect Official Spotify Account',
+      'profile.connectedAs': 'Connected as',
+      'profile.syncNow': 'Sync Library Now',
+      'profile.syncing': 'Syncing music library...',
+      'profile.syncDone': 'Spotify library synced successfully!',
+      'profile.disconnect': 'Disconnect & Log Out',
+      'profile.topTracks': 'Your Top Tracks on Spotify',
+      'profile.topArtists': 'Your Top Artists',
+      'profile.recentlyPlayed': 'Recently Played on Spotify',
+      'profile.notConnected': 'Spotify Account Not Connected',
+      'profile.notConnectedBody': 'Connect your official Spotify account to mirror your liked songs, playlists, and artists.',
+      'profile.clientIdLabel': 'Client ID',
+      'profile.redirectUriLabel': 'Redirect URI',
+      'profile.dashboardGuide': 'Get your Client ID and register your Redirect URI in Spotify Developer Dashboard.',
+      'profile.loginBtn': 'Log In with Spotify (PKCE)',
+      'profile.followers': 'followers',
+      'profile.premium': 'Premium',
+      'profile.free': 'Free Account',
+      'profile.settings': 'Connection Settings',
+      'profile.followedArtists': 'Artists You Follow on Spotify',
+      'profile.savedAlbums': 'Saved Albums from Spotify',
       'search.title': 'Search', 'search.resultsFor': 'Results for “{q}”', 'search.count': '{n} results',
       'search.top': 'Top result', 'search.songs': 'Songs', 'search.artists': 'Artists',
       'search.emptyTitle': 'Nothing answers to that',
@@ -7445,6 +7879,7 @@ window.NG = (function () {
   }
 
   const state = loadState();
+  rehydrateSpotifyLibrary();
 
   function save() {
     try {
@@ -8781,7 +9216,22 @@ window.NG = (function () {
       emit('provider-changed', this.getProviderStatus());
     },
 
-    async getValidAccessToken() {
+    SPOTIFY_SCOPES: [
+      'user-read-private',
+      'user-read-email',
+      'user-library-read',
+      'playlist-read-private',
+      'playlist-read-collaborative',
+      'user-follow-read',
+      'user-top-read',
+      'user-read-recently-played',
+      'user-read-currently-playing',
+      'streaming',
+      'user-modify-playback-state',
+      'user-read-playback-state'
+    ].join(' '),
+
+    async getValidAccessToken(forceRefresh = false) {
       let auth = null;
       try {
         const stored = localStorage.getItem('nagham_spotify_auth');
@@ -8790,7 +9240,7 @@ window.NG = (function () {
 
       if (!auth || !auth.accessToken) return null;
 
-      if (Date.now() < (auth.expiresAt || 0) - 60000) {
+      if (!forceRefresh && Date.now() < (auth.expiresAt || 0) - 60000) {
         return auth.accessToken;
       }
 
@@ -8845,7 +9295,7 @@ window.NG = (function () {
       return null;
     },
 
-    async connectSpotify(customClientId) {
+    async connectSpotify(customClientId, customRedirectUri) {
       let clientId = customClientId || localStorage.getItem('nagham_spotify_client_id');
       if (!clientId) {
         const enteredId = prompt(
@@ -8858,6 +9308,12 @@ window.NG = (function () {
         }
         clientId = enteredId.trim();
         localStorage.setItem('nagham_spotify_client_id', clientId);
+      } else {
+        localStorage.setItem('nagham_spotify_client_id', clientId);
+      }
+
+      if (customRedirectUri) {
+        localStorage.setItem('nagham_spotify_redirect_uri', customRedirectUri);
       }
 
       const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -8884,21 +9340,30 @@ window.NG = (function () {
       try {
         sessionStorage.setItem('spotify_pkce_verifier', verifier);
         sessionStorage.setItem('spotify_pkce_state', oauthState);
+        localStorage.setItem('spotify_pkce_verifier', verifier);
+        localStorage.setItem('spotify_pkce_state', oauthState);
       } catch (e) {}
 
-      const redirectUri = window.location.origin + window.location.pathname;
-      const scope = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+      const configuredRedirect = customRedirectUri || localStorage.getItem('nagham_spotify_redirect_uri');
+      const redirectUri = configuredRedirect || (window.location.origin + window.location.pathname);
+      try {
+        sessionStorage.setItem('spotify_pkce_redirect_uri', redirectUri);
+        localStorage.setItem('spotify_pkce_redirect_uri', redirectUri);
+      } catch (e) {}
 
       const authUrl = new URL('https://accounts.spotify.com/authorize');
       authUrl.searchParams.set('client_id', clientId);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('scope', scope);
+      authUrl.searchParams.set('scope', this.SPOTIFY_SCOPES);
       authUrl.searchParams.set('code_challenge_method', 'S256');
       authUrl.searchParams.set('code_challenge', challenge);
       authUrl.searchParams.set('state', oauthState);
 
-      window.location.href = authUrl.toString();
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = authUrl.toString();
+      }
+      return authUrl.toString();
     },
 
     disconnectSpotify() {
@@ -8908,6 +9373,10 @@ window.NG = (function () {
       }
       this.spotify.deviceId = null;
       this.setSpotifyAuth(null);
+      try {
+        localStorage.removeItem('nagham_spotify_library');
+      } catch (e) {}
+      emit('spotify-disconnected');
     },
 
     async handleCallback() {
@@ -8927,11 +9396,17 @@ window.NG = (function () {
 
       let savedState = null;
       let verifier = null;
+      let redirectUri = null;
       try {
-        savedState = sessionStorage.getItem('spotify_pkce_state');
-        verifier = sessionStorage.getItem('spotify_pkce_verifier');
+        savedState = sessionStorage.getItem('spotify_pkce_state') || localStorage.getItem('spotify_pkce_state');
+        verifier = sessionStorage.getItem('spotify_pkce_verifier') || localStorage.getItem('spotify_pkce_verifier');
+        redirectUri = sessionStorage.getItem('spotify_pkce_redirect_uri') || localStorage.getItem('spotify_pkce_redirect_uri');
         sessionStorage.removeItem('spotify_pkce_state');
         sessionStorage.removeItem('spotify_pkce_verifier');
+        sessionStorage.removeItem('spotify_pkce_redirect_uri');
+        localStorage.removeItem('spotify_pkce_state');
+        localStorage.removeItem('spotify_pkce_verifier');
+        localStorage.removeItem('spotify_pkce_redirect_uri');
       } catch (e) {}
 
       if (stateParam !== savedState || !verifier) {
@@ -8941,7 +9416,9 @@ window.NG = (function () {
       }
 
       const clientId = localStorage.getItem('nagham_spotify_client_id');
-      const redirectUri = window.location.origin + window.location.pathname;
+      if (!redirectUri) {
+        redirectUri = window.location.origin + window.location.pathname;
+      }
 
       try {
         const res = await fetch('https://accounts.spotify.com/api/token', {
@@ -8979,9 +9456,19 @@ window.NG = (function () {
             id: user.id,
             display_name: user.display_name,
             product: user.product,
-            email: user.email
+            email: user.email,
+            images: user.images || [],
+            followers: user.followers || { total: 0 },
+            country: user.country || '',
+            external_urls: user.external_urls || {}
           },
           isPremium
+        });
+
+        emit('spotify-connected', user);
+
+        providers.syncSpotifyLibrary().catch(err => {
+          console.warn('Auto sync library failed:', err);
         });
 
         if (isPremium) {
@@ -8996,6 +9483,291 @@ window.NG = (function () {
       } finally {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+    },
+
+    spotifyApi: {
+      async fetchWithAuth(url, options = {}) {
+        let token = await providers.getValidAccessToken();
+        if (!token) throw new Error('spotify_unauthorized');
+
+        const headers = Object.assign({}, options.headers || {}, {
+          'Authorization': `Bearer ${token}`
+        });
+
+        let res = await fetch(url, Object.assign({}, options, { headers }));
+
+        if (res.status === 401) {
+          token = await providers.getValidAccessToken(true);
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            res = await fetch(url, Object.assign({}, options, { headers }));
+          }
+        }
+
+        if (res.status === 204) return null;
+
+        if (res.status === 429) {
+          const retryAfter = parseInt(res.headers.get('Retry-After') || '2', 10);
+          await new Promise(r => setTimeout(r, (retryAfter + 1) * 1000));
+          return this.fetchWithAuth(url, options);
+        }
+
+        if (!res.ok) {
+          let errData = null;
+          try { errData = await res.json(); } catch (e) {}
+          throw new Error((errData && errData.error && errData.error.message) || `spotify_api_error_${res.status}`);
+        }
+
+        return await res.json();
+      },
+
+      async getProfile() {
+        return await this.fetchWithAuth('https://api.spotify.com/v1/me');
+      },
+
+      async getLikedSongs(maxItems = 200) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/tracks?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getPlaylists(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getPlaylistTracks(playlistId, maxItems = 100) {
+        let items = [];
+        let url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=50`;
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getFollowedArtists(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !data.artists || !Array.isArray(data.artists.items)) break;
+          items = items.concat(data.artists.items);
+          url = data.artists.next;
+        }
+        return items;
+      },
+
+      async getSavedAlbums(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/albums?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getRecentlyPlayed(limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getTopTracks(timeRange = 'medium_term', limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getTopArtists(timeRange = 'medium_term', limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/top/artists?time_range=${timeRange}&limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getCurrentlyPlaying() {
+        return await this.fetchWithAuth('https://api.spotify.com/v1/me/player/currently-playing');
+      }
+    },
+
+    getSpotifyLibrary() {
+      try {
+        const raw = localStorage.getItem('nagham_spotify_library');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    async syncSpotifyLibrary(onProgress = () => {}) {
+      const token = await this.getValidAccessToken();
+      if (!token) throw new Error('spotify_not_authenticated');
+
+      onProgress({ stage: 'profile', text: 'جلب بيانات الحساب...' });
+      const profile = await this.spotifyApi.getProfile();
+
+      let auth = null;
+      try {
+        auth = JSON.parse(localStorage.getItem('nagham_spotify_auth') || '{}');
+      } catch (e) { auth = {}; }
+      auth.user = {
+        id: profile.id,
+        display_name: profile.display_name,
+        product: profile.product,
+        email: profile.email,
+        images: profile.images || [],
+        followers: profile.followers || { total: 0 },
+        country: profile.country || '',
+        external_urls: profile.external_urls || {}
+      };
+      auth.isPremium = profile.product === 'premium';
+      localStorage.setItem('nagham_spotify_auth', JSON.stringify(auth));
+
+      onProgress({ stage: 'liked', text: 'مزامنة الأغاني التي أعجبتك (Liked Songs)...' });
+      const rawLiked = await this.spotifyApi.getLikedSongs(200);
+      const likedTrackIds = [];
+      for (const item of rawLiked) {
+        const rawTrack = item.track || item;
+        const tr = mapSpotifyTrackTo7ify(rawTrack);
+        if (tr) {
+          upsertTrack(tr);
+          likedTrackIds.push(tr.id);
+        }
+      }
+
+      if (likedTrackIds.length) {
+        state.favorites = Array.from(new Set([...likedTrackIds, ...state.favorites]));
+      }
+
+      onProgress({ stage: 'playlists', text: 'مزامنة قوائم التشغيل (Playlists)...' });
+      const rawPlaylists = await this.spotifyApi.getPlaylists(50);
+      const syncedPlaylists = [];
+      for (const pl of rawPlaylists) {
+        if (!pl || !pl.id) continue;
+        const plId = `sp-pl-${pl.id}`;
+        let trackItems = [];
+        try {
+          trackItems = await this.spotifyApi.getPlaylistTracks(pl.id, 100);
+        } catch (e) {}
+
+        const plTrackIds = [];
+        for (const item of trackItems) {
+          const rawTrack = item.track || item;
+          const tr = mapSpotifyTrackTo7ify(rawTrack);
+          if (tr) {
+            upsertTrack(tr);
+            plTrackIds.push(tr.id);
+          }
+        }
+
+        const plCover = (pl.images && pl.images[0]?.url) || (pl.images && pl.images[1]?.url) || '';
+        const plObj = {
+          id: plId,
+          spotifyId: pl.id,
+          name: { ar: pl.name, en: pl.name },
+          sub: {
+            ar: pl.description || `بواسطة ${pl.owner?.display_name || 'Spotify'}`,
+            en: pl.description || `By ${pl.owner?.display_name || 'Spotify'}`
+          },
+          colors: ['#121212', '#1f1f1f', '#1ed760'],
+          motif: 'rings',
+          cover: plCover,
+          art: plCover,
+          trackIds: plTrackIds,
+          isSpotify: true,
+          owner: pl.owner?.display_name || 'Spotify',
+          externalUrl: pl.external_urls?.spotify || ''
+        };
+        syncedPlaylists.push(plObj);
+
+        const existingIdx = state.playlists.findIndex(p => p.id === plId);
+        if (existingIdx !== -1) {
+          state.playlists[existingIdx] = plObj;
+        } else {
+          state.playlists.push(plObj);
+        }
+      }
+
+      onProgress({ stage: 'artists', text: 'جلب الفنانين المتابعين (Followed Artists)...' });
+      let followedArtists = [];
+      try {
+        followedArtists = await this.spotifyApi.getFollowedArtists(50);
+      } catch (e) {}
+
+      onProgress({ stage: 'albums', text: 'جلب الألبومات المحفوظة (Saved Albums)...' });
+      let savedAlbums = [];
+      try {
+        savedAlbums = await this.spotifyApi.getSavedAlbums(50);
+        for (const item of savedAlbums) {
+          const album = item.album || item;
+          if (album && album.tracks && Array.isArray(album.tracks.items)) {
+            for (const t of album.tracks.items) {
+              t.album = album;
+              const tr = mapSpotifyTrackTo7ify(t);
+              if (tr) upsertTrack(tr);
+            }
+          }
+        }
+      } catch (e) {}
+
+      onProgress({ stage: 'recently_played', text: 'جلب سجل الاستماع الأخير...' });
+      let recentlyPlayed = [];
+      try {
+        const rawRecent = await this.spotifyApi.getRecentlyPlayed(50);
+        recentlyPlayed = rawRecent.map(item => {
+          const tr = mapSpotifyTrackTo7ify(item.track || item);
+          if (tr) upsertTrack(tr);
+          return { track: tr, played_at: item.played_at };
+        }).filter(x => x.track);
+      } catch (e) {}
+
+      onProgress({ stage: 'top', text: 'جلب الأكثر استماعاً لديك...' });
+      let topTracks = [];
+      let topArtists = [];
+      try {
+        const rawTopT = await this.spotifyApi.getTopTracks('medium_term', 50);
+        topTracks = rawTopT.map(mapSpotifyTrackTo7ify).filter(Boolean);
+        topTracks.forEach(upsertTrack);
+      } catch (e) {}
+      try {
+        topArtists = await this.spotifyApi.getTopArtists('medium_term', 50);
+      } catch (e) {}
+
+      const libData = {
+        lastSyncedAt: Date.now(),
+        profile,
+        likedCount: likedTrackIds.length,
+        likedTrackIds,
+        playlists: syncedPlaylists,
+        followedArtists,
+        savedAlbums,
+        recentlyPlayed,
+        topTracks,
+        topArtists
+      };
+      try {
+        localStorage.setItem('nagham_spotify_library', JSON.stringify(libData));
+      } catch (e) {}
+
+      save();
+      emit('spotify-sync-complete', libData);
+      onProgress({ stage: 'done', text: 'اكتملت المزامنة بنجاح!' });
+      return libData;
     }
   };
 
@@ -9794,6 +10566,75 @@ window.NG = (function () {
     });
   }
 
+
+  function mapSpotifyTrackTo7ify(item) {
+    if (!item || !item.id) return null;
+    const trackId = `sp-${item.id}`;
+    const artistsStr = Array.isArray(item.artists)
+      ? item.artists.map(a => a.name).filter(Boolean).join(', ')
+      : (item.artist || 'فنان');
+    const albumName = item.album ? item.album.name : '';
+    const artUrl = (item.album && Array.isArray(item.album.images) && item.album.images.length)
+      ? (item.album.images[0]?.url || item.album.images[1]?.url || '')
+      : '';
+    const durSec = Math.round((item.duration_ms || 0) / 1000);
+    const releaseYear = (item.album && item.album.release_date)
+      ? parseInt(item.album.release_date.slice(0, 4), 10)
+      : 2024;
+
+    return {
+      id: trackId,
+      spotifyId: item.id,
+      spotifyUri: item.uri || `spotify:track:${item.id}`,
+      title: { ar: item.name, en: item.name },
+      artist: { ar: artistsStr, en: artistsStr },
+      album: { ar: albumName, en: albumName },
+      art: artUrl,
+      photo: artUrl,
+      preview: item.preview_url || '',
+      previewUrl: item.preview_url || '',
+      duration: durSec || 200,
+      fullDuration: durSec || 200,
+      year: releaseYear,
+      colors: ['#121212', '#1f1f1f', '#1ed760'],
+      motif: 'rings',
+      source: 'spotify',
+      externalUrl: item.external_urls?.spotify || `https://open.spotify.com/track/${item.id}`,
+      isExplicit: Boolean(item.explicit)
+    };
+  }
+
+  function upsertTrack(tr) {
+    if (!tr || !tr.id) return;
+    const idx = TRACKS.findIndex(t => t.id === tr.id);
+    if (idx !== -1) {
+      TRACKS[idx] = Object.assign({}, TRACKS[idx], tr);
+    } else {
+      TRACKS.push(tr);
+    }
+  }
+
+  function rehydrateSpotifyLibrary() {
+    try {
+      const raw = localStorage.getItem('nagham_spotify_library');
+      if (!raw) return;
+      const lib = JSON.parse(raw);
+      if (lib && Array.isArray(lib.topTracks)) {
+        lib.topTracks.forEach(upsertTrack);
+      }
+      if (lib && Array.isArray(lib.recentlyPlayed)) {
+        lib.recentlyPlayed.map(x => x.track).filter(Boolean).forEach(upsertTrack);
+      }
+      if (lib && Array.isArray(lib.playlists)) {
+        for (const pl of lib.playlists) {
+          if (pl && pl.id && !state.playlists.some(p => p.id === pl.id)) {
+            state.playlists.push(pl);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS, CURATED_PLAYLISTS,
@@ -9803,6 +10644,7 @@ window.NG = (function () {
     coverHTML, artStyle, paintCover,
     PLAYBACK_MODES, ENGINE_STATES, musicProviders, ytDriver, loadYouTubeIframeAPI: () => ytDriver.loadAPI(),
     loadSpotifySDK, initializeSpotifyPlayer, playSpotifyTrack, spotifySeek, spotifyPause, spotifyResume, resolvePlaybackSource,
+    mapSpotifyTrackTo7ify, upsertTrack, rehydrateSpotifyLibrary,
     bus, emit, engine, providers, STORAGE_KEY
   };
 })();
@@ -9855,6 +10697,9 @@ window.NG = (function () {
     playlist: $('#view-playlist'),
     artist: $('#view-artist'),
     album: $('#view-album'),
+    profile: $('#view-profile'),
+    spotifyConnectDlg: $('#spotifyConnectDlg'),
+    avatarBtn: $('#avatarBtn'),
     scroll: $('#scroll'),
     np: $('#npBody'),
     npPanel: $('#nowPanel'),
@@ -9894,6 +10739,14 @@ window.NG = (function () {
   }
 
   function playlistCover(pl, eager) {
+    if (pl && (pl.cover || pl.art)) {
+      return coverHTML({
+        colors: pl.colors,
+        motif: pl.motif,
+        art: pl.cover || pl.art,
+        photo: pl.cover || pl.art
+      }, '', eager);
+    }
     const first = (pl.trackIds || []).map(getTrack).filter(Boolean)[0];
     return coverHTML({
       colors: pl.colors,
@@ -9905,7 +10758,7 @@ window.NG = (function () {
 
   function artistAvatar(a) {
     const tr = getTrack(a.track);
-    const src = tr ? (tr.art || tr.photo) : '';
+    const src = tr ? (tr.art || tr.photo) : (a.photo || a.art || '');
     if (!src) {
       const letter = typeof a.name === 'string' ? a.name.slice(0, 1) : ((a.name && (a.name.ar || a.name.en)) || '?').slice(0, 1);
       return '<span class="avatar-art"><b>' + esc(letter) + '</b></span>';
@@ -10749,6 +11602,13 @@ window.NG = (function () {
         ).join('') + '</div>';
       }
     } else {
+      const spLib = providers.getSpotifyLibrary ? providers.getSpotifyLibrary() : null;
+      const followed = spLib?.followedArtists || [];
+      if (followed.length > 0) {
+        html += '<div class="section-head" style="margin-top:8px"><div><h2>' + esc(t('profile.followedArtists')) + '</h2><p>' + followed.length + ' فنان من مكتبتك</p></div></div>';
+        html += '<div class="artist-grid">' + followed.map(a => artistCard({ name: { ar: a.name, en: a.name }, photo: a.images?.[0]?.url || '', sub: { ar: (a.followers?.total || 0) + ' متابع', en: (a.followers?.total || 0) + ' followers' } })).join('') + '</div>';
+        html += '<div class="section-head" style="margin-top:24px"><div><h2>' + esc(t('sec.artists')) + '</h2></div></div>';
+      }
       html += '<div class="artist-grid">' + NG.ARTISTS.map(artistCard).join('') + '</div>';
     }
 
@@ -12123,7 +12983,7 @@ window.NG = (function () {
 
   function renderView() {
     const stageBar = $('.stage-bar');
-    if (stageBar) stageBar.hidden = ui.view === 'track' || ui.view === 'playlist' || ui.view === 'artist' || ui.view === 'album';
+    if (stageBar) stageBar.hidden = ui.view === 'track' || ui.view === 'playlist' || ui.view === 'artist' || ui.view === 'album' || ui.view === 'profile';
     if (ui.view === 'home') renderHome();
     else if (ui.view === 'search') renderSearch();
     else if (ui.view === 'library') renderLibrary();
@@ -12131,6 +12991,7 @@ window.NG = (function () {
     else if (ui.view === 'playlist') renderPlaylistPage();
     else if (ui.view === 'artist') renderArtistPage();
     else if (ui.view === 'album') renderAlbumPage();
+    else if (ui.view === 'profile') renderProfilePage();
     else renderStudio();
     if (el.sheet.open) renderSheet();
   }
@@ -12171,7 +13032,7 @@ window.NG = (function () {
   }
 
   function setView(view, push) {
-    if (['home', 'search', 'library', 'studio', 'track', 'playlist', 'artist', 'album'].indexOf(view) === -1) return;
+    if (['home', 'search', 'library', 'studio', 'track', 'playlist', 'artist', 'album', 'profile'].indexOf(view) === -1) return;
     if (push !== false && ui.hist[ui.histIdx] !== view) {
       ui.hist = ui.hist.slice(0, ui.histIdx + 1);
       ui.hist.push(view);
@@ -12917,8 +13778,299 @@ window.NG = (function () {
 
 /* ---------- event wiring ------------------------------------------------ */
 
+
+  /* ---------- spotify & profile ------------------------------------------- */
+
+  function renderTopProfile() {
+    const btn = $('#avatarBtn');
+    if (!btn) return;
+    const status = providers.getProviderStatus().spotify;
+    const user = status.user;
+    if (status.connected && user) {
+      const imgUrl = (user.images && user.images[0]?.url) || '';
+      if (imgUrl) {
+        btn.innerHTML = '<img src="' + esc(imgUrl) + '" alt="' + esc(user.display_name || 'Spotify') + '" class="avatar-img" />';
+        btn.classList.add('has-img');
+      } else {
+        const initial = (user.display_name || 'S').trim().charAt(0).toUpperCase();
+        btn.textContent = initial;
+        btn.classList.remove('has-img');
+      }
+      btn.setAttribute('title', (user.display_name || 'Spotify') + (status.isPremium ? ' (Premium)' : ' (Free)'));
+    } else {
+      btn.textContent = 'M';
+      btn.classList.remove('has-img');
+      btn.setAttribute('title', t('top.profile'));
+    }
+  }
+
+  function renderProfilePage() {
+    if (!el.profile) return;
+    const status = providers.getProviderStatus().spotify;
+    const user = status.user || {};
+    const isConn = Boolean(status.connected && user.id);
+    const spLib = providers.getSpotifyLibrary() || {};
+    const isPremium = Boolean(status.isPremium || user.product === 'premium');
+
+    if (isConn) {
+      const avatarUrl = (user.images && user.images[0]?.url) || '';
+      const displayName = user.display_name || user.id || 'مستخدم Spotify';
+      const initial = displayName.trim().charAt(0).toUpperCase();
+      const followersCount = (user.followers && typeof user.followers.total === 'number') ? user.followers.total : 0;
+      const likedCount = state.favorites.length;
+      const spPlaylists = state.playlists.filter(p => p.isSpotify);
+      const plCount = spPlaylists.length || (spLib.playlists ? spLib.playlists.length : 0);
+      const followedArtists = spLib.followedArtists || [];
+      const savedAlbums = spLib.savedAlbums || [];
+      const topTracks = spLib.topTracks || [];
+      const topArtists = spLib.topArtists || [];
+      const recentlyPlayed = spLib.recentlyPlayed || [];
+
+      let html = '<div class="profile-page">' +
+        '<div class="profile-hero">' +
+          '<div class="profile-avatar-wrap">' +
+            (avatarUrl
+              ? '<img class="profile-avatar-img" src="' + esc(avatarUrl) + '" alt="' + esc(displayName) + '">'
+              : '<div class="profile-avatar-placeholder">' + esc(initial) + '</div>'
+            ) +
+          '</div>' +
+          '<div class="profile-hero-meta">' +
+            '<div class="profile-kicker">' + esc(t('profile.title')) + '</div>' +
+            '<h1 class="profile-name clamp-1">' + esc(displayName) + '</h1>' +
+            '<div class="profile-badges-row">' +
+              '<span class="badge ' + (isPremium ? 'badge-premium' : 'badge-free') + '">' +
+                (isPremium ? '★ ' + esc(t('profile.premium')) : esc(t('profile.free'))) +
+              '</span>' +
+              (user.email ? '<span class="badge badge-subdued">' + esc(user.email) + '</span>' : '') +
+              (user.country ? '<span class="badge badge-subdued">' + esc(user.country) + '</span>' : '') +
+              '<span class="badge badge-subdued">' + followersCount + ' ' + esc(t('profile.followers')) + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="profile-actions-bar">' +
+          '<button class="btn btn-accent btn-sync" data-action="sync-spotify" id="profileSyncBtn">' +
+            ic('refresh') + '<span>' + esc(t('profile.syncNow')) + '</span>' +
+          '</button>' +
+          '<button class="btn" data-action="open-spotify-connect">' +
+            ic('sliders') + '<span>' + esc(t('profile.settings')) + '</span>' +
+          '</button>' +
+          '<button class="btn btn-ghost is-danger" data-action="disconnect-spotify">' +
+            '<span>' + esc(t('profile.disconnect')) + '</span>' +
+          '</button>' +
+        '</div>' +
+
+        '<div id="spotifySyncProgress" class="sp-sync-progress" hidden>' +
+          '<div class="sp-sync-spinner"></div>' +
+          '<span class="sp-sync-text" id="spotifySyncText">' + esc(t('profile.syncing')) + '</span>' +
+        '</div>' +
+
+        '<div class="profile-stats-grid">' +
+          '<button class="profile-stat-card" data-action="go-lib-tab" data-tab="liked">' +
+            '<span class="profile-stat-icon is-heart">' + ic('heart') + '</span>' +
+            '<span class="profile-stat-num">' + likedCount + '</span>' +
+            '<span class="profile-stat-label">' + esc(t('library.tabLiked')) + '</span>' +
+          '</button>' +
+          '<button class="profile-stat-card" data-action="go-lib-tab" data-tab="playlists">' +
+            '<span class="profile-stat-icon is-pl">' + ic('library') + '</span>' +
+            '<span class="profile-stat-num">' + plCount + '</span>' +
+            '<span class="profile-stat-label">' + esc(t('library.tabPlaylists')) + '</span>' +
+          '</button>' +
+          '<button class="profile-stat-card" data-action="go-lib-tab" data-tab="artists">' +
+            '<span class="profile-stat-icon is-art">' + ic('user') + '</span>' +
+            '<span class="profile-stat-num">' + followedArtists.length + '</span>' +
+            '<span class="profile-stat-label">' + esc(t('library.tabArtists')) + '</span>' +
+          '</button>' +
+          '<button class="profile-stat-card" data-action="go-lib-tab" data-tab="albums">' +
+            '<span class="profile-stat-icon is-alb">' + ic('disc') + '</span>' +
+            '<span class="profile-stat-num">' + savedAlbums.length + '</span>' +
+            '<span class="profile-stat-label">' + esc(t('library.tabAlbums')) + '</span>' +
+          '</button>' +
+        '</div>';
+
+      if (topTracks.length) {
+        ui.ctx.profileTop = topTracks.map(t => t.id);
+        html += '<div class="section-head" style="margin-top:32px"><div><h2>' + esc(t('profile.topTracks')) + '</h2>' +
+          '<p>بناءً على نشاط استماعك في حساب Spotify</p></div></div>' +
+          '<div class="rows">' + topTracks.slice(0, 10).map((tr, i) => rowHTML(tr, i, 'profileTop')).join('') + '</div>';
+      }
+
+      if (topArtists.length) {
+        html += '<div class="section-head" style="margin-top:32px"><div><h2>' + esc(t('profile.topArtists')) + '</h2>' +
+          '<p>الفنانون الأكثر استماعاً في حسابك</p></div></div>' +
+          '<div class="artist-grid">' + topArtists.slice(0, 8).map(a => {
+            const img = (a.images && a.images[0]?.url) || '';
+            return artistCard({
+              name: { ar: a.name, en: a.name },
+              track: null,
+              photo: img,
+              art: img,
+              sub: { ar: (a.followers?.total || 0) + ' متابع', en: (a.followers?.total || 0) + ' followers' }
+            });
+          }).join('') + '</div>';
+      }
+
+      if (recentlyPlayed.length) {
+        const recentTracks = recentlyPlayed.map(x => x.track).filter(Boolean);
+        ui.ctx.profileRecent = recentTracks.map(t => t.id);
+        html += '<div class="section-head" style="margin-top:32px"><div><h2>' + esc(t('profile.recentlyPlayed')) + '</h2>' +
+          '<p>آخر المقاطع التي شغّلتها على حسابك</p></div></div>' +
+          '<div class="rows">' + recentTracks.slice(0, 8).map((tr, i) => rowHTML(tr, i, 'profileRecent')).join('') + '</div>';
+      }
+
+      html += '</div>';
+      el.profile.innerHTML = html;
+    } else {
+      const currentOrigin = (typeof window !== 'undefined' && window.location)
+        ? (window.location.origin + window.location.pathname)
+        : 'http://127.0.0.1:3000/callback';
+      const savedClientId = (typeof localStorage !== 'undefined')
+        ? (localStorage.getItem('nagham_spotify_client_id') || '')
+        : '';
+      const savedRedirect = (typeof localStorage !== 'undefined')
+        ? (localStorage.getItem('nagham_spotify_redirect_uri') || currentOrigin)
+        : currentOrigin;
+
+      let html = '<div class="profile-page not-connected">' +
+        '<div class="connect-onboarding-hero">' +
+          '<div class="spotify-badge-icon">' +
+            '<svg viewBox="0 0 24 24" class="sp-big-logo"><path fill="#1ed760" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.307c-.217.356-.68.47-1.036.253-2.84-1.735-6.415-2.128-10.627-1.166-.407.094-.808-.163-.902-.57-.093-.408.163-.808.57-.902 4.608-1.053 8.563-.607 11.742 1.348.356.217.47.681.253 1.037zm1.468-3.26c-.273.444-.857.587-1.301.314-3.251-1.998-8.208-2.578-12.053-1.41-.498.152-1.026-.134-1.178-.632-.151-.499.135-1.027.633-1.178 4.398-1.336 9.873-.695 13.585 1.587.444.272.587.856.314 1.319zm.126-3.41c-3.899-2.316-10.334-2.529-14.056-1.398-.598.182-1.23-.162-1.412-.76-.182-.598.162-1.23.76-1.412 4.285-1.301 11.396-1.05 15.876 1.611.538.319.715 1.018.396 1.556-.319.539-1.018.715-1.564.403z"/></svg>' +
+          '</div>' +
+          '<h1>' + esc(t('profile.connect')) + '</h1>' +
+          '<p class="onboarding-sub">' + esc(t('profile.notConnectedBody')) + '</p>' +
+        '</div>' +
+
+        '<div class="onboarding-steps-card">' +
+          '<h3>خطوات إعداد الربط لمرة واحدة:</h3>' +
+          '<ol class="steps-list">' +
+            '<li>ادخل إلى <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener" class="link-accent">Spotify Developer Dashboard ↗</a> وسجّل دخولك بحسابك.</li>' +
+            '<li>اضغط على <b>Create App</b> وأدخل اسم التطبيق (مثل 7ify)، واختر Web API.</li>' +
+            '<li>انسخ الـ <b>Client ID</b> وضعه في الحقل أدناه.</li>' +
+            '<li>في إعدادات التطبيق (Settings)، أضف عنوان الـ <b>Redirect URI</b> التالي حرفياً:</li>' +
+          '</ol>' +
+          '<div class="uri-copy-box">' +
+            '<input type="text" id="spRedirectUriInput" class="sp-input" value="' + esc(savedRedirect) + '">' +
+            '<button class="btn btn-small" data-action="copy-redirect-uri">' + ic('copy') + ' نسخ العنوان</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<form class="connect-form-card" id="spConnectForm" data-action="submit-spotify-connect">' +
+          '<label class="form-label" for="spClientIdInput">' +
+            '<b>Spotify Client ID:</b>' +
+            '<span class="muted" style="font-size:12px;margin-inline-start:8px">(مفتاح العميل من لوحة المطورين)</span>' +
+          '</label>' +
+          '<input type="text" id="spClientIdInput" class="sp-input" placeholder="مثال: 3c8e4d10f82b4a1c97..." value="' + esc(savedClientId) + '" required autocomplete="off">' +
+          '<button type="submit" class="btn btn-accent btn-large" style="width:100%;margin-top:16px">' +
+            '<svg viewBox="0 0 24 24" class="ic"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.494 17.307c-.217.356-.68.47-1.036.253-2.84-1.735-6.415-2.128-10.627-1.166-.407.094-.808-.163-.902-.57-.093-.408.163-.808.57-.902 4.608-1.053 8.563-.607 11.742 1.348.356.217.47.681.253 1.037zm1.468-3.26c-.273.444-.857.587-1.301.314-3.251-1.998-8.208-2.578-12.053-1.41-.498.152-1.026-.134-1.178-.632-.151-.499.135-1.027.633-1.178 4.398-1.336 9.873-.695 13.585 1.587.444.272.587.856.314 1.319zm.126-3.41c-3.899-2.316-10.334-2.529-14.056-1.398-.598.182-1.23-.162-1.412-.76-.182-.598.162-1.23.76-1.412 4.285-1.301 11.396-1.05 15.876 1.611.538.319.715 1.018.396 1.556-.319.539-1.018.715-1.564.403z"/></svg>' +
+            '<span>' + esc(t('profile.loginBtn')) + '</span>' +
+          '</button>' +
+        '</form>' +
+      '</div>';
+
+      el.profile.innerHTML = html;
+    }
+  }
+
+  function openSpotifyConnectModal() {
+    const dlg = $('#spotifyConnectDlg');
+    const body = $('#spotifyConnectBody');
+    if (!dlg || !body) return;
+
+    const status = providers.getProviderStatus().spotify;
+    const isConn = Boolean(status.connected && status.user);
+    const currentOrigin = window.location.origin + window.location.pathname;
+    const savedCid = localStorage.getItem('nagham_spotify_client_id') || '';
+    const savedRed = localStorage.getItem('nagham_spotify_redirect_uri') || currentOrigin;
+
+    let content = '<div class="sp-dlg-content">';
+    if (isConn) {
+      content += '<div class="sp-conn-status is-active">' +
+        '<div class="sp-conn-icon">✓</div>' +
+        '<div><b>متصل بحساب Spotify:</b> ' + esc(status.user.display_name || status.user.id) +
+        '<div class="muted" style="font-size:12px">' + (status.isPremium ? 'اشتراك Premium' : 'حساب مجاني') + '</div></div>' +
+      '</div>' +
+      '<div class="dlg-actions" style="margin-top:16px">' +
+        '<button class="btn btn-accent" data-action="sync-spotify">' + ic('refresh') + ' ' + esc(t('profile.syncNow')) + '</button>' +
+        '<button class="btn btn-danger" data-action="disconnect-spotify" data-close-dlg="true">' + esc(t('profile.disconnect')) + '</button>' +
+      '</div>';
+    } else {
+      content += '<p class="dlg-text">' + esc(t('profile.dashboardGuide')) + '</p>' +
+      '<form data-action="submit-spotify-connect" style="display:flex;flex-direction:column;gap:12px">' +
+        '<label class="form-label"><span>' + esc(t('profile.clientIdLabel')) + ':</span><input type="text" id="spDlgClientId" class="sp-input" value="' + esc(savedCid) + '" required placeholder="مثال: 3c8e4d10f82b4a1c97..."></label>' +
+        '<label class="form-label"><span>' + esc(t('profile.redirectUriLabel')) + ':</span><div class="uri-copy-box"><input type="text" id="spDlgRedirectUri" class="sp-input" value="' + esc(savedRed) + '"><button type="button" class="btn btn-small" data-action="copy-redirect-uri" style="flex-shrink:0">' + ic('copy') + ' نسخ</button></div></label>' +
+        '<div class="dlg-actions" style="margin-top:8px">' +
+          '<button type="button" class="btn" data-action="close-dlg">' + esc(t('common.cancel')) + '</button>' +
+          '<button type="submit" class="btn btn-accent">' + esc(t('profile.loginBtn')) + '</button>' +
+        '</div>' +
+      '</form>';
+    }
+    content += '</div>';
+
+    body.innerHTML = content;
+    dlg.showModal();
+  }
+
   function onAction(action, node) {
     switch (action) {
+      case 'sync-spotify': {
+        const progressEl = $('#spotifySyncProgress');
+        const textEl = $('#spotifySyncText');
+        const syncBtn = $('#profileSyncBtn');
+        if (progressEl) progressEl.hidden = false;
+        if (syncBtn) syncBtn.disabled = true;
+        providers.syncSpotifyLibrary((p) => {
+          if (textEl) textEl.textContent = p.text;
+        }).then(() => {
+          toast(t('profile.syncDone'));
+          renderAll();
+        }).catch(err => {
+          console.error('Spotify sync error:', err);
+          toast('تعذرت مزامنة المكتبة — تأكد من الاتصال');
+        }).finally(() => {
+          if (progressEl) progressEl.hidden = true;
+          if (syncBtn) syncBtn.disabled = false;
+        });
+        break;
+      }
+      case 'submit-spotify-connect': {
+        const cid = $('#spClientIdInput')?.value?.trim() || $('#spDlgClientId')?.value?.trim() || '';
+        const red = $('#spRedirectUriInput')?.value?.trim() || $('#spDlgRedirectUri')?.value?.trim() || '';
+        if (!cid) {
+          toast('يرجى إدخال Spotify Client ID');
+          return;
+        }
+        providers.connectSpotify(cid, red).catch(err => {
+          toast('تعذر بدء تسجيل الدخول: ' + err.message);
+        });
+        break;
+      }
+      case 'disconnect-spotify': {
+        providers.disconnectSpotify();
+        toast('تم إلغاء ربط الحساب وتسجيل الخروج');
+        const dlg = $('#spotifyConnectDlg');
+        if (dlg && dlg.open) dlg.close();
+        renderAll();
+        break;
+      }
+      case 'open-spotify-connect': {
+        openSpotifyConnectModal();
+        break;
+      }
+      case 'copy-redirect-uri': {
+        const redInput = $('#spRedirectUriInput') || $('#spDlgRedirectUri');
+        const val = redInput ? redInput.value : (window.location.origin + window.location.pathname);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(val);
+        }
+        toast('تم نسخ العنوان! الصقه في Redirect URIs في لوحة المطورين');
+        break;
+      }
+      case 'go-lib-tab': {
+        const tab = node.dataset.tab || 'liked';
+        ui.libTab = tab;
+        setView('library');
+        break;
+      }
       case 'go': {
         setView(node.dataset.view);
         if (node.dataset.view === 'search' && el.q) {
@@ -13445,6 +14597,7 @@ window.NG = (function () {
     if (el.confirmDlg) el.confirmDlg.addEventListener('click', (e) => { if (e.target === el.confirmDlg) el.confirmDlg.close(); });
     if (el.shortcutsDlg) el.shortcutsDlg.addEventListener('click', (e) => { if (e.target === el.shortcutsDlg) el.shortcutsDlg.close(); });
     if (el.sourcesDlg) el.sourcesDlg.addEventListener('click', (e) => { if (e.target === el.sourcesDlg) el.sourcesDlg.close(); });
+    if (el.spotifyConnectDlg) el.spotifyConnectDlg.addEventListener('click', (e) => { if (e.target === el.spotifyConnectDlg) el.spotifyConnectDlg.close(); });
     if (el.newPlDlg) el.newPlDlg.addEventListener('click', (e) => { if (e.target === el.newPlDlg) el.newPlDlg.close(); });
 
     bus.addEventListener('state', () => { refreshTransport(); renderView(); renderNowPanel(); });
@@ -13479,6 +14632,7 @@ window.NG = (function () {
         }
         if (el.sheet.open) { closeSheet(); return; }
         if (el.sourcesDlg && el.sourcesDlg.open) { el.sourcesDlg.close(); return; }
+        if (el.spotifyConnectDlg && el.spotifyConnectDlg.open) { el.spotifyConnectDlg.close(); return; }
         if (el.shortcutsDlg.open) { el.shortcutsDlg.close(); return; }
         if (el.confirmDlg.open) { el.confirmDlg.close(); return; }
         if (el.newPlDlg.open) { el.newPlDlg.close(); return; }
@@ -13582,12 +14736,14 @@ window.NG = (function () {
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
     openAlbumPage, renderAlbumPage,
+    renderProfilePage, openSpotifyConnectModal,
     toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip, openNowPlaying, closeNowPlaying,
     runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
   if (window.NG) {
     Object.assign(window.NG, {
       ui, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, toggleMiniPlayer, setAutoPip,
+      renderProfilePage, openSpotifyConnectModal,
       runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
     });
   }

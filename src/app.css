@@ -5944,3 +5944,380 @@ html, body {
   height: 18px !important;
   fill: currentColor !important;
 }
+
+
+/* ==========================================================================
+   SPOTIFY PROFILE & ACCOUNT INTEGRATION STYLES
+   ========================================================================== */
+
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 32px 48px;
+  animation: fadeIn 0.25s ease;
+}
+
+.profile-hero {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  padding: 32px;
+  border-radius: var(--r-panel);
+  background: linear-gradient(180deg, rgba(30, 215, 96, 0.22) 0%, rgba(18, 18, 18, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-avatar-wrap {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  background: #181818;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 54px;
+  font-weight: 800;
+  color: #1ed760;
+  background: #242424;
+}
+
+.profile-hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-kicker {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b3b3b3;
+}
+
+.profile-name {
+  font-size: clamp(28px, 4vw, 56px);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.profile-badges-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-premium {
+  background: #1ed760;
+  color: #000000;
+}
+
+.badge-free {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.badge-subdued {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b3b3b3;
+}
+
+.profile-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-sync {
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(30, 215, 96, 0.3);
+}
+
+.sp-sync-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(30, 215, 96, 0.1);
+  border: 1px solid rgba(30, 215, 96, 0.25);
+  color: #1ed760;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.sp-sync-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(30, 215, 96, 0.3);
+  border-top-color: #1ed760;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.profile-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: right;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-stat-card:hover {
+  background: #242424;
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.profile-stat-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.profile-stat-icon.is-heart { color: #1ed760; }
+.profile-stat-icon.is-pl { color: #8A2E11; }
+.profile-stat-icon.is-art { color: #4A2E91; }
+.profile-stat-icon.is-alb { color: #F0D07B; }
+
+.profile-stat-num {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--font-num);
+  color: #ffffff;
+}
+
+.profile-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b3b3b3;
+}
+
+/* Onboarding & Connection Form */
+.connect-onboarding-hero {
+  text-align: center;
+  padding: 48px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.spotify-badge-icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(30, 215, 96, 0.12);
+  border: 1px solid rgba(30, 215, 96, 0.28);
+  margin-bottom: 8px;
+}
+
+.sp-big-logo {
+  width: 44px;
+  height: 44px;
+}
+
+.onboarding-sub {
+  font-size: 16px;
+  color: #b3b3b3;
+  max-width: 580px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.onboarding-steps-card {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.onboarding-steps-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.steps-list {
+  padding-inline-start: 20px;
+  margin: 0 0 16px 0;
+  color: #b3b3b3;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.link-accent {
+  color: #1ed760;
+  text-decoration: none;
+  font-weight: 600;
+}
+.link-accent:hover { text-decoration: underline; }
+
+.uri-copy-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sp-input {
+  flex: 1;
+  background: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.sp-input:focus {
+  border-color: #1ed760;
+}
+
+.connect-form-card {
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: right;
+}
+
+/* Modal Connection Styles */
+.sp-dlg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sp-conn-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(30, 215, 96, 0.1);
+  border: 1px solid rgba(30, 215, 96, 0.25);
+}
+
+.sp-conn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1ed760;
+  color: #000;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Avatar Image in Header */
+.avatar.has-img {
+  padding: 0;
+  background: transparent;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+
+@media (max-width: 640px) {
+  .profile-page {
+    padding: 16px 12px 32px;
+    gap: 16px;
+  }
+  .profile-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+  .profile-avatar-wrap {
+    width: 110px;
+    height: 110px;
+  }
+  .profile-hero-meta {
+    align-items: center;
+    text-align: center;
+  }
+  .profile-badges-row {
+    justify-content: center;
+  }
+  .profile-actions-bar {
+    justify-content: center;
+  }
+  .profile-stat-card {
+    text-align: center;
+  }
+}

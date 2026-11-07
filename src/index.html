@@ -112,7 +112,7 @@
         <span class="pill-label" data-i18n="top.import">استيراد</span>
       </button>
       <button class="pill pill-ghost lang-pill hide-md" id="langBtn" data-action="lang" aria-label="Switch to English" data-i18n-aria="top.lang">EN</button>
-      <button class="avatar" id="avatarBtn" data-action="go" data-view="library" aria-label="حسابك والمكتبة" data-i18n-aria="top.profile">M</button>
+      <button class="avatar" id="avatarBtn" data-action="go" data-view="profile" aria-label="حسابك والملف الشخصي" data-i18n-aria="top.profile">M</button>
     </div>
   </header>
 
@@ -186,6 +186,7 @@
         <section class="view" data-view-section="playlist" id="view-playlist" aria-label="قائمة التشغيل" hidden></section>
         <section class="view" data-view-section="artist" id="view-artist" aria-label="صفحة الفنان" hidden></section>
         <section class="view" data-view-section="album" id="view-album" aria-label="صفحة الألبوم" hidden></section>
+        <section class="view" data-view-section="profile" id="view-profile" aria-label="الملف الشخصي والحساب" hidden></section>
       </div>
     </main>
 
@@ -741,6 +742,16 @@
     <div id="sourcesTrackInfo" class="sources-track-info"></div>
     <div id="sourcesList" class="sources-list" role="list"></div>
   </div>
+</dialog>
+
+<dialog class="dlg" id="spotifyConnectDlg" aria-labelledby="spConnectTitle">
+  <div class="dlg-head">
+    <h2 id="spConnectTitle">ربط حساب Spotify الرسمي</h2>
+    <button class="icon-btn is-small" data-action="close-dlg" aria-label="إغلاق" data-i18n-aria="common.close">
+      <svg aria-hidden="true"><use href="#i-x"></use></svg>
+    </button>
+  </div>
+  <div class="dlg-body" id="spotifyConnectBody"></div>
 </dialog>
 
 <div class="toasts" id="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
