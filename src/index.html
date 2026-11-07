@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#07080A">
-<meta name="color-scheme" content="dark light">
-<meta name="description" content="نَغَم ستوديو — مشغل موسيقى عربي بواجهة كاملة، محرك صوت تجريبي، وقوائم تشغيل.">
-<title>نَغَم ستوديو — NAGHAM Studio</title>
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Spotify Web Player: Music for everyone — مشغل Spotify Web Player بواجهة Encore الأصلية">
+<title>Spotify - Web Player: Music for everyone</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%231ED760'/%3E%3Cg fill='%2304140A'%3E%3Crect x='9' y='12' width='2.6' height='8' rx='1.3'/%3E%3Crect x='14.7' y='8' width='2.6' height='16' rx='1.3'/%3E%3Crect x='20.4' y='14' width='2.6' height='4' rx='1.3'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="icon" sizes="32x32" type="image/png" href="https://open.spotifycdn.com/cdn/images/favicon32.b64ecc03.png">
   <link rel="icon" sizes="16x16" type="image/png" href="https://open.spotifycdn.com/cdn/images/favicon16.1c487bff.png">
@@ -19,10 +19,14 @@
 <link rel="stylesheet" href="https://open.spotifycdn.com/cdn/build/web-player/pip-mini-player.620bdaff.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <!--INLINE_STYLE-->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-spotify" viewBox="0 0 24 24"><path fill="currentColor" d="M12.438 1.009C6.368.769 1.251 5.494 1.008 11.565c-.24 6.07 4.485 11.186 10.556 11.426 6.07.242 11.185-4.484 11.427-10.554S18.507 1.251 12.438 1.009m4.644 16.114a.657.657 0 0 1-.897.246 13.2 13.2 0 0 0-4.71-1.602 13.2 13.2 0 0 0-4.968.242.658.658 0 0 1-.31-1.278 14.5 14.5 0 0 1 5.46-.265c1.837.257 3.579.851 5.177 1.76.315.178.425.58.246.896zm1.445-2.887a.853.853 0 0 1-1.158.344 16.2 16.2 0 0 0-5.475-1.797 16.2 16.2 0 0 0-5.758.219.855.855 0 0 1-1.018-.65.85.85 0 0 1 .65-1.018 17.9 17.9 0 0 1 6.362-.241 17.9 17.9 0 0 1 6.049 1.985c.415.224.57.743.344 1.158zm1.602-3.255a1.05 1.05 0 0 1-1.418.448 19.7 19.7 0 0 0-6.341-2.025 19.6 19.6 0 0 0-6.655.199 1.05 1.05 0 1 1-.417-2.06 21.7 21.7 0 0 1 7.364-.22 21.7 21.7 0 0 1 7.019 2.24c.515.268.715.903.448 1.418"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></symbol>
+  <symbol id="i-pip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="9" width="8" height="6" rx="1"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.6 12 3.2l9 7.4V20a1 1 0 0 1-1 1h-5.2v-6.4H9.2V21H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m16.4 16.4 4.1 4.1"/></symbol>
   <symbol id="i-library" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M8 6v12M12 6v12M16 5.6l3.6 12.8"/></symbol>
@@ -68,47 +72,54 @@
 <div class="app">
 
   <header class="topbar">
-    <button class="brand" data-action="go" data-view="home" aria-label="نَغَم ستوديو — الصفحة الرئيسية">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><g fill="currentColor"><rect x="4.5" y="9" width="3" height="6" rx="1.5"/><rect x="10.5" y="4.5" width="3" height="15" rx="1.5"/><rect x="16.5" y="10.5" width="3" height="3" rx="1.5"/></g></svg>
-      </span>
-      <span class="brand-name"><span id="brandLabel">نَغَم</span><span class="brand-chip">STUDIO</span></span>
-    </button>
+    <div class="topbar-right">
+      <button class="brand" data-action="go" data-view="home" aria-label="Spotify">
+        <svg class="spotify-logo-icon" viewBox="0 0 24 24"><use href="#i-spotify"></use></svg>
+        <span class="brand-name">Spotify</span>
+      </button>
 
-    <div class="hist">
-      <button class="icon-btn" data-action="back" aria-label="رجوع" data-i18n-aria="nav.back"><svg class="ic flip" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
-      <button class="icon-btn" data-action="forward" aria-label="تقدُّم" data-i18n-aria="nav.forward"><svg class="ic flip" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
+      <div class="hist">
+        <button class="icon-btn" data-action="back" aria-label="رجوع" data-i18n-aria="nav.back"><svg class="ic flip" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
+        <button class="icon-btn" data-action="forward" aria-label="تقدُّم" data-i18n-aria="nav.forward"><svg class="ic flip" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
+      </div>
     </div>
 
-    <div class="search" id="searchWrap" role="search">
-      <svg aria-hidden="true"><use href="#i-search"></use></svg>
-      <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="ابحث عن أغنية أو فنان" aria-label="بحث" data-i18n-ph="search.placeholder" data-i18n-aria="search.label">
-      <kbd class="search-kbd" title="اختصار البحث">/</kbd>
-      <button class="search-clear" id="qClear" data-action="clear-search" aria-label="مسح البحث" data-i18n-aria="search.clear" hidden><svg aria-hidden="true"><use href="#i-x"></use></svg></button>
-      <div id="searchAutocomplete" class="search-autocomplete" role="listbox" aria-label="اقتراحات البحث" hidden></div>
+    <div class="topbar-center">
+      <button class="home-pill" data-action="go" data-view="home" id="btnHomePill" aria-label="الصفحة الرئيسية" title="الصفحة الرئيسية">
+        <svg class="ic" aria-hidden="true"><use href="#i-home"></use></svg>
+      </button>
+
+      <div class="search" id="searchWrap" role="search">
+        <svg aria-hidden="true" class="search-ic"><use href="#i-search"></use></svg>
+        <input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="ماذا تريد أن تشغّل؟" aria-label="بحث" data-i18n-ph="search.placeholder" data-i18n-aria="search.label">
+        <kbd class="search-kbd" title="اختصار البحث">/</kbd>
+        <button class="search-clear" id="qClear" data-action="clear-search" aria-label="مسح البحث" data-i18n-aria="search.clear" hidden><svg aria-hidden="true"><use href="#i-x"></use></svg></button>
+        <div class="search-divider"></div>
+        <button class="search-browse-btn" data-action="go" data-view="search" aria-label="تصفح الفئات" title="تصفح الفئات">
+          <svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>
+        </button>
+        <div id="searchAutocomplete" class="search-autocomplete" role="listbox" aria-label="اقتراحات البحث" hidden></div>
+      </div>
     </div>
 
     <div class="top-actions">
-      <button class="pill pill-accent" data-action="import" data-i18n-aria="top.importAria">
+      <button class="pill pill-pip" data-action="toggle-miniplayer" aria-label="المشغّل المصغّر (PiP)" title="المشغّل المصغّر (PiP)">
+        <svg class="ic" aria-hidden="true"><use href="#i-pip-icon"></use></svg>
+        <span class="pill-label">المشغّل المصغّر (PiP)</span>
+      </button>
+      <button class="pill hide-md" data-action="import" data-i18n-aria="top.importAria">
         <svg aria-hidden="true"><use href="#i-upload"></use></svg>
         <span class="pill-label" data-i18n="top.import">استيراد</span>
       </button>
-      <button class="pill hide-md" data-action="go" data-view="studio">
-        <span class="pill-dot" aria-hidden="true"></span>
-        <span class="pill-label" data-i18n="top.customize">تخصيص</span>
-      </button>
-      <button class="icon-btn hide-md" data-action="shortcuts" aria-label="اختصارات لوحة المفاتيح" data-i18n-aria="top.shortcuts">
-        <svg aria-hidden="true"><use href="#i-keyboard"></use></svg>
-      </button>
-      <button class="pill pill-ghost lang-pill" id="langBtn" data-action="lang" aria-label="Switch to English" data-i18n-aria="top.lang">EN</button>
-      <button class="avatar" id="avatarBtn" data-action="go" data-view="library" aria-label="حسابك والمكتبة" data-i18n-aria="top.profile">ن</button>
+      <button class="pill pill-ghost lang-pill hide-md" id="langBtn" data-action="lang" aria-label="Switch to English" data-i18n-aria="top.lang">EN</button>
+      <button class="avatar" id="avatarBtn" data-action="go" data-view="library" aria-label="حسابك والمكتبة" data-i18n-aria="top.profile">M</button>
     </div>
   </header>
 
   <div class="shell">
 
     <aside class="rail" aria-label="المكتبة">
-      <nav class="rail-nav" aria-label="التنقل الرئيسي">
+      <nav class="rail-nav" aria-label="التنقل الرئيسي" style="display:none">
         <button class="rail-link is-active" data-action="go" data-view="home" data-nav="home">
           <svg aria-hidden="true"><use href="#i-home"></use></svg><span data-i18n="nav.home">الرئيسية</span>
         </button>
@@ -120,29 +131,45 @@
         </button>
       </nav>
 
-      <div class="rail-head">
-        <h2 data-i18n="rail.library">مكتبتك</h2>
-        <button class="rail-add" data-action="new-playlist" aria-label="قائمة تشغيل جديدة" data-i18n-aria="rail.new">
-          <svg aria-hidden="true"><use href="#i-plus"></use></svg>
+      <div class="rail-header-row">
+        <button class="rail-title-btn" data-action="toggle-rail" title="طي أو توسيع مكتبتك">
+          <svg class="ic" aria-hidden="true"><use href="#i-library"></use></svg>
+          <span class="rail-title-text" data-i18n="rail.library">مكتبتك</span>
+        </button>
+        <div class="rail-header-actions">
+          <button class="rail-create-btn" data-action="new-playlist" aria-label="إنشاء قائمة تشغيل" title="إنشاء">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>
+            <span>إنشاء</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="rail-filter-chips" id="railFilterChips">
+        <button class="lib-chip is-active" data-action="library-filter" data-filter="all">الكل</button>
+        <button class="lib-chip" data-action="library-filter" data-filter="playlists">قوائم التشغيل</button>
+        <button class="lib-chip" data-action="library-filter" data-filter="albums">الألبومات</button>
+        <button class="lib-chip" data-action="library-filter" data-filter="artists">الفنانون</button>
+      </div>
+
+      <div class="rail-search-row">
+        <div class="rail-search-box">
+          <svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg>
+          <input id="railSearchInput" placeholder="ابحث في مكتبتك" aria-label="ابحث في مكتبتك">
+        </div>
+        <button class="rail-sort-btn" id="railSortBtn" data-action="cycle-lib-sort">
+          <span id="railSortLabel">الأخيرة</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-queue"></use></svg>
         </button>
       </div>
 
       <div class="rail-scroll" id="railList"></div>
-
-      <div class="rail-foot">
-        <span class="dot" aria-hidden="true"></span>
-        <div class="rail-foot-text">
-          <div class="rail-foot-title" data-i18n="rail.engine">محرك صوت تجريبي</div>
-          <div class="rail-foot-sub" data-i18n="rail.engineSub">توليد حي • بدون تحميل</div>
-        </div>
-        <button class="icon-btn is-small" data-action="go" data-view="studio" aria-label="إعدادات الصوت" data-i18n-aria="rail.audioSettings">
-          <svg aria-hidden="true"><use href="#i-monitor"></use></svg>
-        </button>
-      </div>
     </aside>
 
     <main class="stage" id="main" tabindex="-1">
-      <div class="stage-bar">
+      <!-- Dynamic ambient gradient backdrop -->
+      <div id="main-gradient-overlay" class="main-gradient-overlay"></div>
+
+      <div class="stage-bar sticky-filter-bar" id="homeStickyFilters">
         <div class="chips" id="genreChips" role="group" aria-label="تصفية حسب النوع"></div>
         <div class="stage-tools">
           <button class="icon-btn hide-md" data-action="toggle-panel" id="panelToggle" aria-label="إظهار لوحة التشغيل" aria-pressed="false" data-i18n-aria="nav.panel">
@@ -200,19 +227,19 @@
 
     <div class="player-mid">
       <div class="player-controls">
-        <button class="ctrl" data-action="shuffle" id="bShuffle" aria-label="تشغيل عشوائي" aria-pressed="false" data-i18n-aria="player.shuffle">
+        <button class="ctrl" data-action="shuffle" id="bShuffle" class="ctrl-with-dot" aria-label="تشغيل عشوائي" aria-pressed="false" data-i18n-aria="player.shuffle">
           <svg aria-hidden="true"><use href="#i-shuffle"></use></svg>
         </button>
         <button class="ctrl" data-action="prev" aria-label="السابق" data-i18n-aria="player.prev">
           <svg aria-hidden="true"><use href="#i-prev"></use></svg>
         </button>
-        <button class="play-btn" data-action="toggle" id="bPlay" aria-label="تشغيل" data-i18n-aria="player.play">
+        <button class="play-btn" data-action="toggle" id="bPlay" class="play-btn play-btn-white" aria-label="تشغيل" data-i18n-aria="player.play">
           <svg aria-hidden="true" id="pPlayIcon"><use href="#i-play"></use></svg>
         </button>
         <button class="ctrl" data-action="next" aria-label="التالي" data-i18n-aria="player.next">
           <svg aria-hidden="true"><use href="#i-next"></use></svg>
         </button>
-        <button class="ctrl" data-action="repeat" id="bRepeat" aria-label="تكرار: متوقف" aria-pressed="false" data-i18n-aria="player.repeat">
+        <button class="ctrl" data-action="repeat" id="bRepeat" class="ctrl-with-dot" aria-label="تكرار: متوقف" aria-pressed="false" data-i18n-aria="player.repeat">
           <svg aria-hidden="true"><use href="#i-repeat"></use></svg>
           <span class="badge" id="repeatBadge" hidden>1</span>
         </button>

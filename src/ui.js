@@ -355,8 +355,9 @@
     const poolIds = pool.map((tr) => tr.id);
     ui.ctx.home = poolIds;
     const featured = pool[0] || getTrack('t1');
-    const recentIds = state.recent.filter((id) => getTrack(id)).slice(0, 4);
-    const jump = (recentIds.length ? recentIds : poolIds.slice(0, 4)).map(getTrack).filter(Boolean);
+    const recentIds = state.recent.filter((id) => getTrack(id));
+    const jumpIds = [...recentIds, ...poolIds.filter((id) => !recentIds.includes(id))].slice(0, 6);
+    const jump = jumpIds.map(getTrack).filter(Boolean);
     const mixes = state.playlists.slice(0, 4);
     const trending = pool.slice(0, 7);
     const fav = isFav(featured.id);
@@ -365,7 +366,15 @@
     let html = '<div class="greet"><div><h1>' + esc(t(greetingKey())) + '</h1><p>' + esc(t('greet.sub')) + '</p></div>' +
       '<span class="greet-date">' + esc(dateText()) + '</span></div>';
 
-    html += '<article class="hero" aria-labelledby="heroTitle" style="--c1:' + featured.colors[0] + ';--c2:' + featured.colors[1] + ';--c3:' + featured.colors[2] + '">' +
+    // Quick Picks 6-Grid
+    html += '<section class="section section-quick-picks">' +
+      '<div class="jump-grid">' + jump.map((tr) =>
+        '<button class="jump group" data-action="play" data-id="' + tr.id + '" data-ctx="home">' +
+        trackArt(tr) + '<span class="jump-title clamp-2">' + L(tr.title) + '</span>' +
+        '<span class="jump-play play-btn" aria-hidden="true">' + ic('play') + '</span></button>'
+      ).join('') + '</div></section>';
+
+    html += '<article class="hero" aria-labelledby="heroTitle" style="display:none;--c1:' + featured.colors[0] + ';--c2:' + featured.colors[1] + ';--c3:' + featured.colors[2] + '">' +
       '<div class="hero-art">' + trackArt(featured, 'hero-cover', true) + '</div>' +
       '<div class="hero-content">' +
       '<span class="hero-tag">' + ic('sparkle') + ' ' + esc(featured.source === 'file' ? t('player.local') : t('hero.badge')) + ' · ' + featured.year + '</span>' +
@@ -385,13 +394,6 @@
       el.home.innerHTML = html;
       return;
     }
-
-    html += '<section class="section">' + sectionHead(t('sec.jump'), t('sec.jumpSub')) +
-      '<div class="jump-grid">' + jump.map((tr) =>
-        '<button class="jump" data-action="play" data-id="' + tr.id + '" data-ctx="home">' +
-        trackArt(tr) + '<span class="jump-title clamp-2">' + L(tr.title) + '</span>' +
-        '<span class="jump-play play-btn" aria-hidden="true">' + ic('play') + '</span></button>'
-      ).join('') + '</div></section>';
 
     if (mixes.length) {
       html += '<section class="section">' + sectionHead(t('sec.mixes'), t('sec.mixesSub'), 'library') +

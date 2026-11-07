@@ -3751,3 +3751,791 @@ html[data-motion="off"] *::after {
   opacity: 0.5;
   stroke: #fff;
 }
+
+/* ==========================================================================
+   SPOTIFY ENCORE WEB PLAYER - AUTHENTIC STYLES & LAYOUT
+   ========================================================================== */
+
+/* Topbar Spotify Layout */
+.topbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 64px !important;
+  padding: 0 16px !important;
+  background-color: #000000 !important;
+  gap: 16px !important;
+  z-index: 40 !important;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 220px;
+}
+
+.brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease !important;
+}
+
+.brand:hover {
+  transform: scale(1.04) !important;
+}
+
+.spotify-logo-icon {
+  width: 32px !important;
+  height: 32px !important;
+  fill: #1ed760 !important;
+  color: #1ed760 !important;
+}
+
+.brand-name {
+  font-family: 'Cairo', 'Inter', sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+  color: #ffffff !important;
+}
+
+.hist {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.hist .icon-btn {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background-color: #1f1f1f !important;
+  color: #b3b3b3 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.hist .icon-btn:hover {
+  background-color: #282828 !important;
+  color: #ffffff !important;
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 580px;
+  justify-content: center;
+}
+
+.home-pill {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background-color: #1f1f1f !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+
+.home-pill:hover {
+  transform: scale(1.05) !important;
+  background-color: #282828 !important;
+}
+
+.home-pill .ic {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.topbar .search {
+  flex: 1 !important;
+  max-width: 460px !important;
+  height: 48px !important;
+  border-radius: 500px !important;
+  background-color: #1f1f1f !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 14px !important;
+  gap: 10px !important;
+  border: 1px solid transparent !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease !important;
+  position: relative !important;
+}
+
+.topbar .search:hover {
+  background-color: #282828 !important;
+}
+
+.topbar .search:focus-within {
+  background-color: #242424 !important;
+  border-color: #ffffff !important;
+}
+
+.topbar .search input {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  font-weight: 500 !important;
+}
+
+.search-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #3e3e3e;
+  flex-shrink: 0;
+}
+
+.search-browse-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #b3b3b3 !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.15s ease, transform 0.15s ease !important;
+}
+
+.search-browse-btn:hover {
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
+}
+
+.pill-pip {
+  background-color: #1ed760 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border-radius: 500px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+
+.pill-pip:hover {
+  transform: scale(1.04) !important;
+  background-color: #3be477 !important;
+}
+
+/* ------------------ Library Sidebar (مكتبتك) ------------------ */
+
+.rail {
+  background-color: #121212 !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  display: flex;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  gap: 8px !important;
+}
+
+.rail-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 4px 8px;
+}
+
+.rail-title-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.rail-title-btn:hover {
+  color: #ffffff;
+}
+
+.rail-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #1f1f1f;
+  border: none;
+  border-radius: 500px;
+  padding: 6px 12px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.rail-create-btn:hover {
+  background-color: #282828;
+  transform: scale(1.04);
+}
+
+.rail-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 8px;
+  scrollbar-width: none;
+}
+
+.lib-chip {
+  padding: 4px 12px;
+  border-radius: 500px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #1f1f1f;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.lib-chip.is-active {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.lib-chip:hover:not(.is-active) {
+  background-color: #2a2a2a;
+}
+
+.rail-search-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 8px;
+  gap: 8px;
+}
+
+.rail-search-box {
+  display: flex;
+  align-items: center;
+  background-color: #1f1f1f;
+  border-radius: 6px;
+  padding: 4px 8px;
+  flex: 1;
+  gap: 6px;
+}
+
+.rail-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 12px;
+  width: 100%;
+}
+
+.rail-sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rail-sort-btn:hover {
+  color: #ffffff;
+}
+
+/* ------------------ Center Viewport & Ambient Gradient ------------------ */
+
+.main-gradient-overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 280px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(78, 85, 78, 0.6) 0%, rgba(18, 18, 18, 0) 100%);
+  transition: background 0.6s cubic-bezier(0.3, 0, 0, 1);
+  z-index: 1;
+}
+
+.sticky-filter-bar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  background: rgba(18, 18, 18, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  padding: 12px 24px !important;
+}
+
+/* ------------------ Equalizer Bars Animation ------------------ */
+@keyframes eqBar1 { 0%, 100% { height: 3px; } 50% { height: 14px; } }
+@keyframes eqBar2 { 0%, 100% { height: 13px; } 33% { height: 4px; } 66% { height: 15px; } }
+@keyframes eqBar3 { 0%, 100% { height: 6px; } 40% { height: 15px; } 80% { height: 3px; } }
+@keyframes eqBar4 { 0%, 100% { height: 11px; } 25% { height: 4px; } 75% { height: 14px; } }
+
+.eq-bar-1 { animation: eqBar1 0.8s infinite ease-in-out; }
+.eq-bar-2 { animation: eqBar2 0.7s infinite ease-in-out; }
+.eq-bar-3 { animation: eqBar3 0.9s infinite ease-in-out; }
+.eq-bar-4 { animation: eqBar4 0.65s infinite ease-in-out; }
+
+/* ------------------ Bottom Player Bar Polish ------------------ */
+
+.player {
+  height: 88px !important;
+  background-color: #000000 !important;
+  border-top: 1px solid #181818 !important;
+  padding: 0 16px !important;
+}
+
+.play-btn-white {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  transition: transform 0.15s ease !important;
+}
+
+.play-btn-white:hover {
+  transform: scale(1.08) !important;
+}
+
+.play-btn-white:active {
+  transform: scale(0.96) !important;
+}
+
+.play-btn-white svg {
+  fill: #000000 !important;
+  color: #000000 !important;
+}
+
+/* Spotify Slider Hover Green */
+.spotify-slider-container {
+  cursor: pointer;
+}
+
+.spotify-slider-container:hover .spotify-slider-fill,
+.seek:hover .seek-fill {
+  background-color: #1ed760 !important;
+}
+
+.seek:hover .seek-thumb {
+  transform: translate(-50%, -50%) scale(1) !important;
+  opacity: 1 !important;
+}
+
+/* ==========================================================================
+   AUTHENTIC SPOTIFY ENCORE WEB PLAYER MASTER STYLES
+   ========================================================================== */
+
+/* Layout & 3-Pane Framing */
+body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-family: 'Cairo', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.app {
+  background-color: #000000 !important;
+  grid-template-rows: 64px minmax(0, 1fr) 88px !important;
+}
+
+.shell {
+  background-color: #000000 !important;
+  gap: 8px !important;
+  padding: 0 8px 8px !important;
+}
+
+@media (min-width: 981px) {
+  .rail {
+    display: flex !important;
+    background-color: #121212 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .rail {
+    display: none !important;
+  }
+}
+
+.stage {
+  background-color: #121212 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.stage::before {
+  display: none !important;
+}
+
+.nowpanel {
+  background-color: #121212 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* Greeting Heading */
+.greet {
+  margin-top: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+.greet h1 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+  color: #ffffff !important;
+}
+
+.greet p {
+  font-size: 14px !important;
+  color: #b3b3b3 !important;
+  font-weight: 500 !important;
+}
+
+/* Quick Picks 6-Grid */
+.section-quick-picks {
+  margin-top: 8px !important;
+  margin-bottom: 28px !important;
+}
+
+.jump-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+@media (max-width: 1080px) {
+  .jump-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .jump-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
+.jump {
+  height: 64px !important;
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  transition: background 0.2s ease, transform 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-inline-end: 12px !important;
+  cursor: pointer !important;
+  overflow: hidden !important;
+  position: relative !important;
+  border: none !important;
+}
+
+.jump:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.jump .cover {
+  width: 64px !important;
+  height: 64px !important;
+  flex: 0 0 64px !important;
+  border-radius: 0 !important;
+  margin-inline-end: 12px !important;
+}
+
+.jump-title {
+  flex: 1 !important;
+  text-align: start !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.3 !important;
+}
+
+.jump .jump-play {
+  background-color: #1ed760 !important;
+  color: #000000 !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important;
+  transform: scale(0.85) !important;
+  transition: all 0.2s cubic-bezier(0.3, 0, 0, 1) !important;
+  opacity: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.jump .jump-play svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: #000000 !important;
+}
+
+.jump:hover .jump-play {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Shelves & Cards */
+.section-head h2 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.shelf {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.card {
+  background: #181818 !important;
+  border-radius: 8px !important;
+  padding: 14px !important;
+  border: none !important;
+  transition: background 0.25s ease !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.card:hover {
+  background: #282828 !important;
+  transform: none !important;
+}
+
+.card-art {
+  position: relative !important;
+  margin-bottom: 12px !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+.card-art .cover {
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 4px !important;
+  object-fit: cover !important;
+}
+
+.card-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.3 !important;
+  margin-top: 4px !important;
+}
+
+.card-sub {
+  font-size: 12px !important;
+  color: #b3b3b3 !important;
+  margin-top: 4px !important;
+}
+
+.card .fab {
+  position: absolute !important;
+  bottom: 8px !important;
+  inset-inline-end: 8px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: #1ed760 !important;
+  color: #000000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+  opacity: 0 !important;
+  transform: translateY(8px) scale(0.9) !important;
+  transition: all 0.22s cubic-bezier(0.3, 0, 0, 1) !important;
+}
+
+.card .fab svg {
+  width: 20px !important;
+  height: 20px !important;
+  fill: #000000 !important;
+}
+
+.card:hover .fab {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+}
+
+/* Track Rows (Spotify Table style) */
+.row {
+  height: 56px !important;
+  border-radius: 4px !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: background 0.15s ease !important;
+  color: #b3b3b3 !important;
+  border: none !important;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.row.is-current {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.row.is-current .row-title {
+  color: #1ed760 !important;
+}
+
+.row-title {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.row-artist {
+  color: #b3b3b3 !important;
+  font-size: 12px !important;
+}
+
+/* Bottom Player Bar */
+footer.player {
+  height: 88px !important;
+  background-color: #000000 !important;
+  border-top: 1px solid #181818 !important;
+  padding: 0 16px !important;
+}
+
+.player-controls .play-btn {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  transition: transform 0.15s ease !important;
+  border: none !important;
+}
+
+.player-controls .play-btn:hover {
+  transform: scale(1.08) !important;
+}
+
+.player-controls .play-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: #000000 !important;
+  color: #000000 !important;
+}
+
+.seek-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 620px !important;
+}
+
+.time {
+  font-family: 'Cairo', 'Inter', sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+  font-size: 11px !important;
+  color: #b3b3b3 !important;
+  min-width: 36px !important;
+}
+
+.seek {
+  height: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  position: relative !important;
+  flex: 1 !important;
+}
+
+.seek-track {
+  width: 100% !important;
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 9999px !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.seek-fill {
+  height: 100% !important;
+  background: #ffffff !important;
+  border-radius: 9999px !important;
+  transition: background-color 0.1s ease !important;
+}
+
+.seek:hover .seek-fill {
+  background: #1ed760 !important;
+}
+
+.seek-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transform: translate(-50%, -50%) scale(0) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  transition: transform 0.1s ease !important;
+  pointer-events: none !important;
+}
+
+.seek:hover .seek-thumb {
+  transform: translate(-50%, -50%) scale(1) !important;
+}
