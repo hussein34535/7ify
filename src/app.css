@@ -1,3 +1,33 @@
+/* Official Spotify Encore Typography Fonts */
+@font-face {
+  font-family: 'SpotifyMixUI';
+  src: url('https://encore.scdn.co/fonts/SpotifyMixUI-Regular-76c92fb1a35c462f73429fa8865163eb.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SpotifyMixUI';
+  src: url('https://encore.scdn.co/fonts/SpotifyMixUI-Bold-09c45a3a0ce9d2971e62cb26e97760fb.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SpotifyMixUITitle';
+  src: url('https://encore.scdn.co/fonts/SpotifyMixUITitleVariable-08bab3354d40f74e5177917b5ae80894.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SpotifyMixMono';
+  src: url('https://encore.scdn.co/fonts/SpotifyMixMono-Regular-134eeb986fc0f94a9f0acb9cedaeb584.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ==========================================================================
    NAGHAM STUDIO — design system
    ========================================================================== */
@@ -50,7 +80,7 @@
   --background-noise: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj4KICAgPGZpbHRlciBpZD0ibiIgeD0iMCIgeT0iMCI+CiAgICAgIDxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjc1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiAvPgogICAgICA8ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIiAvPgogICA8L2ZpbHRlcj4KICAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNuKSIgb3BhY2l0eT0iMC4wNSIgLz4KPC9zdmc+");
 
   --font-ui: var(--encore-body-font-stack);
-  --font-num: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-num: 'SpotifyMixMono', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --r-panel: 14px;
   --r-card: 8px;
