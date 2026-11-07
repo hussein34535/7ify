@@ -1058,6 +1058,7 @@ input[type="range"].volume::-moz-range-progress { height: 4px; border-radius: 2p
 input[type="range"].volume::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--ink); }
 [dir="rtl"] input[type="range"].volume { direction: ltr; }
 
+.player-actions-mobile { display: none; }
 .player-mini-progress { display: none; }
 .player-play-mobile { display: none; }
 
@@ -1591,6 +1592,35 @@ html[data-density="compact"] .artist-grid { gap: 9px; }
   }
   .player-mid { display: none; }
   .player-end { display: none; }
+  .player-actions-mobile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .player-mini-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .player-mini-mobile:hover,
+  .player-mini-mobile.is-active {
+    color: #fff;
+    transform: scale(1.08);
+  }
+  .player-mini-mobile svg {
+    width: 17px;
+    height: 17px;
+  }
   .player-play-mobile { display: inline-grid; width: 34px; height: 34px; }
   .player-play-mobile svg { width: 15px; height: 15px; }
   .np-art { width: 42px; flex: 0 0 42px; }
@@ -3145,6 +3175,17 @@ html[data-motion="off"] *::after {
 /* ==========================================================================
    Spotify MiniPlayer Popup (PIP)
    ========================================================================== */
+
+@media (max-width: 640px) {
+  .spotify-pip-container {
+    bottom: calc(128px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 150px) !important;
+  }
+}
 
 .spotify-pip-container {
   position: fixed;

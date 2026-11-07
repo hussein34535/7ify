@@ -2253,7 +2253,7 @@
   function renderMiniPlayer() {
     const elPip = $('#spotifyMiniPlayer');
     if (!elPip || elPip.style.display === 'none') return;
-    const tr = getTrack(state.trackId);
+    const tr = getTrack(state.trackId) || (typeof TRACKS !== 'undefined' && TRACKS[0]) || null;
     if (!tr) return;
     const fav = isFav(tr.id);
     const titleText = byLang(tr.title);
@@ -2339,8 +2339,11 @@
   let isDraggingPip = false;
   let pipStartX = 0, pipStartY = 0;
   let pipStartLeft = 0, pipStartTop = 0;
+  let pipControlsInitialized = false;
 
   function initPipControls() {
+    if (pipControlsInitialized) return;
+    pipControlsInitialized = true;
     const dragBar = $('#pipDragBar');
     const miniEl = $('#spotifyMiniPlayer');
     const seekWrap = $('#pipSeekWrap');
@@ -2445,7 +2448,6 @@
 
   function toggleMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
 
     const isHidden = miniEl.style.display === 'none' || miniEl.hidden;
@@ -2458,26 +2460,25 @@
 
   function openMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'flex';
     miniEl.hidden = false;
-    if (btn) {
+    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
-    }
+    });
+    initPipControls();
     renderMiniPlayer();
   }
 
   function closeMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'none';
-    if (btn) {
+    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
       btn.setAttribute('aria-pressed', 'false');
       btn.classList.remove('is-active');
-    }
+    });
   }
 
   /* ---------- event wiring ------------------------------------------------ */
@@ -2988,6 +2989,11 @@
       const tag = (target.tagName || '').toLowerCase();
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
       if (e.key === 'Escape') {
+        const mini = $('#spotifyMiniPlayer');
+        if (mini && mini.style.display !== 'none' && !mini.hidden) {
+          closeMiniPlayer();
+          return;
+        }
         if (el.sheet.open) { closeSheet(); return; }
         if (el.sourcesDlg && el.sourcesDlg.open) { el.sourcesDlg.close(); return; }
         if (el.shortcutsDlg.open) { el.shortcutsDlg.close(); return; }
@@ -3043,6 +3049,7 @@
     NG.applyTheme();
     NG.applyI18n();
     bind();
+    initPipControls();
     bindSeek($('#pSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     bindSeek($('#shSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     engine.load(getTrack(state.trackId));

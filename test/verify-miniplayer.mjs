@@ -84,10 +84,10 @@ try {
 
   console.log('\n--- TESTING SPOTIFY MINIPLAYER POPUP ---');
 
-  // 1. Check MiniPlayer button in player bar
-  const hasBtn = await ev("!!document.getElementById('bMiniPlayer');");
+  // 1. Check MiniPlayer button in player footer bar (.player-end)
+  const hasBtn = await ev("!!document.querySelector('.player-end #bMiniPlayer');");
   console.log('MiniPlayer button in footer bar exists:', hasBtn);
-  if (!hasBtn) throw new Error('Missing #bMiniPlayer button in footer bar');
+  if (!hasBtn) throw new Error('Missing #bMiniPlayer button in .player-end footer bar');
 
   // 2. Open MiniPlayer via button click
   console.log('Clicking MiniPlayer button...');
@@ -98,36 +98,30 @@ try {
     const el = document.getElementById('spotifyMiniPlayer');
     return el && getComputedStyle(el).display !== 'none' && !el.hidden;
   })()`);
-  console.log('MiniPlayer popup is visible:', miniPlayerVisible);
-  if (!miniPlayerVisible) throw new Error('Spotify MiniPlayer did not open');
+  console.log('MiniPlayer is visible on click:', miniPlayerVisible);
+  if (!miniPlayerVisible) throw new Error('MiniPlayer popup did not open');
 
-  // 3. Inspect MiniPlayer Elements
+  // 3. Inspect MiniPlayer internal markup & elements
   const miniDetails = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
     const dragBar = document.getElementById('pipDragBar');
     const banner = document.getElementById('pipPremiumBanner');
-    const bannerTitle = banner?.querySelector('.QCu2KIjyoz3lEIKNrBGQ')?.textContent?.trim() || '';
-    const trackTitle = document.getElementById('pipTrackLink')?.textContent?.trim() || '';
-    const artist = document.getElementById('pipArtistLink')?.textContent?.trim() || '';
-    const coverSrc = document.getElementById('pipCoverImg')?.src || '';
-    const hasPlay = !!document.getElementById('pipPlayBtn');
-    const hasMute = !!document.getElementById('pipVolumeIcon');
-    const hasShuffle = !!document.getElementById('pipShuffleBtn');
-    const hasRepeat = !!document.getElementById('pipRepeatBtn');
-    const hasCopy = !!document.getElementById('pipCopyBtn');
-    const hasSeek = !!document.getElementById('pipSeekWrap');
+    const cover = document.getElementById('pipCoverImg');
+    const tLink = document.getElementById('pipTrackLink');
+    const aLink = document.getElementById('pipArtistLink');
+    const playBtn = document.getElementById('pipPlayBtn');
+    const seek = document.getElementById('pipSeekWrap');
+    const vol = document.getElementById('pipVolInput');
+
     return {
       hasDragBar: !!dragBar,
-      bannerTitle,
-      trackTitle,
-      artist,
-      hasCover: !!coverSrc,
-      hasPlay,
-      hasMute,
-      hasShuffle,
-      hasRepeat,
-      hasCopy,
-      hasSeek
+      bannerTitle: banner ? banner.querySelector('.encore-text-title-small')?.textContent?.trim() : '',
+      coverSrc: cover ? cover.src.slice(0, 50) : '',
+      trackText: tLink ? tLink.textContent.trim() : '',
+      artistText: aLink ? aLink.textContent.trim() : '',
+      hasPlay: !!playBtn,
+      hasSeek: !!seek,
+      hasVol: !!vol
     };
   })()`);
 
@@ -135,6 +129,7 @@ try {
   if (!miniDetails.hasDragBar) throw new Error('Missing MiniPlayer drag bar');
   if (!miniDetails.bannerTitle.includes('Premium')) throw new Error('Missing Premium banner');
   if (!miniDetails.hasPlay || !miniDetails.hasSeek) throw new Error('Missing player controls or seek');
+  if (!miniDetails.trackText) throw new Error('Track text is empty');
 
   await shot('spotify-miniplayer-open');
 
@@ -168,16 +163,16 @@ try {
   const initialPos = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
     const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top };
+    return { left: Math.round(r.left), top: Math.round(r.top) };
   })()`);
 
   await ev(`(() => {
     const dragBar = document.getElementById('pipDragBar');
     const down = new MouseEvent('mousedown', { clientX: 200, clientY: 200, bubbles: true });
     dragBar.dispatchEvent(down);
-    const move = new MouseEvent('mousemove', { clientX: 250, clientY: 150, bubbles: true });
+    const move = new MouseEvent('mousemove', { clientX: 260, clientY: 160, bubbles: true });
     document.dispatchEvent(move);
-    const up = new MouseEvent('mouseup', { clientX: 250, clientY: 150, bubbles: true });
+    const up = new MouseEvent('mouseup', { clientX: 260, clientY: 160, bubbles: true });
     document.dispatchEvent(up);
   })()`);
   await sleep(300);
@@ -185,23 +180,84 @@ try {
   const movedPos = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
     const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top };
+    return { left: Math.round(r.left), top: Math.round(r.top) };
   })()`);
   console.log(`Position moved: (${initialPos.left}, ${initialPos.top}) -> (${movedPos.left}, ${movedPos.top})`);
+  if (movedPos.left === initialPos.left && movedPos.top === initialPos.top) {
+    throw new Error('MiniPlayer dragging did not update position');
+  }
 
-  // 8. Mobile Viewport Check
-  console.log('Testing MiniPlayer on Mobile Viewport...');
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
-  await sleep(500);
-  await shot('spotify-miniplayer-mobile');
+  // 8. Test Seeking in MiniPlayer
+  console.log('Testing Seek timeline in MiniPlayer...');
+  const initialPosSec = await ev("window.NG.engine.getPosition();");
+  await ev(`(() => {
+    const seek = document.getElementById('pipSeekWrap');
+    const rect = seek.getBoundingClientRect();
+    const clickEv = new MouseEvent('click', {
+      clientX: rect.left + rect.width * 0.5,
+      clientY: rect.top + rect.height * 0.5,
+      bubbles: true
+    });
+    seek.dispatchEvent(clickEv);
+  })()`);
+  await sleep(300);
+  const afterSeekSec = await ev("window.NG.engine.getPosition();");
+  console.log(`Seek position: ${initialPosSec} -> ${afterSeekSec}`);
 
-  // 9. Close MiniPlayer
+  // 9. Close MiniPlayer via Close Button
   console.log('Testing Close button...');
   await ev("document.querySelector('[data-action=close-miniplayer]').click();");
   await sleep(400);
   const isClosed = await ev("document.getElementById('spotifyMiniPlayer').style.display === 'none';");
   console.log('MiniPlayer is closed:', isClosed);
   if (!isClosed) throw new Error('MiniPlayer failed to close');
+
+  // 10. Mobile Viewport & Mobile Button Check
+  console.log('Testing MiniPlayer on Mobile Viewport (390x844)...');
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+  await sleep(500);
+
+  const mobileBtnCheck = await ev(`(() => {
+    const btn = document.querySelector('.player-mini-mobile');
+    const style = btn ? window.getComputedStyle(btn) : null;
+    return {
+      exists: !!btn,
+      display: style ? style.display : 'none',
+      visible: btn && style && style.display !== 'none' && btn.offsetParent !== null
+    };
+  })()`);
+  console.log('Mobile MiniPlayer button check:', mobileBtnCheck);
+  if (!mobileBtnCheck.visible) throw new Error('Mobile MiniPlayer button is not visible');
+
+  // Click mobile button to open MiniPlayer on mobile
+  console.log('Clicking mobile MiniPlayer button...');
+  await ev("document.querySelector('.player-mini-mobile').click();");
+  await sleep(600);
+
+  const mobileOpenCheck = await ev(`(() => {
+    const el = document.getElementById('spotifyMiniPlayer');
+    const r = el.getBoundingClientRect();
+    return {
+      display: el.style.display,
+      width: Math.round(r.width),
+      height: Math.round(r.height),
+      left: Math.round(r.left),
+      right: Math.round(r.right),
+      overflows: r.right > window.innerWidth || r.left < 0
+    };
+  })()`);
+  console.log('Mobile MiniPlayer state:', mobileOpenCheck);
+  if (mobileOpenCheck.display === 'none') throw new Error('MiniPlayer failed to open via mobile button');
+  if (mobileOpenCheck.overflows) throw new Error('MiniPlayer overflows mobile viewport');
+
+  await shot('spotify-miniplayer-mobile');
+
+  // Close via mobile button toggle
+  await ev("document.querySelector('.player-mini-mobile').click();");
+  await sleep(400);
+  const mobileClosedCheck = await ev("document.getElementById('spotifyMiniPlayer').style.display === 'none';");
+  console.log('Mobile MiniPlayer toggle closed:', mobileClosedCheck);
+  if (!mobileClosedCheck) throw new Error('MiniPlayer toggle failed to close on mobile');
 
   console.log('\n✅ ALL SPOTIFY MINIPLAYER TESTS PASSED 100%!');
 

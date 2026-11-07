@@ -147,11 +147,6 @@
           <button class="icon-btn hide-md" data-action="toggle-panel" id="panelToggle" aria-label="إظهار لوحة التشغيل" aria-pressed="false" data-i18n-aria="nav.panel">
             <svg aria-hidden="true"><use href="#i-panel"></use></svg>
           </button>
-      <button class="ctrl" data-action="toggle-miniplayer" id="bMiniPlayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
-        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
-          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
-        </svg>
-      </button>
         </div>
       </div>
       <div class="stage-scroll" id="scroll">
@@ -244,14 +239,26 @@
         <svg aria-hidden="true" id="muteIcon"><use href="#i-volume"></use></svg>
       </button>
       <input class="volume" id="vol" type="range" min="0" max="100" value="70" step="1" aria-label="مستوى الصوت" data-i18n-aria="player.volume">
+            <button class="ctrl" data-action="toggle-miniplayer" id="bMiniPlayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
+        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </button>
       <button class="ctrl" data-action="open-track" aria-label="صفحة الأغنية الكاملة" data-i18n-aria="track.fullPage">
         <svg aria-hidden="true"><use href="#i-expand"></use></svg>
       </button>
     </div>
 
-    <button class="play-btn player-play-mobile" data-action="toggle" aria-label="تشغيل" data-i18n-aria="player.play">
-      <svg aria-hidden="true" id="pPlayIconMini"><use href="#i-play"></use></svg>
-    </button>
+    <div class="player-actions-mobile">
+      <button class="ctrl player-mini-mobile" data-action="toggle-miniplayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
+        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </button>
+      <button class="play-btn player-play-mobile" data-action="toggle" aria-label="تشغيل" data-i18n-aria="player.play">
+        <svg aria-hidden="true" id="pPlayIconMini"><use href="#i-play"></use></svg>
+      </button>
+    </div>
   </footer>
 
   <!-- Spotify MiniPlayer Popup (PIP) -->

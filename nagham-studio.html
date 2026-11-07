@@ -1078,6 +1078,7 @@ input[type="range"].volume::-moz-range-progress { height: 4px; border-radius: 2p
 input[type="range"].volume::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--ink); }
 [dir="rtl"] input[type="range"].volume { direction: ltr; }
 
+.player-actions-mobile { display: none; }
 .player-mini-progress { display: none; }
 .player-play-mobile { display: none; }
 
@@ -1611,6 +1612,35 @@ html[data-density="compact"] .artist-grid { gap: 9px; }
   }
   .player-mid { display: none; }
   .player-end { display: none; }
+  .player-actions-mobile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .player-mini-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .player-mini-mobile:hover,
+  .player-mini-mobile.is-active {
+    color: #fff;
+    transform: scale(1.08);
+  }
+  .player-mini-mobile svg {
+    width: 17px;
+    height: 17px;
+  }
   .player-play-mobile { display: inline-grid; width: 34px; height: 34px; }
   .player-play-mobile svg { width: 15px; height: 15px; }
   .np-art { width: 42px; flex: 0 0 42px; }
@@ -3166,6 +3196,17 @@ html[data-motion="off"] *::after {
    Spotify MiniPlayer Popup (PIP)
    ========================================================================== */
 
+@media (max-width: 640px) {
+  .spotify-pip-container {
+    bottom: calc(128px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 150px) !important;
+  }
+}
+
 .spotify-pip-container {
   position: fixed;
   z-index: 9999;
@@ -3738,11 +3779,6 @@ html[data-motion="off"] *::after {
           <button class="icon-btn hide-md" data-action="toggle-panel" id="panelToggle" aria-label="إظهار لوحة التشغيل" aria-pressed="false" data-i18n-aria="nav.panel">
             <svg aria-hidden="true"><use href="#i-panel"></use></svg>
           </button>
-      <button class="ctrl" data-action="toggle-miniplayer" id="bMiniPlayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
-        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
-          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
-        </svg>
-      </button>
         </div>
       </div>
       <div class="stage-scroll" id="scroll">
@@ -3835,14 +3871,26 @@ html[data-motion="off"] *::after {
         <svg aria-hidden="true" id="muteIcon"><use href="#i-volume"></use></svg>
       </button>
       <input class="volume" id="vol" type="range" min="0" max="100" value="70" step="1" aria-label="مستوى الصوت" data-i18n-aria="player.volume">
+            <button class="ctrl" data-action="toggle-miniplayer" id="bMiniPlayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
+        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </button>
       <button class="ctrl" data-action="open-track" aria-label="صفحة الأغنية الكاملة" data-i18n-aria="track.fullPage">
         <svg aria-hidden="true"><use href="#i-expand"></use></svg>
       </button>
     </div>
 
-    <button class="play-btn player-play-mobile" data-action="toggle" aria-label="تشغيل" data-i18n-aria="player.play">
-      <svg aria-hidden="true" id="pPlayIconMini"><use href="#i-play"></use></svg>
-    </button>
+    <div class="player-actions-mobile">
+      <button class="ctrl player-mini-mobile" data-action="toggle-miniplayer" aria-label="المشغِّل المصغَّر" data-i18n-aria="player.miniPlayer" title="المشغِّل المصغَّر">
+        <svg aria-hidden="true" viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </button>
+      <button class="play-btn player-play-mobile" data-action="toggle" aria-label="تشغيل" data-i18n-aria="player.play">
+        <svg aria-hidden="true" id="pPlayIconMini"><use href="#i-play"></use></svg>
+      </button>
+    </div>
   </footer>
 
   <!-- Spotify MiniPlayer Popup (PIP) -->
@@ -9503,7 +9551,7 @@ window.NG = (function () {
   function renderMiniPlayer() {
     const elPip = $('#spotifyMiniPlayer');
     if (!elPip || elPip.style.display === 'none') return;
-    const tr = getTrack(state.trackId);
+    const tr = getTrack(state.trackId) || (typeof TRACKS !== 'undefined' && TRACKS[0]) || null;
     if (!tr) return;
     const fav = isFav(tr.id);
     const titleText = byLang(tr.title);
@@ -9589,8 +9637,11 @@ window.NG = (function () {
   let isDraggingPip = false;
   let pipStartX = 0, pipStartY = 0;
   let pipStartLeft = 0, pipStartTop = 0;
+  let pipControlsInitialized = false;
 
   function initPipControls() {
+    if (pipControlsInitialized) return;
+    pipControlsInitialized = true;
     const dragBar = $('#pipDragBar');
     const miniEl = $('#spotifyMiniPlayer');
     const seekWrap = $('#pipSeekWrap');
@@ -9695,7 +9746,6 @@ window.NG = (function () {
 
   function toggleMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
 
     const isHidden = miniEl.style.display === 'none' || miniEl.hidden;
@@ -9708,26 +9758,25 @@ window.NG = (function () {
 
   function openMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'flex';
     miniEl.hidden = false;
-    if (btn) {
+    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
-    }
+    });
+    initPipControls();
     renderMiniPlayer();
   }
 
   function closeMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
-    const btn = $('#bMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'none';
-    if (btn) {
+    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
       btn.setAttribute('aria-pressed', 'false');
       btn.classList.remove('is-active');
-    }
+    });
   }
 
   /* ---------- event wiring ------------------------------------------------ */
@@ -10238,6 +10287,11 @@ window.NG = (function () {
       const tag = (target.tagName || '').toLowerCase();
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
       if (e.key === 'Escape') {
+        const mini = $('#spotifyMiniPlayer');
+        if (mini && mini.style.display !== 'none' && !mini.hidden) {
+          closeMiniPlayer();
+          return;
+        }
         if (el.sheet.open) { closeSheet(); return; }
         if (el.sourcesDlg && el.sourcesDlg.open) { el.sourcesDlg.close(); return; }
         if (el.shortcutsDlg.open) { el.shortcutsDlg.close(); return; }
@@ -10293,6 +10347,7 @@ window.NG = (function () {
     NG.applyTheme();
     NG.applyI18n();
     bind();
+    initPipControls();
     bindSeek($('#pSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     bindSeek($('#shSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     engine.load(getTrack(state.trackId));
