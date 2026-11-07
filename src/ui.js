@@ -1038,6 +1038,53 @@
 
   /* ---------- player ------------------------------------------------------ */
 
+  /* ---------- Media Session & Tab Title ----------------------------------- */
+  function updateMediaSession() {
+    const tr = getTrack(state.trackId);
+    if (!tr) return;
+    const title = byLang(tr.title);
+    const artist = byLang(tr.artist);
+    const album = byLang(tr.album);
+    const playing = engine.playing;
+
+    document.title = (playing ? '▶ ' : '') + title + ' • ' + artist + ' — 7ify';
+
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist,
+        album,
+        artwork: tr.art ? [
+          { src: tr.art, sizes: '96x96', type: 'image/jpeg' },
+          { src: tr.art, sizes: '128x128', type: 'image/jpeg' },
+          { src: tr.art, sizes: '192x192', type: 'image/jpeg' },
+          { src: tr.art, sizes: '256x256', type: 'image/jpeg' },
+          { src: tr.art, sizes: '512x512', type: 'image/jpeg' }
+        ] : []
+      });
+      navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+    } catch (e) {}
+  }
+
+  let mediaSessionInitialized = false;
+  function initMediaSession() {
+    if (!('mediaSession' in navigator) || mediaSessionInitialized) return;
+    mediaSessionInitialized = true;
+    try {
+      navigator.mediaSession.setActionHandler('play', () => { if (!engine.playing) engine.toggle(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (engine.playing) engine.toggle(); });
+      navigator.mediaSession.setActionHandler('previoustrack', () => stepTrack(-1));
+      navigator.mediaSession.setActionHandler('nexttrack', () => stepTrack(1));
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime != null) {
+          engine.seek(details.seekTime);
+          syncProgress();
+        }
+      });
+    } catch (e) {}
+  }
+
   function renderPlayer() {
     const tr = getTrack(state.trackId);
     if (!tr) return;
@@ -1081,6 +1128,7 @@
     if (stage) stage.style.setProperty('--tint', tr.colors[1]);
     refreshTransport();
     syncProgress();
+    updateMediaSession();
   }
 
   function refreshTransport() {
@@ -1126,6 +1174,7 @@
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
     renderMiniPlayer();
+    updateMediaSession();
   }
 
   function syncProgress() {
@@ -1158,14 +1207,17 @@
       shSeek.setAttribute('aria-valuetext', fmt(pos));
     }
     updateLyricHighlight(pos);
-    const pipFill = $('#pipProgressFill');
-    const pipHandle = $('#pipProgressHandle');
-    if (pipFill) pipFill.style.width = pct + '%';
-    if (pipHandle) pipHandle.style.left = pct + '%';
-    const pipCur = $('#pipCur');
-    const pipDur = $('#pipDur');
-    if (pipCur) pipCur.textContent = fmt(pos);
-    if (pipDur) pipDur.textContent = fmt(safeDur);
+    const elPip = (currentPipWindow && currentPipWindow.document ? currentPipWindow.document.getElementById('spotifyMiniPlayer') : null) || $('#spotifyMiniPlayer');
+    if (elPip) {
+      const pipFill = elPip.querySelector('#pipProgressFill');
+      const pipHandle = elPip.querySelector('#pipProgressHandle');
+      if (pipFill) pipFill.style.width = pct + '%';
+      if (pipHandle) pipHandle.style.left = pct + '%';
+      const pipCur = elPip.querySelector('#pipCur');
+      const pipDur = elPip.querySelector('#pipDur');
+      if (pipCur) pipCur.textContent = fmt(pos);
+      if (pipDur) pipDur.textContent = fmt(safeDur);
+    }
   }
 
   function updateLyricHighlight(pos) {
@@ -2036,6 +2088,17 @@
     if (el.scroll) el.scroll.scrollTop = 0;
   }
 
+  let pipHintShown = false;
+  function showPipHintOnce() {
+    if (pipHintShown || !('documentPictureInPicture' in window) || currentPipWindow) return;
+    pipHintShown = true;
+    setTimeout(() => {
+      if (engine.playing && !currentPipWindow) {
+        toast('💡 اضغط على أيقونة (⧉) في شريط التشغيل ليبقى المشغّل ظاهراً فوق باقي التبويبات والبرامج!', 6000);
+      }
+    }, 1500);
+  }
+
   function playTrack(id, context, preferredProviderId) {
     const tr = getTrack(id);
     if (!tr) return;
@@ -2057,6 +2120,7 @@
     engine.play();
     save();
     renderAll();
+    showPipHintOnce();
   }
 
   function playPlaylist(plId) {
@@ -2248,10 +2312,20 @@
   }
 
   
-  /* ---------- Spotify MiniPlayer (PIP) ------------------------------------ */
+  /* ---------- Spotify MiniPlayer (PIP & Document PiP) --------------------- */
+
+  let currentPipWindow = null;
+
+  function getMiniPlayerElement() {
+    if (currentPipWindow && currentPipWindow.document) {
+      const el = currentPipWindow.document.getElementById('spotifyMiniPlayer');
+      if (el) return el;
+    }
+    return $('#spotifyMiniPlayer');
+  }
 
   function renderMiniPlayer() {
-    const elPip = $('#spotifyMiniPlayer');
+    const elPip = getMiniPlayerElement();
     if (!elPip || elPip.style.display === 'none') return;
     const tr = getTrack(state.trackId) || (typeof TRACKS !== 'undefined' && TRACKS[0]) || null;
     if (!tr) return;
@@ -2260,20 +2334,20 @@
     const artistText = byLang(tr.artist);
 
     // Track Title & Artist
-    const tLink = $('#pipTrackLink');
+    const tLink = elPip.querySelector('#pipTrackLink');
     if (tLink) {
       tLink.textContent = titleText;
       tLink.dataset.id = tr.id;
     }
-    const aLink = $('#pipArtistLink');
+    const aLink = elPip.querySelector('#pipArtistLink');
     if (aLink) {
       aLink.textContent = artistText;
       aLink.dataset.artist = typeof tr.artist === 'object' ? (tr.artist.ar || tr.artist.en) : tr.artist;
     }
 
     // Cover art & dynamic backdrop
-    const coverImg = $('#pipCoverImg');
-    const mainBody = $('#pipMainBody');
+    const coverImg = elPip.querySelector('#pipCoverImg');
+    const mainBody = elPip.querySelector('#pipMainBody');
     const artSrc = tr.art || (tr.colors ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="' + encodeURIComponent(tr.colors[0] || '#222') + '"/><text x="50%" y="50%" fill="%23fff" font-size="64" font-family="sans-serif" text-anchor="middle" dy=".3em">' + encodeURIComponent(titleText.slice(0, 1)) + '</text></svg>' : '');
     if (coverImg && artSrc) {
       coverImg.src = artSrc;
@@ -2283,11 +2357,11 @@
     }
 
     // Like button
-    const likeBtn = $('#pipLikeBtn');
+    const likeBtn = elPip.querySelector('#pipLikeBtn');
     if (likeBtn) {
       likeBtn.setAttribute('aria-checked', String(fav));
       likeBtn.dataset.id = tr.id;
-      const likeIcon = $('#pipLikeIcon');
+      const likeIcon = elPip.querySelector('#pipLikeIcon');
       if (likeIcon) {
         likeIcon.style.color = fav ? '#1ed760' : 'inherit';
         if (fav) {
@@ -2299,7 +2373,7 @@
     }
 
     // Play / Pause Icon
-    const playIcon = $('#pipPlayIcon');
+    const playIcon = elPip.querySelector('#pipPlayIcon');
     if (playIcon) {
       if (engine.playing) {
         playIcon.innerHTML = '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>';
@@ -2309,21 +2383,21 @@
     }
 
     // Shuffle & Repeat buttons active styles
-    const shuffleBtn = $('#pipShuffleBtn');
+    const shuffleBtn = elPip.querySelector('#pipShuffleBtn');
     if (shuffleBtn) {
       shuffleBtn.style.color = state.shuffle ? '#1ed760' : '';
     }
-    const repeatBtn = $('#pipRepeatBtn');
+    const repeatBtn = elPip.querySelector('#pipRepeatBtn');
     if (repeatBtn) {
       repeatBtn.style.color = state.repeat !== 'off' ? '#1ed760' : '';
     }
 
     // Volume slider & icon
-    const volInput = $('#pipVolInput');
+    const volInput = elPip.querySelector('#pipVolInput');
     if (volInput) {
       volInput.value = state.muted ? 0 : state.volume;
     }
-    const volIcon = $('#pipVolumeIcon');
+    const volIcon = elPip.querySelector('#pipVolumeIcon');
     if (volIcon) {
       if (state.muted || state.volume === 0) {
         volIcon.innerHTML = '<path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8z"></path><path d="m11.5 6 4 4m0-4-4 4"></path>';
@@ -2341,15 +2415,16 @@
   let pipStartLeft = 0, pipStartTop = 0;
   let pipControlsInitialized = false;
 
-  function initPipControls() {
-    if (pipControlsInitialized) return;
-    pipControlsInitialized = true;
-    const dragBar = $('#pipDragBar');
-    const miniEl = $('#spotifyMiniPlayer');
-    const seekWrap = $('#pipSeekWrap');
-    const volInput = $('#pipVolInput');
+  function initPipControls(rootDoc) {
+    const doc = rootDoc || document;
+    const miniEl = doc.getElementById('spotifyMiniPlayer');
+    if (!miniEl) return;
+    const dragBar = miniEl.querySelector('#pipDragBar');
+    const seekWrap = miniEl.querySelector('#pipSeekWrap');
+    const volInput = miniEl.querySelector('#pipVolInput');
 
-    if (dragBar && miniEl) {
+    if (dragBar && !dragBar.dataset.bound) {
+      dragBar.dataset.bound = 'true';
       dragBar.addEventListener('mousedown', (e) => {
         if (e.target.closest('button')) return;
         isDraggingPip = true;
@@ -2362,7 +2437,7 @@
         e.preventDefault();
       });
 
-      document.addEventListener('mousemove', (e) => {
+      doc.addEventListener('mousemove', (e) => {
         if (!isDraggingPip || !miniEl) return;
         const dx = e.clientX - pipStartX;
         const dy = e.clientY - pipStartY;
@@ -2374,7 +2449,7 @@
         miniEl.style.bottom = 'auto';
       });
 
-      document.addEventListener('mouseup', () => {
+      doc.addEventListener('mouseup', () => {
         if (isDraggingPip) {
           isDraggingPip = false;
           if (miniEl) miniEl.style.transition = '';
@@ -2394,7 +2469,7 @@
         miniEl.style.transition = 'none';
       }, { passive: true });
 
-      document.addEventListener('touchmove', (e) => {
+      doc.addEventListener('touchmove', (e) => {
         if (!isDraggingPip || !miniEl) return;
         const touch = e.touches[0];
         if (!touch) return;
@@ -2408,7 +2483,7 @@
         miniEl.style.bottom = 'auto';
       }, { passive: true });
 
-      document.addEventListener('touchend', () => {
+      doc.addEventListener('touchend', () => {
         if (isDraggingPip) {
           isDraggingPip = false;
           if (miniEl) miniEl.style.transition = '';
@@ -2416,7 +2491,8 @@
       });
     }
 
-    if (seekWrap) {
+    if (seekWrap && !seekWrap.dataset.bound) {
+      seekWrap.dataset.bound = 'true';
       seekWrap.addEventListener('click', (e) => {
         const rect = seekWrap.getBoundingClientRect();
         const pct = clamp((e.clientX - rect.left) / rect.width, 0, 1);
@@ -2428,7 +2504,8 @@
       });
     }
 
-    if (volInput) {
+    if (volInput && !volInput.dataset.bound) {
+      volInput.dataset.bound = 'true';
       volInput.addEventListener('input', () => {
         state.volume = Number(volInput.value);
         if (state.volume > 0) state.muted = false;
@@ -2446,42 +2523,204 @@
     }
   }
 
-  function toggleMiniPlayer() {
+  async function toggleMiniPlayer() {
+    // 1. If Document Picture-in-Picture window is currently open, close it
+    if (currentPipWindow && !currentPipWindow.closed) {
+      currentPipWindow.close();
+      return;
+    }
+
+    // 2. If in-page popup is currently open, close it
+    const miniEl = $('#spotifyMiniPlayer');
+    if (miniEl && miniEl.style.display !== 'none' && !miniEl.classList.contains('in-document-pip')) {
+      closeInPageMiniPlayer();
+      return;
+    }
+
+    // 3. On desktop with Document Picture-in-Picture support, open native floating window
+    if ('documentPictureInPicture' in window && window.innerWidth > 640) {
+      try {
+        const opened = await openDocumentPip();
+        if (opened) return;
+      } catch (err) {
+        console.warn('Document Picture-in-Picture error, falling back to in-page popup:', err);
+      }
+    }
+
+    // 4. In-page fallback (mobile or unsupported browsers)
+    openInPageMiniPlayer();
+  }
+
+  async function openDocumentPip() {
+    const miniEl = $('#spotifyMiniPlayer');
+    if (!miniEl || !('documentPictureInPicture' in window)) return false;
+
+    // Close in-page version
+    miniEl.style.display = 'none';
+
+    // Request native floating window
+    const pipWin = await window.documentPictureInPicture.requestWindow({
+      width: 360,
+      height: 520,
+      disallowReturnToOpener: false
+    });
+    currentPipWindow = pipWin;
+
+    // Copy all stylesheets from main document
+    [...document.styleSheets].forEach((sheet) => {
+      try {
+        if (sheet.href) {
+          const link = pipWin.document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = sheet.href;
+          pipWin.document.head.appendChild(link);
+        } else if (sheet.cssRules) {
+          const style = pipWin.document.createElement('style');
+          style.textContent = [...sheet.cssRules].map((r) => r.cssText).join('\n');
+          pipWin.document.head.appendChild(style);
+        }
+      } catch (e) {
+        if (sheet.href) {
+          const link = pipWin.document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = sheet.href;
+          pipWin.document.head.appendChild(link);
+        }
+      }
+    });
+
+    // Copy fonts & favicons
+    [...document.querySelectorAll('link[rel*="font"], link[rel*="icon"]')].forEach((l) => {
+      pipWin.document.head.appendChild(l.cloneNode(true));
+    });
+
+    // Pip window document configuration
+    pipWin.document.documentElement.lang = 'ar';
+    pipWin.document.documentElement.dir = 'rtl';
+    pipWin.document.documentElement.className = 'encore-dark-theme encore-small-devices-theme ' + (document.documentElement.className || '');
+    pipWin.document.title = 'Spotify MiniPlayer';
+    pipWin.document.body.style.margin = '0';
+    pipWin.document.body.style.padding = '0';
+    pipWin.document.body.style.overflow = 'hidden';
+    pipWin.document.body.style.height = '100%';
+    pipWin.document.body.style.backgroundColor = '#121212';
+
+    // Placeholder in main DOM tree
+    const placeholder = document.createElement('div');
+    placeholder.id = 'pipPlaceholder';
+    placeholder.style.display = 'none';
+    miniEl.parentNode.insertBefore(placeholder, miniEl);
+
+    // Style for full-window PiP display
+    miniEl.classList.add('in-document-pip');
+    miniEl.style.display = 'flex';
+    miniEl.hidden = false;
+    miniEl.style.position = 'static';
+    miniEl.style.width = '100vw';
+    miniEl.style.height = '100vh';
+    miniEl.style.maxWidth = '100vw';
+    miniEl.style.borderRadius = '0';
+    miniEl.style.boxShadow = 'none';
+
+    pipWin.document.body.appendChild(miniEl);
+
+    // Forward click actions from PiP window to application
+    pipWin.document.addEventListener('click', (e) => {
+      const node = e.target.closest('[data-action]');
+      if (!node) return;
+      const action = node.dataset.action;
+      if (node.tagName === 'A' && node.getAttribute('href') === '#') e.preventDefault();
+      if (action === 'close-miniplayer') {
+        pipWin.close();
+        return;
+      }
+      onAction(action, node);
+    });
+
+    // Initialize PiP seek and volume controls
+    initPipControls(pipWin.document);
+
+    // Highlight button in main document
+    $$('[data-action="toggle-miniplayer"]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', 'true');
+      btn.classList.add('is-active');
+    });
+
+    renderMiniPlayer();
+
+    // Cleanup when PiP window is closed
+    pipWin.addEventListener('pagehide', () => {
+      currentPipWindow = null;
+      miniEl.classList.remove('in-document-pip');
+      miniEl.style.position = '';
+      miniEl.style.width = '';
+      miniEl.style.height = '';
+      miniEl.style.maxWidth = '';
+      miniEl.style.borderRadius = '';
+      miniEl.style.boxShadow = '';
+      miniEl.style.display = 'none';
+
+      if (placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(miniEl, placeholder);
+        placeholder.remove();
+      }
+
+      $$('[data-action="toggle-miniplayer"]').forEach((btn) => {
+        btn.setAttribute('aria-pressed', 'false');
+        btn.classList.remove('is-active');
+      });
+    });
+
+    return true;
+  }
+
+  function toggleInPageMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
     if (!miniEl) return;
-
     const isHidden = miniEl.style.display === 'none' || miniEl.hidden;
     if (isHidden) {
-      openMiniPlayer();
+      openInPageMiniPlayer();
     } else {
-      closeMiniPlayer();
+      closeInPageMiniPlayer();
     }
   }
 
-  function openMiniPlayer() {
+  function openInPageMiniPlayer() {
     const miniEl = $('#spotifyMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'flex';
     miniEl.hidden = false;
-    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
+    $$('[data-action="toggle-miniplayer"]').forEach((btn) => {
       btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('is-active');
     });
-    initPipControls();
+    initPipControls(document);
     renderMiniPlayer();
   }
 
-  function closeMiniPlayer() {
+  function closeInPageMiniPlayer() {
+    if (currentPipWindow && !currentPipWindow.closed) {
+      currentPipWindow.close();
+      return;
+    }
     const miniEl = $('#spotifyMiniPlayer');
     if (!miniEl) return;
     miniEl.style.display = 'none';
-    $$('[data-action="toggle-miniplayer"]').forEach(btn => {
+    $$('[data-action="toggle-miniplayer"]').forEach((btn) => {
       btn.setAttribute('aria-pressed', 'false');
       btn.classList.remove('is-active');
     });
   }
 
-  /* ---------- event wiring ------------------------------------------------ */
+  function openMiniPlayer() {
+    toggleMiniPlayer();
+  }
+
+  function closeMiniPlayer() {
+    closeInPageMiniPlayer();
+  }
+
+/* ---------- event wiring ------------------------------------------------ */
 
   function onAction(action, node) {
     switch (action) {
@@ -3050,6 +3289,7 @@
     NG.applyI18n();
     bind();
     initPipControls();
+    initMediaSession();
     bindSeek($('#pSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     bindSeek($('#shSeek'), (ratio) => { engine.seek(ratio * engine.getDuration()); syncProgress(); });
     engine.load(getTrack(state.trackId));
