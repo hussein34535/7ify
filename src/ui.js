@@ -1740,8 +1740,8 @@
     const isCurrent = state.trackId === tr.id;
     const isPlaying = isCurrent && engine.playing;
     const fav = isFav(tr.id);
-    const colors = tr.colors || ['#121212', '#282828', '#1ED760'];
-    const accentCol = colors[1] || colors[0] || '#1ED760';
+    const colors = tr.colors || ['#4E554E', '#687168', '#1ED760'];
+    const accentCol = colors[1] || colors[0] || '#4E554E';
     const bgCol = colors[0] || '#121212';
     const artistName = byLang(tr.artist);
     const artistKey = 'artist:' + (tr.source === 'file' ? artistName : artistName.split('&')[0].trim());
@@ -1750,8 +1750,8 @@
     const artistData = ARTIST_BIOS[tr.artist && (tr.artist.ar || tr.artist.en)] || null;
     const bioText = (tr.bio && L(tr.bio)) || (artistData ? byLang(artistData.bio) : (
       state.lang === 'ar' ?
-        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' بجودة صوتية فائقة على 7ify.') :
-        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' on 7ify.')
+        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' بجودة صوتية فائقة على Spotify.') :
+        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' on Spotify.')
     ));
     const listenersCount = tr.source === 'file'
       ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
@@ -1762,10 +1762,14 @@
       if (t.id === tr.id) return false;
       const itemArt = norm(t.artist?.ar || t.artist?.en || '');
       return itemArt && itemArt === curArt;
-    }).slice(0, 5);
+    });
+
+    // Discography releases
+    const discography = TRACKS.slice(0, 5);
+
     const lyrics = tr.lyrics || [];
 
-    // Dynamic lyrics fetching from LRCLIB if not available locally
+    // Online lyrics request fallback
     if ((!tr.lyrics || !tr.lyrics.length) && !tr._lyricsRequested && NG.fetchLyricsOnline) {
       tr._lyricsRequested = true;
       NG.fetchLyricsOnline(tr, tr.artist, (data) => {
@@ -1780,7 +1784,7 @@
       });
     }
 
-    // Dynamic more tracks by same artist using dedicated fetchArtistTracks (does not mutate Search UI)
+    // Dynamic more tracks by same artist
     if (sameArtist.length < 3 && !tr._moreRequested && NG.fetchArtistTracks) {
       tr._moreRequested = true;
       const qArt = tr.artist?.ar || tr.artist?.en || '';
@@ -1793,175 +1797,338 @@
       }
     }
 
+    const SVG_CHECK = '<path fill="#1ed760" d="M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12zm16.28-2.72a.75.75 0 0 0-1.06-1.06l-5.47 5.47-2.47-2.47a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l6-6z"></path>';
+    const SVG_PLUS = '<path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path><path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>';
+
     let html = '<div class="sp-page" style="--sp-accent: ' + accentCol + '; --sp-bg: ' + bgCol + ';">';
 
-    // 1. Spotify Dynamic Ambient Hero
-    html += '<section class="sp-hero">' +
+    // Sticky Compact Song Bar on Scroll
+    html += '<div id="sticky-song-bar" class="sticky top-0 z-20 px-6 py-2.5 bg-[#181818]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between transition-opacity duration-200 opacity-0 pointer-events-none" dir="ltr">' +
+      '<div class="flex items-center gap-3">' +
+        '<button class="w-10 h-10 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 text-black flex items-center justify-center shadow-lg transition sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="' + (isPlaying ? 'toggle' : 'play') + '" data-id="' + tr.id + '" data-ctx="track">' +
+          '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">' + (isPlaying ? '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>' : '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>') + '</svg>' +
+        '</button>' +
+        '<span class="text-base font-extrabold text-white truncate">' + esc(L(tr.title)) + '</span>' +
+      '</div>' +
+      '<span class="text-xs font-semibold text-white/75" dir="ltr">/intl-ar/track/' + tr.id + '</span>' +
+    '</div>';
+
+    // 1. Hero Song Banner
+    html += '<section id="song-hero-section" class="sp-hero relative px-6 sm:px-8 pt-6 pb-8 flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8 transition-colors duration-500" dir="ltr">' +
       '<div class="sp-hero-glow" style="background: radial-gradient(circle at 20% 40%, ' + accentCol + ' 0%, transparent 70%);" aria-hidden="true"></div>' +
-      '<div class="sp-hero-wrap">' +
-        '<div class="sp-cover-box">' +
+      '<div class="sp-hero-wrap flex items-center md:items-end gap-6 sm:gap-8 w-full">' +
+        '<div id="hero-cover-trigger" class="sp-cover-box tilt-card-3d w-48 h-48 sm:w-56 sm:h-56 lg:w-60 lg:h-60 rounded-lg overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.75)] shrink-0 relative group cursor-pointer bg-[#282828]" data-action="toggle-miniplayer" title="فتح في المشغّل المصغّر">' +
           trackArt(tr, 'sp-cover', true) +
+          '<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none">' +
+            '<span class="px-3 py-1.5 rounded-full bg-black/80 text-white text-xs font-bold shadow-xl">المشغِّل المصغَّر (PiP)</span>' +
+          '</div>' +
         '</div>' +
-        '<div class="sp-hero-meta">' +
-          '<div class="sp-kicker">' + esc(t('track.kicker') || 'أغنية') + '</div>' +
-          '<h1 class="sp-title clamp-2" title="' + L(tr.title) + '">' + L(tr.title) + '</h1>' +
-          '<div class="sp-subline">' +
-            '<button class="sp-artist-chip" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' +
+        '<div class="sp-hero-meta flex flex-col items-start text-left min-w-0 flex-1 space-y-3">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="sp-kicker px-2.5 py-0.5 rounded bg-black/35 text-white text-xs font-extrabold uppercase tracking-wider">' + esc(t('track.kicker') || 'أغنية') + '</span>' +
+            '<span class="sp-badge-hq px-2.5 py-0.5 rounded bg-[#1ed760]/20 text-[#1ed760] text-[11px] font-bold inline-flex items-center gap-1.5">' +
+              '<svg class="ic w-3 h-3 fill-current" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 8 8 8 8 0 0 0-8-8zm3.5 11.5L8 9.75 4.5 11.5l.75-3.85L2.4 4.95l3.9-.55L8 1l1.7 3.4 3.9.55-2.85 2.7.75 3.85z"/></svg>' +
+              esc(t('track.previewNoteShort') || 'صوت استوديو عالي الدقة · Master HQ') +
+            '</span>' +
+          '</div>' +
+          '<h1 class="sp-title text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none select-text clamp-2" title="' + esc(L(tr.title)) + '">' + esc(L(tr.title)) + '</h1>' +
+          '<div class="sp-subline flex flex-wrap items-center gap-2 text-sm text-white/90 pt-1">' +
+            '<button class="sp-artist-chip inline-flex items-center gap-1.5 font-extrabold text-white hover:underline cursor-pointer bg-transparent border-0 p-0" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' +
               artistAvatar({ name: tr.artist, track: tr.id }) +
-              '<span class="sp-artist-link">' + L(tr.artist) + '</span>' +
+              '<span class="sp-artist-link">' + esc(artistName) + '</span>' +
             '</button>' +
-            '<span class="sp-sep">•</span>' +
-            '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
-            (tr.year ? ('<span class="sp-sep">•</span><span class="sp-year-text">' + tr.year + '</span>') : '') +
-            '<span class="sp-sep">•</span>' +
-            '<span class="sp-dur-text num">' + fmt(tr.duration || 260) + '</span>' +
-            '<span class="sp-sep">•</span>' +
-            '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || '٣٢,٤٥٨,١٩٠ استماع')) + '</span>' +
+            '<span class="sp-sep text-white/60">•</span>' +
+            '<button class="sp-album-text text-white/90 hover:underline font-medium bg-transparent border-0 p-0 cursor-pointer" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '">' + esc(L(tr.album)) + '</button>' +
+            (tr.year ? ('<span class="sp-sep text-white/60">•</span><span class="sp-year-text text-white/80">' + tr.year + '</span>') : '') +
+            '<span class="sp-sep text-white/60">•</span>' +
+            '<span class="sp-dur-text text-white/80 font-medium num">' + fmt(tr.duration || 224) + '</span>' +
+            '<span class="sp-sep text-white/60">•</span>' +
+            '<span class="sp-streams-text text-white font-bold num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : '٣٢,٤٥٨,١٩٠ استماع') + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
     '</section>';
 
-    // 2. Spotify Action Bar
-    html += '<div class="sp-actions-bar">' +
-      '<div class="sp-actions-left">' +
-        '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="' + (isPlaying ? 'toggle' : 'play') + '" data-id="' + tr.id + '" data-ctx="track" aria-label="' + (isPlaying ? esc(t('player.pause')) : esc(t('player.play')) + ': ' + L(tr.title)) + '">' +
-          '<svg class="ic" aria-hidden="true"><use href="#i-' + (isPlaying ? 'pause' : 'play') + '"></use></svg>' +
+    // 2. Action Toolbar
+    html += '<div class="relative px-6 sm:px-8 pt-6 pb-16 space-y-8" style="background: linear-gradient(180deg, rgba(78, 85, 78, 0.28) 0%, #121212 240px);">' +
+      '<div class="sp-actions-bar flex items-center justify-between gap-4" dir="ltr">' +
+        '<div class="sp-actions-left flex items-center gap-5">' +
+          '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + ' w-14 h-14 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-[0_8px_24px_rgba(0,0,0,0.5)] transition" data-action="' + (isPlaying ? 'toggle' : 'play') + '" data-id="' + tr.id + '" data-ctx="track" aria-label="' + (isPlaying ? esc(t('player.pause')) : esc(t('player.play'))) + '">' +
+            '<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">' + (isPlaying ? '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>' : '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>') + '</svg>' +
+          '</button>' +
+          '<button class="sp-icon-btn ' + (state.shuffle ? 'text-[#1ed760] border-[#1ed760]' : '') + ' w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-[#b3b3b3] hover:text-white transition" data-action="shuffle" title="التشغيل العشوائي">' +
+            '<svg class="w-5 h-5 fill-current" viewBox="0 0 16 16"><path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path><path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path></svg>' +
+          '</button>' +
+          '<button class="sp-icon-btn ' + (fav ? 'is-liked text-[#1ed760] border-[#1ed760]' : '') + ' w-10 h-10 rounded-full hover:bg-white/10 hover:scale-110 flex items-center justify-center text-[#b3b3b3] hover:text-white transition" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '" title="الإضافة إلى أغانٍ أعجبتني">' +
+            '<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">' + (fav ? SVG_CHECK : SVG_PLUS) + '</svg>' +
+          '</button>' +
+          '<button class="sp-icon-btn w-10 h-10 rounded-full hover:bg-white/10 hover:scale-110 flex items-center justify-center text-[#b3b3b3] hover:text-white transition" data-action="copy-song-link" data-id="' + tr.id + '" title="نسخ رابط الأغنية">' +
+            '<svg class="w-5 h-5 fill-current" viewBox="0 0 16 16"><path d="M1 5.75A.75.75 0 0 1 1.75 5H4v1.5H2.5v8h11v-8H12V5h2.25a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-.75.75H1.75a.75.75 0 0 1-.75-.75z"></path><path d="M8 9.576a.75.75 0 0 0 .75-.75V2.903l1.454 1.454a.75.75 0 0 0 1.06-1.06L8 .03 4.735 3.296a.75.75 0 0 0 1.06 1.061L7.25 2.903v5.923c0 .414.336.75.75.75"></path></svg>' +
+          '</button>' +
+        '</div>' +
+        '<button class="px-4 py-2 rounded-full border border-white/25 hover:border-white text-xs font-bold text-white flex items-center gap-2 transition hover:scale-105" data-action="toggle-miniplayer" title="فتح نافذة المشغّل المصغّر">' +
+          '<svg class="w-4 h-4 fill-current text-[#1ed760]" viewBox="0 0 24 24"><path d="M19 11h-8v6h8zm4-7v16a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2m-2 0H3v16h18z"/></svg>' +
+          '<span>المشغِّل المصغَّر (PiP)</span>' +
         '</button>' +
-        '<button class="sp-icon-btn ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '" aria-label="' + esc(t('player.like')) + '">' +
-          likeIcon(fav) +
-        '</button>' +
-        '<button class="sp-icon-btn" data-action="new-playlist" aria-label="' + esc(t('rail.new') || 'قائمة جديدة') + '" title="' + esc(t('rail.new') || 'إضافة لقائمة تشغيل') + '">' +
-          '<svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>' +
-        '</button>' +
-        '<button class="sp-icon-btn" data-action="copy-song-link" data-id="' + tr.id + '" aria-label="' + esc(t('track.copyLink') || 'نسخ الرابط') + '" title="' + esc(t('track.copyLink') || 'نسخ رابط الأغنية') + '">' +
-          '<svg class="ic" aria-hidden="true"><use href="#i-arrow"></use></svg>' +
-        '</button>' +
+      '</div>';
+
+    // 2.5 Active Song Row Table (XPUI routes-album format)
+    html += '<section class="space-y-1.5" dir="ltr">' +
+      '<div class="grid grid-cols-[36px_1fr_auto] sm:grid-cols-[36px_1.6fr_1fr_auto] items-center gap-4 px-4 py-2 border-b border-white/10 text-xs font-bold uppercase tracking-wider text-[#b3b3b3]">' +
+        '<span class="text-center">#</span>' +
+        '<span>Title • العنوان</span>' +
+        '<span class="hidden sm:block text-right">Plays • الاستماعات</span>' +
+        '<span class="flex justify-end pr-2" title="المدة">' +
+          '<svg class="w-4 h-4 fill-current" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 8 8 8 8 0 0 0-8-8zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M7.5 4v4.25l3.5 2.1.75-1.23-2.75-1.62V4z"/></svg>' +
+        '</span>' +
       '</div>' +
-      '<div class="sp-actions-right">' +
-        '<span class="sp-badge-hq"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> <span>' + esc(t('track.previewNoteShort') || 'صوت استوديو عالي الدقة · Master HQ') + '</span></span><button class="sp-sources-btn" data-action="open-sources" data-id="' + tr.id + '" style="display:none !important" hidden>' +
+      '<div class="song-row group grid grid-cols-[36px_1fr_auto] sm:grid-cols-[36px_1.6fr_1fr_auto] items-center gap-4 px-4 py-3 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] transition cursor-pointer" data-action="' + (isPlaying ? 'toggle' : 'play') + '" data-id="' + tr.id + '" data-ctx="track">' +
+        '<div class="flex items-center justify-center w-6">' +
+          (isPlaying ? (
+            '<div class="row-index flex items-end gap-[2px] h-3.5">' +
+              '<span class="w-[3px] bg-[#1ed760] eq-bar-1"></span>' +
+              '<span class="w-[3px] bg-[#1ed760] eq-bar-2"></span>' +
+              '<span class="w-[3px] bg-[#1ed760] eq-bar-3"></span>' +
+              '<span class="w-[3px] bg-[#1ed760] eq-bar-4"></span>' +
+            '</div>'
+          ) : (
+            '<span class="row-index text-sm font-bold text-[#1ed760]">1</span>'
+          )) +
+          '<button class="row-play-btn hidden items-center justify-center text-white">' +
+            '<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">' + (isPlaying ? '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>' : '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>') + '</svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="min-w-0">' +
+          '<div class="text-base font-extrabold text-[#1ed760] truncate">' + esc(L(tr.title)) + '</div>' +
+          '<div class="flex items-center gap-1.5 mt-0.5">' +
+            '<span class="px-1 py-0.2 rounded bg-white/20 text-[9px] font-extrabold text-black uppercase">E</span>' +
+            '<span class="text-xs font-medium text-[#b3b3b3] group-hover:text-white truncate">' + esc(artistName) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hidden sm:block text-right text-sm font-medium text-[#b3b3b3] group-hover:text-white font-variant-numeric tabular-nums">' +
+          '٣٢,٤٥٨,١٩٠' +
+        '</div>' +
+        '<div class="flex items-center gap-4 justify-end">' +
+          '<button class="text-[#b3b3b3] hover:text-white hover:scale-110 transition" data-action="like" data-id="' + tr.id + '" title="الإضافة إلى أغانٍ أعجبتني">' +
+            '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">' + (fav ? SVG_CHECK : SVG_PLUS) + '</svg>' +
+          '</button>' +
+          '<span class="text-sm font-medium text-[#b3b3b3] font-variant-numeric tabular-nums w-11 text-right">' + fmt(tr.duration || 224) + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</section>';
+
+    // 3. Two-Column Grid: Synced Lyrics (Left) + Artist & Credits (Right)
+    html += '<div id="lyrics-section" class="sp-grid grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">' +
+      '<div class="sp-lyrics-card lg:col-span-7 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-4 transition-colors duration-500" style="background: linear-gradient(180deg, ' + accentCol + ' 0%, #181c18 100%);">' +
+        '<div class="sp-card-head flex items-center justify-between border-b border-white/10 pb-3">' +
+          '<div class="flex items-center gap-2.5">' +
+            '<svg class="w-5 h-5 text-[#1ed760] fill-current" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3m5 7a1 1 0 0 0-2 0 3 3 0 0 1-6 0 1 1 0 0 0-2 0 5 5 0 0 0 4 4.9V16H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-2.1A5 5 0 0 0 17 9"/></svg>' +
+            '<h2 class="text-xl font-extrabold text-white">' + esc(t('track.lyrics') || 'كلمات الأغنية') + ' • Lyrics</h2>' +
+          '</div>' +
+          '<span class="text-xs font-semibold text-white/70">اضغط على أي سطر للانتقال إليه</span>' +
+        '</div>' +
+        '<div class="sp-lyrics-content space-y-3.5 py-2 max-h-[460px] overflow-y-auto" dir="ltr">' +
+          (lyrics.length ? (
+            lyrics.map((line, idx) => {
+              const mainText = line.text || byLang(line);
+              return '<button class="lyric sp-lyric cursor-pointer transition-all duration-200 font-extrabold text-lg sm:text-2xl leading-snug w-full text-left bg-transparent border-0 p-1.5 rounded hover:text-white text-white/50" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '" data-lyric-idx="' + idx + '">' +
+                '<span class="sp-lyric-main">' + esc(mainText) + '</span>' +
+              '</button>';
+            }).join('')
+          ) : (tr.plainLyrics ? (
+            esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line, idx) =>
+              '<div class="sp-lyric font-extrabold text-lg sm:text-2xl leading-snug text-white/60 py-1" data-lyric-idx="' + idx + '">' + esc(line) + '</div>'
+            ).join('')
+          ) : (
+            '<div class="sp-lyrics-empty text-center py-8">' +
+              '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
+              '<p class="sp-lyrics-empty-title text-base font-bold text-white mt-2">' + (state.lang === 'ar' ? 'استمتع بالألحان والموسيقى' : 'Enjoy the music') + '</p>' +
+            '</div>'
+          ))) +
+        '</div>' +
+      '</div>' +
+
+      // Artist & Credits Column
+      '<div id="artist-credit-card" class="sp-col-side lg:col-span-5 space-y-5">' +
+        // Artist Card
+        '<div class="sp-artist-card rounded-2xl bg-[#181818] hover:bg-[#222222] transition p-5 border border-white/[0.06] flex items-center justify-between gap-4">' +
+          '<div class="flex items-center gap-4 min-w-0" dir="ltr">' +
+            '<div class="sp-artist-avatar-wrap w-20 h-20 rounded-full overflow-hidden shadow-xl shrink-0 bg-[#282828] border-2 border-white/20">' +
+              artistAvatar({ name: tr.artist, track: tr.id }) +
+            '</div>' +
+            '<div class="min-w-0">' +
+              '<div class="sp-artist-kicker-row flex items-center gap-1.5">' +
+                '<span class="sp-artist-kicker text-xs font-bold uppercase tracking-wider text-[#b3b3b3]">' + esc(t('page.artist') || 'فنان') + ' • Artist</span>' +
+                '<span class="sp-verified-tag px-1.5 py-0.5 rounded bg-[#3d91f4]/20 text-[#3d91f4] text-[10px] font-bold">Verified</span>' +
+              '</div>' +
+              '<h3 class="sp-artist-title text-xl font-extrabold text-white truncate mt-0.5">' + esc(artistName) + '</h3>' +
+              '<p class="sp-artist-listeners text-xs text-[#b3b3b3] mt-0.5 num">' + esc(listenersCount) + '</p>' +
+            '</div>' +
+          '</div>' +
+          '<button class="sp-follow-btn ' + (isFollowing ? 'is-following' : '') + ' px-4 py-1.5 rounded-full border border-[#727272] hover:border-white text-xs font-bold text-white transition shrink-0" data-action="follow" data-id="' + esc(artistKey) + '" aria-pressed="' + isFollowing + '">' +
+            esc(t(isFollowing ? 'artist.following' : 'artist.follow')) +
+          '</button>' +
+        '</div>' +
+
+        // Credits Card
+        '<div class="sp-credits-card rounded-2xl bg-[#181818] p-5 border border-white/[0.06] space-y-4">' +
+          '<div class="flex items-center justify-between border-b border-white/10 pb-3">' +
+            '<h4 class="text-base font-extrabold text-white">' + esc(t('track.credits') || 'القائمون على العمل (Credits)') + '</h4>' +
+            '<span class="text-xs text-[#1ed760] font-bold">Master Audio</span>' +
+          '</div>' +
+          '<div class="sp-credits-table space-y-3 text-sm" dir="ltr">' +
+            '<div class="sp-credit-row flex items-center justify-between border-b border-white/[0.06] pb-2.5">' +
+              '<div>' +
+                '<div class="font-bold text-white">' + esc(artistName) + '</div>' +
+                '<div class="text-xs text-[#b3b3b3]">Main Artist, Composer, Lyricist</div>' +
+              '</div>' +
+              '<span class="text-[11px] font-mono text-[#b3b3b3]">/artist/' + esc(encodeURIComponent(artistName)) + '</span>' +
+            '</div>' +
+            '<div class="sp-credit-row flex items-center justify-between border-b border-white/[0.06] pb-2.5">' +
+              '<div>' +
+                '<div class="font-bold text-white">' + esc(L(tr.album)) + '</div>' +
+                '<div class="text-xs text-[#b3b3b3]">Record Label & Mastering</div>' +
+              '</div>' +
+              '<span class="text-[11px] font-mono text-[#1ed760]">' + (tr.year || '2024') + ' Release</span>' +
+            '</div>' +
+            '<div class="sp-credit-row flex items-center justify-between">' +
+              '<div>' +
+                '<div class="font-bold text-white">Track ID</div>' +
+                '<div class="text-xs text-[#b3b3b3]">Spotify URI & Palette</div>' +
+              '</div>' +
+              '<span class="text-[11px] font-mono text-[#939B93]">' + accentCol + ' • track:' + tr.id + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
-    // 3. Two-Column Spotify Layout Grid
-    const isSynced = Boolean(
-      tr._lyricsSynced === true ||
-      (lyrics.length > 0 && lyrics.some((l) => typeof l.t === 'number' && Number.isFinite(l.t)) && tr._lyricsSynced !== false)
-    );
-    const isVerified = Boolean(tr.verified === true);
-
-    html += '<div class="sp-grid">' +
-      '<div class="sp-col-main">' +
-        '<div class="sp-lyrics-card">' +
-          '<div class="sp-card-head">' +
-            '<h2>' + esc(t('track.lyrics') || 'كلمات الأغنية') + '</h2>' +
-            (isSynced ? (
-              '<span class="sp-live-badge"><span class="sp-live-dot"></span> ' + (state.lang === 'ar' ? 'متزامنة LIVE' : 'LIVE Synced') + '</span>'
-            ) : (lyrics.length || tr.plainLyrics) ? (
-              '<span class="sp-plain-badge" style="font-size:11px;color:var(--text-sub);padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);">' + (state.lang === 'ar' ? 'كلمات نصية غير متزامنة' : 'Plain Lyrics') + '</span>'
-            ) : (
-              '<span class="sp-plain-badge" style="font-size:11px;color:var(--text-sub);padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);">' + (state.lang === 'ar' ? 'استماع' : 'Audio') + '</span>'
-            )) +
+    // 4. Popular Tracks by Artist
+    if (sameArtist.length) {
+      html += '<section class="sp-more-section space-y-4">' +
+        '<div class="flex items-end justify-between">' +
+          '<div>' +
+            '<span class="text-xs font-bold text-[#b3b3b3]">الأغاني الأكثر استماعاً للفنان</span>' +
+            '<h2 class="text-2xl font-extrabold text-white mt-0.5" dir="ltr">Popular by ' + esc(artistName) + '</h2>' +
           '</div>' +
-          '<div class="sp-lyrics-content">' +
-            (isSynced ? (
-              '<div class="lyrics sp-lyrics-list">' + lyrics.map((line) => {
-                const mainText = line.text || byLang(line);
-                const sub = (line.translation && line.translation !== mainText) ? line.translation : '';
-                return '<button class="lyric sp-lyric" data-action="seek-lyric" data-t="' + (typeof line.t === 'number' ? line.t : 0) + '">' +
-                  '<span class="sp-lyric-main">' + esc(mainText) + '</span>' +
-                  (sub ? ('<span class="sp-lyric-sub">' + esc(sub) + '</span>') : '') +
-                '</button>';
-              }).join('') + '</div>'
-            ) : (lyrics.length || tr.plainLyrics) ? (
-              '<div class="sp-plain-lyrics-wrap" style="padding:16px 8px;line-height:2.2;font-size:1.15rem;color:var(--text);">' +
-                (tr.plainLyrics
-                  ? esc(tr.plainLyrics).split(/\r?\n/).filter(Boolean).map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line) + '</p>').join('')
-                  : lyrics.map((line) => '<p class="sp-plain-line" style="margin:0 0 10px 0;">' + esc(line.text || byLang(line)) + '</p>').join('')
-                ) +
-              '</div>'
-            ) : (
-              '<div class="sp-lyrics-empty">' +
-                '<div class="sp-wave-bars"><i style="--h:24px"></i><i style="--h:48px"></i><i style="--h:32px"></i><i style="--h:56px"></i><i style="--h:36px"></i></div>' +
-                '<p class="sp-lyrics-empty-title">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'جاري جلب كلمات الأغنية...' : 'Searching for lyrics...') : (state.lang === 'ar' ? 'استمتع بالألحان والموسيقى' : 'Enjoy the music')) + '</p>' +
-                '<p class="sp-lyrics-empty-sub">' + (tr._lyricsRequested && !lyrics.length ? (state.lang === 'ar' ? 'يتم الاستعلام من قاعدة البيانات المفتوحة للكلمات.' : 'Querying open lyrics database.') : (state.lang === 'ar' ? 'لا تتوفر كلمات لهذه الأغنية حالياً.' : 'No lyrics available for this track.')) + '</p>' +
-              '</div>'
-            )) +
-          '</div>' +
+          '<span class="text-xs text-[#b3b3b3]">اضغط على أي أغنية لتشغيلها</span>' +
         '</div>' +
+        '<div id="popular-tracks-list" class="sp-more-list space-y-1" dir="ltr">' +
+          sameArtist.map((st, i) =>
+            '<div class="sp-more-row song-row group grid grid-cols-[32px_1fr_auto] sm:grid-cols-[32px_1.5fr_1fr_auto] items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-white/10 transition cursor-pointer ' + (state.trackId === st.id ? 'bg-white/[0.07]' : '') + '" data-action="play" data-id="' + st.id + '" data-ctx="track">' +
+              '<div class="flex items-center justify-center w-6">' +
+                (state.trackId === st.id && engine.playing ? (
+                  '<div class="row-index flex items-end gap-[2px] h-3.5">' +
+                    '<span class="w-[3px] bg-[#1ed760] eq-bar-1"></span>' +
+                    '<span class="w-[3px] bg-[#1ed760] eq-bar-2"></span>' +
+                    '<span class="w-[3px] bg-[#1ed760] eq-bar-3"></span>' +
+                    '<span class="w-[3px] bg-[#1ed760] eq-bar-4"></span>' +
+                  '</div>'
+                ) : (
+                  '<span class="row-index text-sm font-semibold ' + (state.trackId === st.id ? 'text-[#1ed760]' : 'text-[#b3b3b3]') + '">' + (i + 1) + '</span>'
+                )) +
+                '<button class="row-play-btn hidden items-center justify-center text-white">' +
+                  '<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">' + (state.trackId === st.id && engine.playing ? '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>' : '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>') + '</svg>' +
+                '</button>' +
+              '</div>' +
+              '<div class="flex items-center gap-3 min-w-0">' +
+                '<span class="sp-more-art w-10 h-10 rounded overflow-hidden shrink-0 shadow block">' + trackArt(st) + '</span>' +
+                '<div class="min-w-0">' +
+                  '<div class="sp-more-title text-sm font-bold truncate ' + (state.trackId === st.id ? 'text-[#1ed760]' : 'text-white') + '">' + esc(L(st.title)) + '</div>' +
+                  '<div class="sp-more-sub text-xs text-[#b3b3b3] truncate">' + esc(L(st.album)) + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="hidden sm:block text-xs text-[#b3b3b3] font-variant-numeric tabular-nums text-right">' +
+                (st.source === 'file' ? 'Local' : '٢٤,١٠٥,٨٩٠') +
+              '</div>' +
+              '<div class="flex items-center gap-4 justify-end">' +
+                '<button class="row-like text-[#b3b3b3] hover:text-white transition ' + (isFav(st.id) ? 'is-liked text-[#1ed760]' : '') + '" data-action="like" data-id="' + st.id + '" data-like="' + st.id + '">' +
+                  '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">' + (isFav(st.id) ? SVG_CHECK : SVG_PLUS) + '</svg>' +
+                '</button>' +
+                '<span class="sp-more-dur text-xs text-[#b3b3b3] font-variant-numeric tabular-nums w-10 text-right">' + fmt(st.duration) + '</span>' +
+              '</div>' +
+            '</div>'
+          ).join('') +
+        '</div>' +
+      '</section>';
+    }
 
-        (sameArtist.length ? (
-          '<div class="sp-more-section">' +
-            '<div class="section-head"><div><h3>' + esc((t('track.moreBy') || 'المزيد من {artist}').replace('{artist}', artistName)) + '</h3></div></div>' +
-            '<div class="sp-more-list">' +
-              sameArtist.map((st, i) =>
-                '<div class="sp-more-row' + (state.trackId === st.id ? ' is-current' : '') + '">' +
-                  '<button class="sp-more-hit" data-action="play" data-id="' + st.id + '" data-ctx="track">' +
-                    '<span class="sp-more-idx">' + (state.trackId === st.id && engine.playing ? eq() : (i + 1)) + '</span>' +
-                    '<span class="sp-more-art">' + trackArt(st) + '</span>' +
-                    '<span class="sp-more-info"><span class="sp-more-title clamp-1">' + L(st.title) + '</span><span class="sp-more-sub clamp-1">' + L(st.album) + '</span></span>' +
-                    '<span class="sp-more-dur num">' + fmt(st.duration) + '</span>' +
-                  '</button>' +
-                  '<button class="row-like ' + (isFav(st.id) ? 'is-liked' : '') + '" data-action="like" data-id="' + st.id + '" data-like="' + st.id + '" aria-pressed="' + isFav(st.id) + '">' +
-                    likeIcon(isFav(st.id)) +
-                  '</button>' +
-                '</div>'
-              ).join('') +
+    // 5. More From Discography & Releases
+    html += '<section id="discography-section" class="space-y-4">' +
+      '<div class="flex items-end justify-between">' +
+        '<div>' +
+          '<span class="text-xs font-bold text-[#b3b3b3]">الألبومات والإصدارات</span>' +
+          '<h2 class="text-2xl font-extrabold text-white mt-0.5">المزيد من ' + esc(artistName) + '</h2>' +
+        '</div>' +
+      '</div>' +
+      '<div id="discography-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" dir="ltr">' +
+        discography.map((dt) =>
+          '<div class="discog-card p-3.5 rounded-xl bg-[#181818] hover:bg-[#282828] transition cursor-pointer flex flex-col gap-3 group relative" data-action="play" data-id="' + dt.id + '" data-ctx="track">' +
+            '<div class="relative aspect-square w-full rounded-lg overflow-hidden shadow-lg bg-[#282828]">' +
+              trackArt(dt, 'w-full h-full object-cover') +
+              '<button class="card-play-fab absolute bottom-2 right-2 w-12 h-12 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 text-black flex items-center justify-center shadow-2xl transition" data-action="play" data-id="' + dt.id + '">' +
+                '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">' + (state.trackId === dt.id && engine.playing ? '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>' : '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>') + '</svg>' +
+              '</button>' +
+            '</div>' +
+            '<div class="min-w-0">' +
+              '<div class="text-sm font-bold text-white truncate">' + esc(L(dt.title)) + '</div>' +
+              '<div class="text-xs text-[#b3b3b3] mt-1">' + (dt.year || '2024') + ' • ' + esc(L(dt.album)) + '</div>' +
             '</div>' +
           '</div>'
-        ) : '') +
+        ).join('') +
       '</div>' +
+    '</section>';
 
-      '<div class="sp-col-side">' +
-        '<div class="sp-artist-card">' +
-          '<div class="sp-artist-header">' +
-            '<div class="sp-artist-avatar-wrap">' +
-              artistAvatar({ name: tr.artist, track: tr.id }) +
-            '</div>' +
-            '<div class="sp-artist-header-info">' +
-              '<div class="sp-artist-kicker-row">' +
-                '<span class="sp-artist-kicker">' + esc(t('page.artist') || 'فنان') + '</span>' +
-                (isVerified ? (
-                  '<div class="sp-verified-tag">' +
-                    '<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>' +
-                    '<span>' + esc(t('track.verified') || 'فنان موثق في الكتالوج') + '</span>' +
-                  '</div>'
-                ) : '') +
-              '</div>' +
-              '<h3 class="sp-artist-title">' + esc(artistName) + '</h3>' +
-              '<div class="sp-artist-listeners num">' + esc(listenersCount) + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="sp-artist-body">' +
-            '<p class="sp-artist-bio">' + esc(bioText) + '</p>' +
-            '<button class="sp-follow-btn ' + (isFollowing ? 'is-following' : '') + '" data-action="follow" data-id="' + esc(artistKey) + '" aria-pressed="' + isFollowing + '">' +
-              esc(t(isFollowing ? 'artist.following' : 'artist.follow')) +
-            '</button>' +
-          '</div>' +
-        '</div>' +
-
-        '<div class="sp-credits-card">' +
-          '<h4>' + esc(t('track.credits') || 'بيانات الأغنية والإنتاج') + '</h4>' +
-          '<div class="sp-credits-table">' +
-            '<div class="sp-credit-row"><span>' + esc(t('track.mainArtist') || 'الفنان الرئيسي') + '</span><b>' + esc(artistName) + '</b></div>' +
-            '<div class="sp-credit-row"><span>' + esc(t('hero.album') || 'الألبوم / الإصدار') + '</span><b>' + L(tr.album) + '</b></div>' +
-            (tr.year ? ('<div class="sp-credit-row"><span>' + esc(t('track.releaseYear') || 'سنة النشر') + '</span><b>' + tr.year + '</b></div>') : '') +
-            '<div class="sp-credit-row"><span>' + esc(t('track.playDuration') || 'المدة الزمنية') + '</span><b>' + fmt(tr.duration || 260) + '</b></div>' +
-            '<div class="sp-credit-row"><span>' + esc(t('track.contentType') || 'نوع المحتوى') + '</span><b class="badge-accent">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف محلي من جهازك') : esc(t('track.previewNoteShort') || 'معاينة صوتية رسمية ٣٠ ثانية')) + '</b></div>' +
-            '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Lossless Master') + '</b></div>' +
-          '</div>' +
-          '<div class="sp-copyright-notice">' +
-            (tr.source === 'file' ? esc(t('track.localNotice') || 'ملف صوتي مخزن محليًا على هذا الجهاز.') : 'جميع حقوق التسجيل والإنتاج الموسيقي محفوظة لأصحابها وفق الترخيص الرقمي.') +
-          '</div>' +
-        '</div>' +
+    // 6. Album Release Date & Build Metadata Footer
+    html += '<footer class="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#b3b3b3]" dir="ltr">' +
+      '<div class="space-y-1">' +
+        '<div class="font-semibold text-white/90">March 15, ' + (tr.year || '2024') + ' • 1 Song, ' + fmt(tr.duration || 224) + '</div>' +
+        '<div>℗ ' + (tr.year || '2024') + ' One Umbrella Records • © ' + (tr.year || '2024') + ' One Umbrella Records</div>' +
       '</div>' +
-    '</div></div>';
+      '<div class="flex flex-wrap items-center gap-2 font-mono text-[11px] text-[#939B93]">' +
+        '<span class="px-2 py-1 rounded bg-[#181818] border border-white/10">Market: EG (ar-EG)</span>' +
+        '<span class="px-2 py-1 rounded bg-[#181818] border border-white/10">Client: 1.3.10.542</span>' +
+        '<span class="px-2 py-1 rounded bg-[#181818] border border-white/10">URI: track:' + tr.id + '</span>' +
+      '</div>' +
+    '</footer>';
+
+    html += '</div></div>';
 
     el.track.innerHTML = html;
     updateLyricHighlight(engine.getPosition());
-  }
 
-  /* ---------- players: actions ------------------------------------------- */
+    // 3D Tilt Card Interaction
+    const heroCard = el.track.querySelector('#hero-cover-trigger');
+    if (heroCard && !heroCard.dataset.tiltBound) {
+      heroCard.dataset.tiltBound = 'true';
+      heroCard.addEventListener('mousemove', (e) => {
+        const r = heroCard.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        heroCard.style.transform = 'perspective(600px) rotateY(' + (x * 14) + 'deg) rotateX(' + (-y * 14) + 'deg) scale(1.03)';
+      });
+      heroCard.addEventListener('mouseleave', () => {
+        heroCard.style.transform = 'perspective(600px) rotateY(0deg) rotateX(0deg) scale(1)';
+      });
+    }
+
+    // Sticky Song Bar Visibility on Scroll
+    const viewport = $('#viewport');
+    const stickyBar = el.track.querySelector('#sticky-song-bar');
+    if (viewport && stickyBar && !viewport.dataset.stickySongBound) {
+      viewport.dataset.stickySongBound = 'true';
+      viewport.addEventListener('scroll', () => {
+        if (ui.view !== 'track') return;
+        if (viewport.scrollTop > 260) {
+          stickyBar.classList.remove('opacity-0', 'pointer-events-none');
+          stickyBar.classList.add('opacity-100');
+        } else {
+          stickyBar.classList.add('opacity-0', 'pointer-events-none');
+          stickyBar.classList.remove('opacity-100');
+        }
+      });
+    }
+  }
 
   function renderAll() {
     renderRail();
