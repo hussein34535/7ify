@@ -449,6 +449,29 @@ html[dir="ltr"] .brand-name { letter-spacing: .06em; font-family: 'Inter', syste
 .search-clear svg { width: 13px; height: 13px; }
 .search.has-value .search-kbd { display: none; }
 
+.search-landing-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--raised-2, #242424);
+  border: 1px solid var(--line-subtle, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  padding: 13px 16px;
+  color: var(--muted, #b3b3b3);
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 14px;
+  margin-bottom: 22px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.search-landing-box:hover {
+  background: var(--raised-3, #2e2e2e);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 /* ---------- top actions -------------------------------------------------- */
 
 .top-actions { display: flex; align-items: center; gap: 4px; margin-inline-start: auto; }
@@ -7707,6 +7730,11 @@ window.NG = (function () {
     let html = '<div class="search-head"><div><h1>' + esc(t('search.title')) + '</h1>' +
       '<p>' + esc(t('search.noQueryBody')) + '</p></div></div>';
 
+    html += '<div class="search-landing-box" data-action="focus-search" role="button" tabindex="0">' +
+      '<svg class="ic" aria-hidden="true" style="width:20px;height:20px;fill:currentColor;flex-shrink:0;"><use href="#i-search"></use></svg>' +
+      '<span>' + esc(t('search.placeholder')) + '</span>' +
+      '</div>';
+
     const suggestions = ['عمرو دياب', 'ويجز - البخت', 'كايروكي', 'فيروز', 'تامر حسني', 'شيرين', 'The Weeknd', 'أم كلثوم'];
     html += '<section class="section">' + sectionHead(t('search.quickSuggestions'), '') +
       '<div class="recent-chips">' + suggestions.map((q) =>
@@ -10017,7 +10045,13 @@ window.NG = (function () {
 
   function onAction(action, node) {
     switch (action) {
-      case 'go': setView(node.dataset.view); break;
+      case 'go': {
+        setView(node.dataset.view);
+        if (node.dataset.view === 'search' && el.q) {
+          setTimeout(() => el.q.focus(), 60);
+        }
+        break;
+      }
       case 'back':
         if (ui.histIdx > 0) { ui.histIdx -= 1; setView(ui.hist[ui.histIdx], false); }
         break;
@@ -10186,6 +10220,18 @@ window.NG = (function () {
         else renderSearch();
         triggerOnlineSearch(ui.q);
         break;
+      case 'focus-search':
+      case 'submit-search': {
+        if (el.q) {
+          el.q.focus();
+          if (el.q.value.trim()) {
+            runUnifiedSearch(el.q.value.trim());
+            if (ui.view !== 'search') setView('search');
+            else renderSearch();
+          }
+        }
+        break;
+      }
       case 'clear-recent':
         ui.recentSearches = [];
         renderSearch();
@@ -10383,6 +10429,29 @@ window.NG = (function () {
     });
 
     function handleAutocompleteKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
+          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
+        } else {
+          const v = el.q.value.trim();
+          if (v) {
+            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
+            closeAutocomplete();
+            if (ui.view !== 'search') setView('search');
+            else renderSearch();
+            triggerOnlineSearch(v);
+          }
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeAutocomplete();
+        return;
+      }
+
       if (!el.searchAutocomplete || el.searchAutocomplete.hidden) {
         if (e.key === 'ArrowDown' && el.q.value.trim()) {
           e.preventDefault();
@@ -10397,22 +10466,6 @@ window.NG = (function () {
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveSuggestion(activeSuggestionIndex <= 0 ? autocompleteItems.length - 1 : activeSuggestionIndex - 1);
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        closeAutocomplete();
-      } else if (e.key === 'Enter') {
-        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
-          e.preventDefault();
-          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
-        } else {
-          const v = el.q.value.trim();
-          if (v) {
-            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
-            closeAutocomplete();
-            if (ui.view !== 'search') setView('search');
-            renderSearch();
-          }
-        }
       }
     }
 

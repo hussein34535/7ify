@@ -446,6 +446,11 @@
     let html = '<div class="search-head"><div><h1>' + esc(t('search.title')) + '</h1>' +
       '<p>' + esc(t('search.noQueryBody')) + '</p></div></div>';
 
+    html += '<div class="search-landing-box" data-action="focus-search" role="button" tabindex="0">' +
+      '<svg class="ic" aria-hidden="true" style="width:20px;height:20px;fill:currentColor;flex-shrink:0;"><use href="#i-search"></use></svg>' +
+      '<span>' + esc(t('search.placeholder')) + '</span>' +
+      '</div>';
+
     const suggestions = ['عمرو دياب', 'ويجز - البخت', 'كايروكي', 'فيروز', 'تامر حسني', 'شيرين', 'The Weeknd', 'أم كلثوم'];
     html += '<section class="section">' + sectionHead(t('search.quickSuggestions'), '') +
       '<div class="recent-chips">' + suggestions.map((q) =>
@@ -2756,7 +2761,13 @@
 
   function onAction(action, node) {
     switch (action) {
-      case 'go': setView(node.dataset.view); break;
+      case 'go': {
+        setView(node.dataset.view);
+        if (node.dataset.view === 'search' && el.q) {
+          setTimeout(() => el.q.focus(), 60);
+        }
+        break;
+      }
       case 'back':
         if (ui.histIdx > 0) { ui.histIdx -= 1; setView(ui.hist[ui.histIdx], false); }
         break;
@@ -2925,6 +2936,18 @@
         else renderSearch();
         triggerOnlineSearch(ui.q);
         break;
+      case 'focus-search':
+      case 'submit-search': {
+        if (el.q) {
+          el.q.focus();
+          if (el.q.value.trim()) {
+            runUnifiedSearch(el.q.value.trim());
+            if (ui.view !== 'search') setView('search');
+            else renderSearch();
+          }
+        }
+        break;
+      }
       case 'clear-recent':
         ui.recentSearches = [];
         renderSearch();
@@ -3122,6 +3145,29 @@
     });
 
     function handleAutocompleteKeydown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
+          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
+        } else {
+          const v = el.q.value.trim();
+          if (v) {
+            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
+            closeAutocomplete();
+            if (ui.view !== 'search') setView('search');
+            else renderSearch();
+            triggerOnlineSearch(v);
+          }
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeAutocomplete();
+        return;
+      }
+
       if (!el.searchAutocomplete || el.searchAutocomplete.hidden) {
         if (e.key === 'ArrowDown' && el.q.value.trim()) {
           e.preventDefault();
@@ -3136,22 +3182,6 @@
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setActiveSuggestion(activeSuggestionIndex <= 0 ? autocompleteItems.length - 1 : activeSuggestionIndex - 1);
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        closeAutocomplete();
-      } else if (e.key === 'Enter') {
-        if (activeSuggestionIndex >= 0 && autocompleteItems[activeSuggestionIndex]) {
-          e.preventDefault();
-          selectAutocompleteItem(autocompleteItems[activeSuggestionIndex]);
-        } else {
-          const v = el.q.value.trim();
-          if (v) {
-            ui.recentSearches = [v].concat(ui.recentSearches.filter((x) => x !== v)).slice(0, 6);
-            closeAutocomplete();
-            if (ui.view !== 'search') setView('search');
-            renderSearch();
-          }
-        }
       }
     }
 
