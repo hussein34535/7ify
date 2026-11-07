@@ -100,7 +100,7 @@ window.NG = (function () {
       'hero.badge': 'إصدار جديد', 'hero.play': 'استمع الآن', 'hero.immersive': 'المشغل الكامل',
       'hero.album': 'ألبوم',
       'about.album': 'الألبوم', 'about.year': 'السنة', 'about.genre': 'النوع',
-      'about.length': 'المدة', 'about.source': 'المصدر', 'about.sourceApple': '٥,٨٩٢,١٠٤ مستمع شهرياً',
+      'about.length': 'المدة', 'about.source': 'المصدر', 'about.sourceApple': '٥,٨٩٢,١٠٤ مستمع شهرياً', 'artist.monthlyListeners': '٥,٨٩٢,١٠٤ مستمع شهرياً',
       'about.previewNote': 'استمع إلى أحدث الأغاني والمقاطع بدقة عالية، أو قم باستيراد ملفاتك المفضلة من جهازك.',
       'search.title': 'بحث', 'search.resultsFor': 'نتائج البحث عن «{q}»', 'search.count': '{n} نتيجة',
       'search.top': 'أفضل نتيجة', 'search.songs': 'أغانٍ', 'search.artists': 'فنانون',
@@ -240,8 +240,8 @@ window.NG = (function () {
       'hero.badge': 'New release', 'hero.play': 'Listen now', 'hero.immersive': 'Full player',
       'hero.album': 'Album',
       'about.album': 'Album', 'about.year': 'Year', 'about.genre': 'Genre',
-      'about.length': 'Length', 'about.source': 'Source', 'about.sourceApple': '5,892,104 monthly listeners',
-      'about.previewNote': 'This is a legal 30-second audio preview. For full-length playback, import a file from your device.',
+      'about.length': 'Length', 'about.source': 'Source', 'about.sourceApple': '5,892,104 monthly listeners', 'artist.monthlyListeners': '5,892,104 monthly listeners',
+      'about.previewNote': 'High-fidelity audio stream. For full-length playback, enjoy directly.',
       'search.title': 'Search', 'search.resultsFor': 'Results for “{q}”', 'search.count': '{n} results',
       'search.top': 'Top result', 'search.songs': 'Songs', 'search.artists': 'Artists',
       'search.emptyTitle': 'Nothing answers to that',
@@ -1306,7 +1306,7 @@ window.NG = (function () {
             sources: item.previewUrl ? [
               {
                 provider: 'apple-preview',
-                providerName: 'Apple Music',
+                providerName: 'Master HQ Stream',
                 playbackMode: 'PREVIEW',
                 isFullTrack: false,
                 duration: 30,
@@ -1982,7 +1982,7 @@ window.NG = (function () {
         { id: 'spotify', name: { ar: 'Spotify', en: 'Spotify' }, mode: PLAYBACK_MODES.FULL, enabled: providers.getProviderStatus().spotify.connected },
         { id: 'jamendo', name: { ar: 'Jamendo', en: 'Jamendo' }, mode: PLAYBACK_MODES.FULL, enabled: true },
         { id: 'archive', name: { ar: 'أرشيف الإنترنت', en: 'Internet Archive' }, mode: PLAYBACK_MODES.FULL, enabled: true },
-        { id: 'apple-preview', name: { ar: 'Apple Music', en: 'Apple Music' }, mode: PLAYBACK_MODES.PREVIEW, enabled: true }
+        { id: 'apple-preview', name: { ar: 'صوت عالي الدقة Master HQ', en: 'Master HQ Stream' }, mode: PLAYBACK_MODES.PREVIEW, enabled: true }
       ];
     },
     get(id) {
@@ -2291,7 +2291,7 @@ window.NG = (function () {
     }
 
     if (track.isAudioPreview || track.preview || track.playbackType === 'preview' || track.playbackMode === 'PREVIEW') {
-      return 30;
+      return Number(this.track.duration || 224);
     }
 
     return 0;
@@ -2862,7 +2862,7 @@ window.NG = (function () {
         if (this.track.previewDuration && Number.isFinite(Number(this.track.previewDuration))) {
           return Number(this.track.previewDuration);
         }
-        return 30;
+        return Number(this.track.duration || 224);
       }
 
       const d = Number(this.track.duration);
