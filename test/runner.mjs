@@ -68,7 +68,8 @@ if (apiRes.status !== 0) {
 const browserTests = [
   { name: 'Spotify Track Page Verification', file: 'test/verify-song-page.mjs' },
   { name: 'Dedicated Pages (Playlist/Artist/Album/Library) Verification', file: 'test/verify-pages.mjs' },
-  { name: 'Edge Cases & Breakpoints Verification', file: 'test/edge.mjs' }
+  { name: 'Edge Cases & Breakpoints Verification', file: 'test/edge.mjs' },
+  { name: 'Spotify MiniPlayer Popup Verification', file: 'test/verify-miniplayer.mjs' }
 ];
 
 for (const t of browserTests) {

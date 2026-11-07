@@ -1125,6 +1125,7 @@
     }
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
+    renderMiniPlayer();
   }
 
   function syncProgress() {
@@ -1157,6 +1158,14 @@
       shSeek.setAttribute('aria-valuetext', fmt(pos));
     }
     updateLyricHighlight(pos);
+    const pipFill = $('#pipProgressFill');
+    const pipHandle = $('#pipProgressHandle');
+    if (pipFill) pipFill.style.width = pct + '%';
+    if (pipHandle) pipHandle.style.left = pct + '%';
+    const pipCur = $('#pipCur');
+    const pipDur = $('#pipDur');
+    if (pipCur) pipCur.textContent = fmt(pos);
+    if (pipDur) pipDur.textContent = fmt(safeDur);
   }
 
   function updateLyricHighlight(pos) {
@@ -2238,6 +2247,239 @@
     ).join('');
   }
 
+  
+  /* ---------- Spotify MiniPlayer (PIP) ------------------------------------ */
+
+  function renderMiniPlayer() {
+    const elPip = $('#spotifyMiniPlayer');
+    if (!elPip || elPip.style.display === 'none') return;
+    const tr = getTrack(state.trackId);
+    if (!tr) return;
+    const fav = isFav(tr.id);
+    const titleText = byLang(tr.title);
+    const artistText = byLang(tr.artist);
+
+    // Track Title & Artist
+    const tLink = $('#pipTrackLink');
+    if (tLink) {
+      tLink.textContent = titleText;
+      tLink.dataset.id = tr.id;
+    }
+    const aLink = $('#pipArtistLink');
+    if (aLink) {
+      aLink.textContent = artistText;
+      aLink.dataset.artist = typeof tr.artist === 'object' ? (tr.artist.ar || tr.artist.en) : tr.artist;
+    }
+
+    // Cover art & dynamic backdrop
+    const coverImg = $('#pipCoverImg');
+    const mainBody = $('#pipMainBody');
+    const artSrc = tr.art || (tr.colors ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="100%" height="100%" fill="' + encodeURIComponent(tr.colors[0] || '#222') + '"/><text x="50%" y="50%" fill="%23fff" font-size="64" font-family="sans-serif" text-anchor="middle" dy=".3em">' + encodeURIComponent(titleText.slice(0, 1)) + '</text></svg>' : '');
+    if (coverImg && artSrc) {
+      coverImg.src = artSrc;
+    }
+    if (mainBody && artSrc) {
+      mainBody.style.setProperty('--background-image-url', 'url("' + artSrc + '")');
+    }
+
+    // Like button
+    const likeBtn = $('#pipLikeBtn');
+    if (likeBtn) {
+      likeBtn.setAttribute('aria-checked', String(fav));
+      likeBtn.dataset.id = tr.id;
+      const likeIcon = $('#pipLikeIcon');
+      if (likeIcon) {
+        likeIcon.style.color = fav ? '#1ed760' : 'inherit';
+        if (fav) {
+          likeIcon.innerHTML = '<path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path><path d="m15.5 10-5 5-2.5-2.5 1.06-1.06L10.5 12.88l3.94-3.94z"></path>';
+        } else {
+          likeIcon.innerHTML = '<path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path><path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>';
+        }
+      }
+    }
+
+    // Play / Pause Icon
+    const playIcon = $('#pipPlayIcon');
+    if (playIcon) {
+      if (engine.playing) {
+        playIcon.innerHTML = '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>';
+      } else {
+        playIcon.innerHTML = '<path d="M7.05 3.606 20 12l-12.95 8.394A.7.7 0 0 1 6 19.8V4.2a.7.7 0 0 1 1.05-.594z"></path>';
+      }
+    }
+
+    // Shuffle & Repeat buttons active styles
+    const shuffleBtn = $('#pipShuffleBtn');
+    if (shuffleBtn) {
+      shuffleBtn.style.color = state.shuffle ? '#1ed760' : '';
+    }
+    const repeatBtn = $('#pipRepeatBtn');
+    if (repeatBtn) {
+      repeatBtn.style.color = state.repeat !== 'off' ? '#1ed760' : '';
+    }
+
+    // Volume slider & icon
+    const volInput = $('#pipVolInput');
+    if (volInput) {
+      volInput.value = state.muted ? 0 : state.volume;
+    }
+    const volIcon = $('#pipVolumeIcon');
+    if (volIcon) {
+      if (state.muted || state.volume === 0) {
+        volIcon.innerHTML = '<path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8z"></path><path d="m11.5 6 4 4m0-4-4 4"></path>';
+      } else {
+        volIcon.innerHTML = '<path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8zm8.683 4.29V5.56a2.75 2.75 0 0 1 0 4.88"></path><path d="M11.5 13.614a5.752 5.752 0 0 0 0-11.228v1.55a4.252 4.252 0 0 1 0 8.127z"></path>';
+      }
+    }
+
+    // Timeline progress
+    paintProgress(engine.getPosition(), engine.getDuration());
+  }
+
+  let isDraggingPip = false;
+  let pipStartX = 0, pipStartY = 0;
+  let pipStartLeft = 0, pipStartTop = 0;
+
+  function initPipControls() {
+    const dragBar = $('#pipDragBar');
+    const miniEl = $('#spotifyMiniPlayer');
+    const seekWrap = $('#pipSeekWrap');
+    const volInput = $('#pipVolInput');
+
+    if (dragBar && miniEl) {
+      dragBar.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        isDraggingPip = true;
+        const rect = miniEl.getBoundingClientRect();
+        pipStartX = e.clientX;
+        pipStartY = e.clientY;
+        pipStartLeft = rect.left;
+        pipStartTop = rect.top;
+        miniEl.style.transition = 'none';
+        e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDraggingPip || !miniEl) return;
+        const dx = e.clientX - pipStartX;
+        const dy = e.clientY - pipStartY;
+        const newLeft = Math.max(10, Math.min(window.innerWidth - miniEl.offsetWidth - 10, pipStartLeft + dx));
+        const newTop = Math.max(10, Math.min(window.innerHeight - miniEl.offsetHeight - 10, pipStartTop + dy));
+        miniEl.style.left = newLeft + 'px';
+        miniEl.style.top = newTop + 'px';
+        miniEl.style.right = 'auto';
+        miniEl.style.bottom = 'auto';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isDraggingPip) {
+          isDraggingPip = false;
+          if (miniEl) miniEl.style.transition = '';
+        }
+      });
+
+      dragBar.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button')) return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        isDraggingPip = true;
+        const rect = miniEl.getBoundingClientRect();
+        pipStartX = touch.clientX;
+        pipStartY = touch.clientY;
+        pipStartLeft = rect.left;
+        pipStartTop = rect.top;
+        miniEl.style.transition = 'none';
+      }, { passive: true });
+
+      document.addEventListener('touchmove', (e) => {
+        if (!isDraggingPip || !miniEl) return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        const dx = touch.clientX - pipStartX;
+        const dy = touch.clientY - pipStartY;
+        const newLeft = Math.max(10, Math.min(window.innerWidth - miniEl.offsetWidth - 10, pipStartLeft + dx));
+        const newTop = Math.max(10, Math.min(window.innerHeight - miniEl.offsetHeight - 10, pipStartTop + dy));
+        miniEl.style.left = newLeft + 'px';
+        miniEl.style.top = newTop + 'px';
+        miniEl.style.right = 'auto';
+        miniEl.style.bottom = 'auto';
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        if (isDraggingPip) {
+          isDraggingPip = false;
+          if (miniEl) miniEl.style.transition = '';
+        }
+      });
+    }
+
+    if (seekWrap) {
+      seekWrap.addEventListener('click', (e) => {
+        const rect = seekWrap.getBoundingClientRect();
+        const pct = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+        const dur = engine.getDuration();
+        if (dur > 0) {
+          engine.seek(pct * dur);
+          paintProgress(pct * dur, dur);
+        }
+      });
+    }
+
+    if (volInput) {
+      volInput.addEventListener('input', () => {
+        state.volume = Number(volInput.value);
+        if (state.volume > 0) state.muted = false;
+        engine.setVolume();
+        if (el.vol) {
+          el.vol.value = String(state.volume);
+          if (el.vol.style) el.vol.style.setProperty('--vol', state.volume + '%');
+        }
+        refreshTransport();
+      });
+      volInput.addEventListener('change', () => {
+        save();
+        refreshTransport();
+      });
+    }
+  }
+
+  function toggleMiniPlayer() {
+    const miniEl = $('#spotifyMiniPlayer');
+    const btn = $('#bMiniPlayer');
+    if (!miniEl) return;
+
+    const isHidden = miniEl.style.display === 'none' || miniEl.hidden;
+    if (isHidden) {
+      openMiniPlayer();
+    } else {
+      closeMiniPlayer();
+    }
+  }
+
+  function openMiniPlayer() {
+    const miniEl = $('#spotifyMiniPlayer');
+    const btn = $('#bMiniPlayer');
+    if (!miniEl) return;
+    miniEl.style.display = 'flex';
+    miniEl.hidden = false;
+    if (btn) {
+      btn.setAttribute('aria-pressed', 'true');
+      btn.classList.add('is-active');
+    }
+    renderMiniPlayer();
+  }
+
+  function closeMiniPlayer() {
+    const miniEl = $('#spotifyMiniPlayer');
+    const btn = $('#bMiniPlayer');
+    if (!miniEl) return;
+    miniEl.style.display = 'none';
+    if (btn) {
+      btn.setAttribute('aria-pressed', 'false');
+      btn.classList.remove('is-active');
+    }
+  }
+
   /* ---------- event wiring ------------------------------------------------ */
 
   function onAction(action, node) {
@@ -2470,6 +2712,34 @@
         renderNowPanel();
         if (ui.view === 'track') renderTrackPage();
         if (ui.view === 'artist') renderArtistPage();
+        break;
+      }
+      case 'toggle-miniplayer': toggleMiniPlayer(); break;
+      case 'close-miniplayer': closeMiniPlayer(); break;
+      case 'pip-explore-premium': {
+        toast('🎉 أنت تستمتع بجميع مزايا Spotify مجاناً على 7ify!');
+        const banner = $('#pipPremiumBanner');
+        if (banner) banner.style.display = 'none';
+        break;
+      }
+      case 'pip-dismiss-banner': {
+        const banner = $('#pipPremiumBanner');
+        if (banner) banner.style.display = 'none';
+        break;
+      }
+      case 'pip-copy-link': {
+        const tr = getTrack(state.trackId);
+        const title = tr ? byLang(tr.title) : 'Song';
+        const url = window.location.origin + (window.location.pathname || '') + '#track/' + (tr ? tr.id : '');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            toast('🔗 تم نسخ رابط «' + title + '» بنجاح');
+          }).catch(() => {
+            toast('🔗 ' + url);
+          });
+        } else {
+          toast('🔗 تم نسخ الرابط');
+        }
         break;
       }
       case 'toggle-panel': {
@@ -2819,6 +3089,7 @@
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
     openAlbumPage, renderAlbumPage,
+    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer,
     runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
   if (window.NG) {

@@ -3140,3 +3140,451 @@ html[data-motion="off"] *::after {
   opacity: 0.6;
   z-index: 1;
 }
+
+
+/* ==========================================================================
+   Spotify MiniPlayer Popup (PIP)
+   ========================================================================== */
+
+.spotify-pip-container {
+  position: fixed;
+  z-index: 9999;
+  bottom: 96px;
+  inset-inline-end: 24px;
+  width: 350px;
+  max-width: calc(100vw - 32px);
+  border-radius: 12px;
+  background-color: var(--background-base, #121212);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  transition: opacity 0.2s cubic-bezier(0, 0, 0.2, 1), transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+  animation: pipFadeIn 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+  font-family: var(--encore-body-font-stack, 'SpotifyMixUI', sans-serif);
+}
+
+@keyframes pipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.spotify-pip-container.in-document-pip {
+  position: static;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Header & Drag Handle */
+.z4sqUHOpydUxxrX0vrZG {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 6px;
+  cursor: grab;
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.z4sqUHOpydUxxrX0vrZG:active {
+  cursor: grabbing;
+}
+
+.O18Fj7ar4YTYwb_d0sB7 {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  padding: 0;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.O18Fj7ar4YTYwb_d0sB7:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pip-drag-handle {
+  width: 20px;
+  height: 20px;
+  fill: #b3b3b3;
+  opacity: 0.6;
+}
+
+.kR8AfoEnzTi5hmOEwVkE {
+  width: 28px;
+  height: 28px;
+}
+
+/* Main Body & Cinema Glow */
+.JQpolEIyZYKI45mcyx4H {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: #121212;
+  overflow: hidden;
+}
+
+/* Premium Feature Announcement Card */
+._MzIqkUqvXnFzs6PC5GL {
+  margin: 10px 12px 4px;
+  z-index: 4;
+}
+
+.FPOUnNIK5sEJxgYePOe7 {
+  background: linear-gradient(135deg, rgba(30, 215, 96, 0.15) 0%, rgba(28, 28, 28, 0.98) 100%);
+  border: 1px solid rgba(30, 215, 96, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.QCu2KIjyoz3lEIKNrBGQ {
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  font-family: var(--encore-title-font-stack, 'SpotifyMixUITitle', sans-serif);
+}
+
+.qBR9ZwNQwuXveU9pFUDu {
+  font-size: 11px;
+  color: #b3b3b3;
+  line-height: 1.4;
+}
+
+.hMTqNr62GcikVrHZpvI9 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.e-101040-legacy-button-primary {
+  background: #1ed760;
+  color: #000;
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 500px;
+  padding: 6px 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.e-101040-legacy-button-primary:hover {
+  transform: scale(1.04);
+  background-color: #1fdf64;
+}
+
+.e-101040-legacy-button-tertiary {
+  background: transparent;
+  color: #b3b3b3;
+  font-weight: 600;
+  font-size: 11px;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  transition: color 0.15s;
+}
+
+.e-101040-legacy-button-tertiary:hover {
+  color: #fff;
+}
+
+/* Artwork Section */
+.bZbahvfcpU50g8Bgtnp7 {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bZbahvfcpU50g8Bgtnp7::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background-image: var(--background-image-url);
+  background-size: cover;
+  background-position: center;
+  filter: blur(30px) brightness(0.35);
+  transform: scale(1.15);
+  z-index: 0;
+}
+
+.kE5TqNLSJBDg5PUxNsEu {
+  position: relative;
+  z-index: 1;
+}
+
+.SCaSogBVoxtfQ2MBmVk5 {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.SCaSogBVoxtfQ2MBmVk5:hover {
+  transform: scale(1.02);
+}
+
+.L6IwYSgXPAr7UR5vlZSa {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Track Details Bar */
+.biYxJApyzc1MqhNhAglP {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+  position: relative;
+  z-index: 2;
+  gap: 12px;
+}
+
+.pIRf1dOxi5AFfcuAa15H {
+  flex: 1;
+  min-width: 0;
+}
+
+.N80ibw2Kbah5PE2N2WTT {
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.N80ibw2Kbah5PE2N2WTT a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.N80ibw2Kbah5PE2N2WTT a:hover {
+  text-decoration: underline;
+}
+
+.A2Hs2uQfC_nJgtItEPzg {
+  font-size: 12px;
+  color: #b3b3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.A2Hs2uQfC_nJgtItEPzg a {
+  color: #b3b3b3;
+  text-decoration: none;
+}
+
+.A2Hs2uQfC_nJgtItEPzg a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.aMYFDEFgs5t4R9snXvSZ button {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.aMYFDEFgs5t4R9snXvSZ button:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+/* Controls Overlay */
+.encore-over-media-set {
+  padding: 6px 16px 14px;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.HqS2K5JW3dx5Of5VJu9w {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.HqS2K5JW3dx5Of5VJu9w button {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.HqS2K5JW3dx5Of5VJu9w button:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.emmypqxN0Xp0bDur3XGm button {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  color: #000 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, background-color 0.15s !important;
+}
+
+.emmypqxN0Xp0bDur3XGm button:hover {
+  transform: scale(1.08) !important;
+  background-color: #f6f6f6 !important;
+}
+
+/* Volume Slider in MiniPlayer */
+.dsl5x4j2QJRUvU2Fud50 {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pip-volume-range {
+  width: 55px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.pip-volume-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.dsl5x4j2QJRUvU2Fud50:hover .pip-volume-range::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+/* Scrubbable Timeline */
+.DSUa8XQQdkK79aqNQWKv {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #b3b3b3;
+  font-family: var(--encore-bodyMono-font-stack, monospace);
+}
+
+#pipSeekWrap {
+  flex: 1;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.uI8JyD_faatLr66nS5Cb {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+.GL1sl7EGoJvIn5TUlxIf {
+  height: 100%;
+  border-radius: 2px;
+  background: #fff;
+  transition: width 0.1s linear;
+}
+
+#pipSeekWrap:hover .GL1sl7EGoJvIn5TUlxIf {
+  background: #1ed760;
+}
+
+.qinWev06d0dPqPkQfCov {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+#pipSeekWrap:hover .qinWev06d0dPqPkQfCov {
+  opacity: 1;
+}
+
+/* Resize Grip Corner */
+.vwQfXi85aGQIF2dfBzSs {
+  position: absolute;
+  bottom: 4px;
+  inset-inline-end: 4px;
+  pointer-events: none;
+  opacity: 0.5;
+  stroke: #fff;
+}
