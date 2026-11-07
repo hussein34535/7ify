@@ -102,6 +102,29 @@ window.NG = (function () {
       'about.album': 'الألبوم', 'about.year': 'السنة', 'about.genre': 'النوع',
       'about.length': 'المدة', 'about.source': 'المصدر', 'about.sourceApple': '٥,٨٩٢,١٠٤ مستمع شهرياً', 'artist.monthlyListeners': '٥,٨٩٢,١٠٤ مستمع شهرياً',
       'about.previewNote': 'استمع إلى أحدث الأغاني والمقاطع بدقة عالية، أو قم باستيراد ملفاتك المفضلة من جهازك.',
+            'profile.title': 'الملف الشخصي',
+      'profile.sub': 'بيانات حسابك ومكتبتك الموسيقية على Spotify',
+      'profile.connect': 'ربط حساب Spotify الرسمي',
+      'profile.connectedAs': 'متصل بحساب',
+      'profile.syncNow': 'مزامنة المكتبة الآن',
+      'profile.syncing': 'جاري مزامنة المكتبة الموسيقية...',
+      'profile.syncDone': 'تمت مزامنة مكتبة Spotify بنجاح!',
+      'profile.disconnect': 'تسجيل الخروج وإلغاء الربط',
+      'profile.topTracks': 'أكثر أغانيك استماعاً على Spotify',
+      'profile.topArtists': 'أكثر الفنانين استماعاً لديك',
+      'profile.recentlyPlayed': 'سجل الاستماع الأخير على Spotify',
+      'profile.notConnected': 'لم يتم ربط حساب Spotify بعد',
+      'profile.notConnectedBody': 'اربط حسابك الرسمي لمزامنة مكتبتك: أغانيك المفضلة، قوائمك، وفنانيك المفضلين داخل 7ify.',
+      'profile.clientIdLabel': 'معرف العميل (Client ID)',
+      'profile.redirectUriLabel': 'عنوان إعادة التوجيه (Redirect URI)',
+      'profile.dashboardGuide': 'يمكنك الحصول على معرف العميل وإضافة عنوان إعادة التوجيه من لوحة تحكم مطوري Spotify.',
+      'profile.loginBtn': 'تسجيل الدخول وربط الحساب عبر Spotify',
+      'profile.followers': 'متابع',
+      'profile.premium': 'اشتراك Premium',
+      'profile.free': 'حساب مجاني',
+      'profile.settings': 'إعدادات الربط',
+      'profile.followedArtists': 'فنانون تتابعهم على Spotify',
+      'profile.savedAlbums': 'ألبومات محفوظة من Spotify',
       'search.title': 'بحث', 'search.resultsFor': 'نتائج البحث عن «{q}»', 'search.count': '{n} نتيجة',
       'search.top': 'أفضل نتيجة', 'search.songs': 'أغانٍ', 'search.artists': 'فنانون',
       'search.emptyTitle': 'لا يوجد شيء بهذا الاسم',
@@ -242,6 +265,29 @@ window.NG = (function () {
       'about.album': 'Album', 'about.year': 'Year', 'about.genre': 'Genre',
       'about.length': 'Length', 'about.source': 'Source', 'about.sourceApple': '5,892,104 monthly listeners', 'artist.monthlyListeners': '5,892,104 monthly listeners',
       'about.previewNote': 'High-fidelity audio stream. For full-length playback, enjoy directly.',
+            'profile.title': 'Profile',
+      'profile.sub': 'Your Spotify account profile and library',
+      'profile.connect': 'Connect Official Spotify Account',
+      'profile.connectedAs': 'Connected as',
+      'profile.syncNow': 'Sync Library Now',
+      'profile.syncing': 'Syncing music library...',
+      'profile.syncDone': 'Spotify library synced successfully!',
+      'profile.disconnect': 'Disconnect & Log Out',
+      'profile.topTracks': 'Your Top Tracks on Spotify',
+      'profile.topArtists': 'Your Top Artists',
+      'profile.recentlyPlayed': 'Recently Played on Spotify',
+      'profile.notConnected': 'Spotify Account Not Connected',
+      'profile.notConnectedBody': 'Connect your official Spotify account to mirror your liked songs, playlists, and artists.',
+      'profile.clientIdLabel': 'Client ID',
+      'profile.redirectUriLabel': 'Redirect URI',
+      'profile.dashboardGuide': 'Get your Client ID and register your Redirect URI in Spotify Developer Dashboard.',
+      'profile.loginBtn': 'Log In with Spotify (PKCE)',
+      'profile.followers': 'followers',
+      'profile.premium': 'Premium',
+      'profile.free': 'Free Account',
+      'profile.settings': 'Connection Settings',
+      'profile.followedArtists': 'Artists You Follow on Spotify',
+      'profile.savedAlbums': 'Saved Albums from Spotify',
       'search.title': 'Search', 'search.resultsFor': 'Results for “{q}”', 'search.count': '{n} results',
       'search.top': 'Top result', 'search.songs': 'Songs', 'search.artists': 'Artists',
       'search.emptyTitle': 'Nothing answers to that',
@@ -739,6 +785,7 @@ window.NG = (function () {
   }
 
   const state = loadState();
+  rehydrateSpotifyLibrary();
 
   function save() {
     try {
@@ -2075,7 +2122,22 @@ window.NG = (function () {
       emit('provider-changed', this.getProviderStatus());
     },
 
-    async getValidAccessToken() {
+    SPOTIFY_SCOPES: [
+      'user-read-private',
+      'user-read-email',
+      'user-library-read',
+      'playlist-read-private',
+      'playlist-read-collaborative',
+      'user-follow-read',
+      'user-top-read',
+      'user-read-recently-played',
+      'user-read-currently-playing',
+      'streaming',
+      'user-modify-playback-state',
+      'user-read-playback-state'
+    ].join(' '),
+
+    async getValidAccessToken(forceRefresh = false) {
       let auth = null;
       try {
         const stored = localStorage.getItem('nagham_spotify_auth');
@@ -2084,7 +2146,7 @@ window.NG = (function () {
 
       if (!auth || !auth.accessToken) return null;
 
-      if (Date.now() < (auth.expiresAt || 0) - 60000) {
+      if (!forceRefresh && Date.now() < (auth.expiresAt || 0) - 60000) {
         return auth.accessToken;
       }
 
@@ -2139,7 +2201,7 @@ window.NG = (function () {
       return null;
     },
 
-    async connectSpotify(customClientId) {
+    async connectSpotify(customClientId, customRedirectUri) {
       let clientId = customClientId || localStorage.getItem('nagham_spotify_client_id');
       if (!clientId) {
         const enteredId = prompt(
@@ -2152,6 +2214,12 @@ window.NG = (function () {
         }
         clientId = enteredId.trim();
         localStorage.setItem('nagham_spotify_client_id', clientId);
+      } else {
+        localStorage.setItem('nagham_spotify_client_id', clientId);
+      }
+
+      if (customRedirectUri) {
+        localStorage.setItem('nagham_spotify_redirect_uri', customRedirectUri);
       }
 
       const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -2178,21 +2246,30 @@ window.NG = (function () {
       try {
         sessionStorage.setItem('spotify_pkce_verifier', verifier);
         sessionStorage.setItem('spotify_pkce_state', oauthState);
+        localStorage.setItem('spotify_pkce_verifier', verifier);
+        localStorage.setItem('spotify_pkce_state', oauthState);
       } catch (e) {}
 
-      const redirectUri = window.location.origin + window.location.pathname;
-      const scope = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+      const configuredRedirect = customRedirectUri || localStorage.getItem('nagham_spotify_redirect_uri');
+      const redirectUri = configuredRedirect || (window.location.origin + window.location.pathname);
+      try {
+        sessionStorage.setItem('spotify_pkce_redirect_uri', redirectUri);
+        localStorage.setItem('spotify_pkce_redirect_uri', redirectUri);
+      } catch (e) {}
 
       const authUrl = new URL('https://accounts.spotify.com/authorize');
       authUrl.searchParams.set('client_id', clientId);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('scope', scope);
+      authUrl.searchParams.set('scope', this.SPOTIFY_SCOPES);
       authUrl.searchParams.set('code_challenge_method', 'S256');
       authUrl.searchParams.set('code_challenge', challenge);
       authUrl.searchParams.set('state', oauthState);
 
-      window.location.href = authUrl.toString();
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.href = authUrl.toString();
+      }
+      return authUrl.toString();
     },
 
     disconnectSpotify() {
@@ -2202,6 +2279,10 @@ window.NG = (function () {
       }
       this.spotify.deviceId = null;
       this.setSpotifyAuth(null);
+      try {
+        localStorage.removeItem('nagham_spotify_library');
+      } catch (e) {}
+      emit('spotify-disconnected');
     },
 
     async handleCallback() {
@@ -2221,11 +2302,17 @@ window.NG = (function () {
 
       let savedState = null;
       let verifier = null;
+      let redirectUri = null;
       try {
-        savedState = sessionStorage.getItem('spotify_pkce_state');
-        verifier = sessionStorage.getItem('spotify_pkce_verifier');
+        savedState = sessionStorage.getItem('spotify_pkce_state') || localStorage.getItem('spotify_pkce_state');
+        verifier = sessionStorage.getItem('spotify_pkce_verifier') || localStorage.getItem('spotify_pkce_verifier');
+        redirectUri = sessionStorage.getItem('spotify_pkce_redirect_uri') || localStorage.getItem('spotify_pkce_redirect_uri');
         sessionStorage.removeItem('spotify_pkce_state');
         sessionStorage.removeItem('spotify_pkce_verifier');
+        sessionStorage.removeItem('spotify_pkce_redirect_uri');
+        localStorage.removeItem('spotify_pkce_state');
+        localStorage.removeItem('spotify_pkce_verifier');
+        localStorage.removeItem('spotify_pkce_redirect_uri');
       } catch (e) {}
 
       if (stateParam !== savedState || !verifier) {
@@ -2235,7 +2322,9 @@ window.NG = (function () {
       }
 
       const clientId = localStorage.getItem('nagham_spotify_client_id');
-      const redirectUri = window.location.origin + window.location.pathname;
+      if (!redirectUri) {
+        redirectUri = window.location.origin + window.location.pathname;
+      }
 
       try {
         const res = await fetch('https://accounts.spotify.com/api/token', {
@@ -2273,9 +2362,19 @@ window.NG = (function () {
             id: user.id,
             display_name: user.display_name,
             product: user.product,
-            email: user.email
+            email: user.email,
+            images: user.images || [],
+            followers: user.followers || { total: 0 },
+            country: user.country || '',
+            external_urls: user.external_urls || {}
           },
           isPremium
+        });
+
+        emit('spotify-connected', user);
+
+        providers.syncSpotifyLibrary().catch(err => {
+          console.warn('Auto sync library failed:', err);
         });
 
         if (isPremium) {
@@ -2290,6 +2389,291 @@ window.NG = (function () {
       } finally {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+    },
+
+    spotifyApi: {
+      async fetchWithAuth(url, options = {}) {
+        let token = await providers.getValidAccessToken();
+        if (!token) throw new Error('spotify_unauthorized');
+
+        const headers = Object.assign({}, options.headers || {}, {
+          'Authorization': `Bearer ${token}`
+        });
+
+        let res = await fetch(url, Object.assign({}, options, { headers }));
+
+        if (res.status === 401) {
+          token = await providers.getValidAccessToken(true);
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            res = await fetch(url, Object.assign({}, options, { headers }));
+          }
+        }
+
+        if (res.status === 204) return null;
+
+        if (res.status === 429) {
+          const retryAfter = parseInt(res.headers.get('Retry-After') || '2', 10);
+          await new Promise(r => setTimeout(r, (retryAfter + 1) * 1000));
+          return this.fetchWithAuth(url, options);
+        }
+
+        if (!res.ok) {
+          let errData = null;
+          try { errData = await res.json(); } catch (e) {}
+          throw new Error((errData && errData.error && errData.error.message) || `spotify_api_error_${res.status}`);
+        }
+
+        return await res.json();
+      },
+
+      async getProfile() {
+        return await this.fetchWithAuth('https://api.spotify.com/v1/me');
+      },
+
+      async getLikedSongs(maxItems = 200) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/tracks?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getPlaylists(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/playlists?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getPlaylistTracks(playlistId, maxItems = 100) {
+        let items = [];
+        let url = `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=50`;
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getFollowedArtists(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !data.artists || !Array.isArray(data.artists.items)) break;
+          items = items.concat(data.artists.items);
+          url = data.artists.next;
+        }
+        return items;
+      },
+
+      async getSavedAlbums(maxItems = 50) {
+        let items = [];
+        let url = 'https://api.spotify.com/v1/me/albums?limit=50';
+        while (url && items.length < maxItems) {
+          const data = await this.fetchWithAuth(url);
+          if (!data || !Array.isArray(data.items)) break;
+          items = items.concat(data.items);
+          url = data.next;
+        }
+        return items;
+      },
+
+      async getRecentlyPlayed(limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getTopTracks(timeRange = 'medium_term', limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/top/tracks?time_range=${timeRange}&limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getTopArtists(timeRange = 'medium_term', limit = 50) {
+        const data = await this.fetchWithAuth(`https://api.spotify.com/v1/me/top/artists?time_range=${timeRange}&limit=${limit}`);
+        return data && Array.isArray(data.items) ? data.items : [];
+      },
+
+      async getCurrentlyPlaying() {
+        return await this.fetchWithAuth('https://api.spotify.com/v1/me/player/currently-playing');
+      }
+    },
+
+    getSpotifyLibrary() {
+      try {
+        const raw = localStorage.getItem('nagham_spotify_library');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    async syncSpotifyLibrary(onProgress = () => {}) {
+      const token = await this.getValidAccessToken();
+      if (!token) throw new Error('spotify_not_authenticated');
+
+      onProgress({ stage: 'profile', text: 'جلب بيانات الحساب...' });
+      const profile = await this.spotifyApi.getProfile();
+
+      let auth = null;
+      try {
+        auth = JSON.parse(localStorage.getItem('nagham_spotify_auth') || '{}');
+      } catch (e) { auth = {}; }
+      auth.user = {
+        id: profile.id,
+        display_name: profile.display_name,
+        product: profile.product,
+        email: profile.email,
+        images: profile.images || [],
+        followers: profile.followers || { total: 0 },
+        country: profile.country || '',
+        external_urls: profile.external_urls || {}
+      };
+      auth.isPremium = profile.product === 'premium';
+      localStorage.setItem('nagham_spotify_auth', JSON.stringify(auth));
+
+      onProgress({ stage: 'liked', text: 'مزامنة الأغاني التي أعجبتك (Liked Songs)...' });
+      const rawLiked = await this.spotifyApi.getLikedSongs(200);
+      const likedTrackIds = [];
+      for (const item of rawLiked) {
+        const rawTrack = item.track || item;
+        const tr = mapSpotifyTrackTo7ify(rawTrack);
+        if (tr) {
+          upsertTrack(tr);
+          likedTrackIds.push(tr.id);
+        }
+      }
+
+      if (likedTrackIds.length) {
+        state.favorites = Array.from(new Set([...likedTrackIds, ...state.favorites]));
+      }
+
+      onProgress({ stage: 'playlists', text: 'مزامنة قوائم التشغيل (Playlists)...' });
+      const rawPlaylists = await this.spotifyApi.getPlaylists(50);
+      const syncedPlaylists = [];
+      for (const pl of rawPlaylists) {
+        if (!pl || !pl.id) continue;
+        const plId = `sp-pl-${pl.id}`;
+        let trackItems = [];
+        try {
+          trackItems = await this.spotifyApi.getPlaylistTracks(pl.id, 100);
+        } catch (e) {}
+
+        const plTrackIds = [];
+        for (const item of trackItems) {
+          const rawTrack = item.track || item;
+          const tr = mapSpotifyTrackTo7ify(rawTrack);
+          if (tr) {
+            upsertTrack(tr);
+            plTrackIds.push(tr.id);
+          }
+        }
+
+        const plCover = (pl.images && pl.images[0]?.url) || (pl.images && pl.images[1]?.url) || '';
+        const plObj = {
+          id: plId,
+          spotifyId: pl.id,
+          name: { ar: pl.name, en: pl.name },
+          sub: {
+            ar: pl.description || `بواسطة ${pl.owner?.display_name || 'Spotify'}`,
+            en: pl.description || `By ${pl.owner?.display_name || 'Spotify'}`
+          },
+          colors: ['#121212', '#1f1f1f', '#1ed760'],
+          motif: 'rings',
+          cover: plCover,
+          art: plCover,
+          trackIds: plTrackIds,
+          isSpotify: true,
+          owner: pl.owner?.display_name || 'Spotify',
+          externalUrl: pl.external_urls?.spotify || ''
+        };
+        syncedPlaylists.push(plObj);
+
+        const existingIdx = state.playlists.findIndex(p => p.id === plId);
+        if (existingIdx !== -1) {
+          state.playlists[existingIdx] = plObj;
+        } else {
+          state.playlists.push(plObj);
+        }
+      }
+
+      onProgress({ stage: 'artists', text: 'جلب الفنانين المتابعين (Followed Artists)...' });
+      let followedArtists = [];
+      try {
+        followedArtists = await this.spotifyApi.getFollowedArtists(50);
+      } catch (e) {}
+
+      onProgress({ stage: 'albums', text: 'جلب الألبومات المحفوظة (Saved Albums)...' });
+      let savedAlbums = [];
+      try {
+        savedAlbums = await this.spotifyApi.getSavedAlbums(50);
+        for (const item of savedAlbums) {
+          const album = item.album || item;
+          if (album && album.tracks && Array.isArray(album.tracks.items)) {
+            for (const t of album.tracks.items) {
+              t.album = album;
+              const tr = mapSpotifyTrackTo7ify(t);
+              if (tr) upsertTrack(tr);
+            }
+          }
+        }
+      } catch (e) {}
+
+      onProgress({ stage: 'recently_played', text: 'جلب سجل الاستماع الأخير...' });
+      let recentlyPlayed = [];
+      try {
+        const rawRecent = await this.spotifyApi.getRecentlyPlayed(50);
+        recentlyPlayed = rawRecent.map(item => {
+          const tr = mapSpotifyTrackTo7ify(item.track || item);
+          if (tr) upsertTrack(tr);
+          return { track: tr, played_at: item.played_at };
+        }).filter(x => x.track);
+      } catch (e) {}
+
+      onProgress({ stage: 'top', text: 'جلب الأكثر استماعاً لديك...' });
+      let topTracks = [];
+      let topArtists = [];
+      try {
+        const rawTopT = await this.spotifyApi.getTopTracks('medium_term', 50);
+        topTracks = rawTopT.map(mapSpotifyTrackTo7ify).filter(Boolean);
+        topTracks.forEach(upsertTrack);
+      } catch (e) {}
+      try {
+        topArtists = await this.spotifyApi.getTopArtists('medium_term', 50);
+      } catch (e) {}
+
+      const libData = {
+        lastSyncedAt: Date.now(),
+        profile,
+        likedCount: likedTrackIds.length,
+        likedTrackIds,
+        playlists: syncedPlaylists,
+        followedArtists,
+        savedAlbums,
+        recentlyPlayed,
+        topTracks,
+        topArtists
+      };
+      try {
+        localStorage.setItem('nagham_spotify_library', JSON.stringify(libData));
+      } catch (e) {}
+
+      save();
+      emit('spotify-sync-complete', libData);
+      onProgress({ stage: 'done', text: 'اكتملت المزامنة بنجاح!' });
+      return libData;
     }
   };
 
@@ -3088,6 +3472,75 @@ window.NG = (function () {
     });
   }
 
+
+  function mapSpotifyTrackTo7ify(item) {
+    if (!item || !item.id) return null;
+    const trackId = `sp-${item.id}`;
+    const artistsStr = Array.isArray(item.artists)
+      ? item.artists.map(a => a.name).filter(Boolean).join(', ')
+      : (item.artist || 'فنان');
+    const albumName = item.album ? item.album.name : '';
+    const artUrl = (item.album && Array.isArray(item.album.images) && item.album.images.length)
+      ? (item.album.images[0]?.url || item.album.images[1]?.url || '')
+      : '';
+    const durSec = Math.round((item.duration_ms || 0) / 1000);
+    const releaseYear = (item.album && item.album.release_date)
+      ? parseInt(item.album.release_date.slice(0, 4), 10)
+      : 2024;
+
+    return {
+      id: trackId,
+      spotifyId: item.id,
+      spotifyUri: item.uri || `spotify:track:${item.id}`,
+      title: { ar: item.name, en: item.name },
+      artist: { ar: artistsStr, en: artistsStr },
+      album: { ar: albumName, en: albumName },
+      art: artUrl,
+      photo: artUrl,
+      preview: item.preview_url || '',
+      previewUrl: item.preview_url || '',
+      duration: durSec || 200,
+      fullDuration: durSec || 200,
+      year: releaseYear,
+      colors: ['#121212', '#1f1f1f', '#1ed760'],
+      motif: 'rings',
+      source: 'spotify',
+      externalUrl: item.external_urls?.spotify || `https://open.spotify.com/track/${item.id}`,
+      isExplicit: Boolean(item.explicit)
+    };
+  }
+
+  function upsertTrack(tr) {
+    if (!tr || !tr.id) return;
+    const idx = TRACKS.findIndex(t => t.id === tr.id);
+    if (idx !== -1) {
+      TRACKS[idx] = Object.assign({}, TRACKS[idx], tr);
+    } else {
+      TRACKS.push(tr);
+    }
+  }
+
+  function rehydrateSpotifyLibrary() {
+    try {
+      const raw = localStorage.getItem('nagham_spotify_library');
+      if (!raw) return;
+      const lib = JSON.parse(raw);
+      if (lib && Array.isArray(lib.topTracks)) {
+        lib.topTracks.forEach(upsertTrack);
+      }
+      if (lib && Array.isArray(lib.recentlyPlayed)) {
+        lib.recentlyPlayed.map(x => x.track).filter(Boolean).forEach(upsertTrack);
+      }
+      if (lib && Array.isArray(lib.playlists)) {
+        for (const pl of lib.playlists) {
+          if (pl && pl.id && !state.playlists.some(p => p.id === pl.id)) {
+            state.playlists.push(pl);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
     I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS, CURATED_PLAYLISTS,
@@ -3097,6 +3550,7 @@ window.NG = (function () {
     coverHTML, artStyle, paintCover,
     PLAYBACK_MODES, ENGINE_STATES, musicProviders, ytDriver, loadYouTubeIframeAPI: () => ytDriver.loadAPI(),
     loadSpotifySDK, initializeSpotifyPlayer, playSpotifyTrack, spotifySeek, spotifyPause, spotifyResume, resolvePlaybackSource,
+    mapSpotifyTrackTo7ify, upsertTrack, rehydrateSpotifyLibrary,
     bus, emit, engine, providers, STORAGE_KEY
   };
 })();

@@ -111,7 +111,7 @@ const server = createServer(async (req, res) => {
 
     // Static file serving with strict path traversal prevention
     let pathname = decodeURIComponent(url.pathname);
-    if (pathname === '/') pathname = '/nagham-studio.html';
+    if (pathname === '/' || pathname === '/callback') pathname = '/nagham-studio.html';
     const filePath = normalize(join(ROOT, pathname));
 
     if (filePath !== ROOT && !filePath.startsWith(ROOT + sep)) {
