@@ -2125,6 +2125,7 @@
     engine.play();
     save();
     renderAll();
+    maybePromptPipPermission();
   }
 
   function playPlaylist(plId) {
@@ -2551,6 +2552,28 @@
   let userDismissedPip = false;
   function setAutoPip(enabled) {
     userDismissedPip = !enabled;
+  }
+
+    function maybePromptPipPermission() {
+    if (currentPipWindow && !currentPipWindow.closed) return;
+    const perm = localStorage.getItem('7ify_pip_permission');
+    if (perm === 'granted') {
+      if ('documentPictureInPicture' in window && window.innerWidth > 640) {
+        openDocumentPip().catch(() => {});
+      }
+      return;
+    }
+    if (perm === 'dismissed') return;
+    if (sessionStorage.getItem('7ify_pip_prompt_shown')) return;
+
+    if ('documentPictureInPicture' in window && window.innerWidth > 640) {
+      sessionStorage.setItem('7ify_pip_prompt_shown', 'true');
+      const promptEl = $('#pipPermissionPrompt');
+      if (promptEl) {
+        promptEl.hidden = false;
+        promptEl.style.display = 'flex';
+      }
+    }
   }
 
   async function triggerAutoPip() {
@@ -3011,6 +3034,28 @@
       }
       case 'toggle-miniplayer': toggleMiniPlayer(); break;
       case 'close-miniplayer': closeMiniPlayer(); break;
+      case 'grant-pip-permission': {
+        const promptEl = $('#pipPermissionPrompt');
+        if (promptEl) {
+          promptEl.hidden = true;
+          promptEl.style.display = 'none';
+        }
+        localStorage.setItem('7ify_pip_permission', 'granted');
+        openDocumentPip().catch((e) => {
+          console.warn('PiP window open error:', e);
+          openInPageMiniPlayer();
+        });
+        break;
+      }
+      case 'dismiss-pip-prompt': {
+        const promptEl = $('#pipPermissionPrompt');
+        if (promptEl) {
+          promptEl.hidden = true;
+          promptEl.style.display = 'none';
+        }
+        localStorage.setItem('7ify_pip_permission', 'dismissed');
+        break;
+      }
       case 'pip-explore-premium': {
         toast('🎉 أنت تستمتع بجميع مزايا Spotify مجاناً على 7ify!');
         const banner = $('#pipPremiumBanner');

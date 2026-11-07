@@ -3216,6 +3216,150 @@ html[data-motion="off"] *::after {
 }
 
 
+/* ---------- PiP Permission Prompt ---------------------------------------- */
+
+.pip-permission-prompt {
+  position: fixed;
+  z-index: 9998;
+  bottom: 84px;
+  inset-inline-end: 24px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--raised-2, #242424);
+  border: 1px solid var(--line-strong, rgba(255, 255, 255, 0.15));
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: pipPromptSlideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+  user-select: none;
+}
+
+@keyframes pipPromptSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pip-prompt-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.pip-prompt-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(30, 215, 96, 0.15);
+  color: #1ED760;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pip-prompt-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pip-prompt-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: var(--font-display, inherit);
+}
+
+.pip-prompt-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted, #b3b3b3);
+  line-height: 1.45;
+}
+
+.pip-prompt-close {
+  background: transparent;
+  border: none;
+  color: var(--muted, #b3b3b3);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.pip-prompt-close:hover {
+  color: #ffffff;
+}
+
+.pip-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline-start: 50px;
+}
+
+.pip-prompt-allow {
+  background: #1ED760 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  border-radius: 500px !important;
+  padding: 7px 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+
+.pip-prompt-allow:hover {
+  transform: scale(1.04) !important;
+  background-color: #1fdf64 !important;
+}
+
+.pip-prompt-dismiss {
+  background: transparent !important;
+  color: var(--muted, #b3b3b3) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 500px !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.pip-prompt-dismiss:hover {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+@media (max-width: 640px) {
+  .pip-permission-prompt {
+    bottom: calc(116px + env(safe-area-inset-bottom, 0px));
+    inset-inline: 12px;
+    width: auto;
+    max-width: none;
+  }
+  .pip-prompt-actions {
+    padding-inline-start: 0;
+    justify-content: flex-end;
+  }
+}
+
 /* ==========================================================================
    Spotify MiniPlayer Popup (PIP) - Authentic Spotify Design
    ========================================================================== */
@@ -3871,6 +4015,33 @@ html[data-motion="off"] *::after {
       </button>
     </div>
   </footer>
+
+    <!-- Floating Permission / Consent Prompt for PiP -->
+  <aside class="pip-permission-prompt" id="pipPermissionPrompt" role="dialog" aria-labelledby="pipPromptTitle" aria-describedby="pipPromptDesc" hidden>
+    <div class="pip-prompt-head">
+      <div class="pip-prompt-icon-badge" aria-hidden="true">
+        <svg viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </div>
+      <div class="pip-prompt-text">
+        <h3 class="pip-prompt-title" id="pipPromptTitle">تشغيل المشغّل العائم المصغّر؟</h3>
+        <p class="pip-prompt-desc" id="pipPromptDesc">ليظل المشغّل ظاهراً أمامك وتتحكم بالموسيقى أثناء تصفحك للتبويبات والبرامج الأخرى.</p>
+      </div>
+      <button class="pip-prompt-close" data-action="dismiss-pip-prompt" aria-label="إغلاق التنبيه">
+        <svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg>
+      </button>
+    </div>
+    <div class="pip-prompt-actions">
+      <button class="btn btn-primary pip-prompt-allow" data-action="grant-pip-permission">
+        <svg class="ic" aria-hidden="true" style="width:14px;height:14px;fill:currentColor;margin-inline-end:6px;"><use href="#i-check"></use></svg>
+        سماح وتشغيل ⧉
+      </button>
+      <button class="btn pip-prompt-dismiss" data-action="dismiss-pip-prompt">
+        ليس الآن
+      </button>
+    </div>
+  </aside>
 
   <!-- Spotify MiniPlayer Popup (PIP) -->
   <div class="spotify-pip-container encore-dark-theme encore-small-devices-theme ARdTwt0PuIoYx7R0BrJz" id="spotifyMiniPlayer" style="--mini-player-display: grid; --mini-player-drag-display: none; display: none;" dir="rtl" aria-label="Spotify MiniPlayer">
@@ -9409,6 +9580,7 @@ window.NG = (function () {
     engine.play();
     save();
     renderAll();
+    maybePromptPipPermission();
   }
 
   function playPlaylist(plId) {
@@ -9835,6 +10007,28 @@ window.NG = (function () {
   let userDismissedPip = false;
   function setAutoPip(enabled) {
     userDismissedPip = !enabled;
+  }
+
+    function maybePromptPipPermission() {
+    if (currentPipWindow && !currentPipWindow.closed) return;
+    const perm = localStorage.getItem('7ify_pip_permission');
+    if (perm === 'granted') {
+      if ('documentPictureInPicture' in window && window.innerWidth > 640) {
+        openDocumentPip().catch(() => {});
+      }
+      return;
+    }
+    if (perm === 'dismissed') return;
+    if (sessionStorage.getItem('7ify_pip_prompt_shown')) return;
+
+    if ('documentPictureInPicture' in window && window.innerWidth > 640) {
+      sessionStorage.setItem('7ify_pip_prompt_shown', 'true');
+      const promptEl = $('#pipPermissionPrompt');
+      if (promptEl) {
+        promptEl.hidden = false;
+        promptEl.style.display = 'flex';
+      }
+    }
   }
 
   async function triggerAutoPip() {
@@ -10295,6 +10489,28 @@ window.NG = (function () {
       }
       case 'toggle-miniplayer': toggleMiniPlayer(); break;
       case 'close-miniplayer': closeMiniPlayer(); break;
+      case 'grant-pip-permission': {
+        const promptEl = $('#pipPermissionPrompt');
+        if (promptEl) {
+          promptEl.hidden = true;
+          promptEl.style.display = 'none';
+        }
+        localStorage.setItem('7ify_pip_permission', 'granted');
+        openDocumentPip().catch((e) => {
+          console.warn('PiP window open error:', e);
+          openInPageMiniPlayer();
+        });
+        break;
+      }
+      case 'dismiss-pip-prompt': {
+        const promptEl = $('#pipPermissionPrompt');
+        if (promptEl) {
+          promptEl.hidden = true;
+          promptEl.style.display = 'none';
+        }
+        localStorage.setItem('7ify_pip_permission', 'dismissed');
+        break;
+      }
       case 'pip-explore-premium': {
         toast('🎉 أنت تستمتع بجميع مزايا Spotify مجاناً على 7ify!');
         const banner = $('#pipPremiumBanner');

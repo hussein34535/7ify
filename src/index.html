@@ -262,6 +262,33 @@
     </div>
   </footer>
 
+    <!-- Floating Permission / Consent Prompt for PiP -->
+  <aside class="pip-permission-prompt" id="pipPermissionPrompt" role="dialog" aria-labelledby="pipPromptTitle" aria-describedby="pipPromptDesc" hidden>
+    <div class="pip-prompt-head">
+      <div class="pip-prompt-icon-badge" aria-hidden="true">
+        <svg viewBox="0 0 16 16" style="width:18px;height:18px;fill:currentColor">
+          <path d="M16 2.45v11.1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V2.45a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1M14.5 3h-13v10h13zM6 8.5H1v4h5z"/>
+        </svg>
+      </div>
+      <div class="pip-prompt-text">
+        <h3 class="pip-prompt-title" id="pipPromptTitle">تشغيل المشغّل العائم المصغّر؟</h3>
+        <p class="pip-prompt-desc" id="pipPromptDesc">ليظل المشغّل ظاهراً أمامك وتتحكم بالموسيقى أثناء تصفحك للتبويبات والبرامج الأخرى.</p>
+      </div>
+      <button class="pip-prompt-close" data-action="dismiss-pip-prompt" aria-label="إغلاق التنبيه">
+        <svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg>
+      </button>
+    </div>
+    <div class="pip-prompt-actions">
+      <button class="btn btn-primary pip-prompt-allow" data-action="grant-pip-permission">
+        <svg class="ic" aria-hidden="true" style="width:14px;height:14px;fill:currentColor;margin-inline-end:6px;"><use href="#i-check"></use></svg>
+        سماح وتشغيل ⧉
+      </button>
+      <button class="btn pip-prompt-dismiss" data-action="dismiss-pip-prompt">
+        ليس الآن
+      </button>
+    </div>
+  </aside>
+
   <!-- Spotify MiniPlayer Popup (PIP) -->
   <div class="spotify-pip-container encore-dark-theme encore-small-devices-theme ARdTwt0PuIoYx7R0BrJz" id="spotifyMiniPlayer" style="--mini-player-display: grid; --mini-player-drag-display: none; display: none;" dir="rtl" aria-label="Spotify MiniPlayer">
     <!-- Header & Drag Bar (shown on desktop draggable or in window mode) -->
