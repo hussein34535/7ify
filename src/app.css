@@ -5,12 +5,56 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --font-ui: 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Spotify Encore Design System Tokens */
+  --background-base: #121212;
+  --background-highlight: #1f1f1f;
+  --background-press: #000000;
+  --background-elevated-base: #1f1f1f;
+  --background-elevated-highlight: #2a2a2a;
+  --background-elevated-press: #191919;
+  --background-tinted-base: rgba(255, 255, 255, 0.1);
+  --background-tinted-highlight: rgba(255, 255, 255, 0.14);
+  --background-tinted-press: rgba(255, 255, 255, 0.21);
+  --text-base: #ffffff;
+  --text-subdued: #b3b3b3;
+  --text-bright-accent: #1ed760;
+  --text-negative: #f3727f;
+  --text-warning: #ffa42b;
+  --text-positive: #1ed760;
+  --text-announcement: #539df5;
+  --essential-base: #ffffff;
+  --essential-subdued: #7c7c7c;
+  --essential-bright-accent: #1ed760;
+  --essential-negative: #ed2c3f;
+  --essential-warning: #ffa42b;
+  --essential-positive: #1ed760;
+  --essential-announcement: #1278f2;
+  --decorative-base: #ffffff;
+  --decorative-subdued: #292929;
+
+  --encore-body-font-stack: SpotifyMixUI, SpotifyMixUI-Arab, 'IBM Plex Sans Arabic', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --encore-title-font-stack: SpotifyMixUITitle, SpotifyMixUITitle-Arab, 'IBM Plex Sans Arabic', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --encore-spacing-tighter-2: 8px;
+  --encore-spacing-tighter: 12px;
+  --encore-spacing-base: 16px;
+  --encore-spacing-looser: 24px;
+  --encore-spacing-looser-2: 32px;
+  --encore-control-size-smaller: 32px;
+  --encore-control-size-base: 48px;
+  --encore-control-size-larger: 56px;
+  --encore-button-hover-scale: 1.04;
+  --encore-productive: cubic-bezier(.3, 0, 0, 1);
+  --encore-productive-decelerate: cubic-bezier(0, 0, .2, 1);
+  --encore-productive-accelerate: cubic-bezier(.8, 0, 1, 1);
+  --encore-border-radius-rounded: 9999px;
+  --background-noise: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj4KICAgPGZpbHRlciBpZD0ibiIgeD0iMCIgeT0iMCI+CiAgICAgIDxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIwLjc1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiAvPgogICAgICA8ZmVDb2xvck1hdHJpeCB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIiAvPgogICA8L2ZpbHRlcj4KICAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNuKSIgb3BhY2l0eT0iMC4wNSIgLz4KPC9zdmc+");
+
+  --font-ui: var(--encore-body-font-stack);
   --font-num: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --r-panel: 14px;
-  --r-card: 12px;
-  --r-cover: 8px;
+  --r-card: 8px;
+  --r-cover: 6px;
   --r-btn: 999px;
 
   --dur-1: 140ms;
@@ -27,23 +71,41 @@
   --danger: #FB7185;
 }
 
+/* Spotify Authentic Scrollbars */
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
 /* ---------- themes ------------------------------------------------------- */
 
 html[data-theme="ink"] {
-  --canvas: #07080A;
-  --panel: #0E1013;
-  --raised: #15181D;
-  --raised-2: #1B1F26;
-  --hover: rgba(255, 255, 255, .06);
-  --hover-2: rgba(255, 255, 255, .1);
-  --ink: #EEF1F5;
-  --muted: #9BA4B0;
-  --faint: #7F8A97;
-  --line: rgba(255, 255, 255, .07);
-  --line-strong: rgba(255, 255, 255, .14);
-  --hero-veil: rgba(5, 6, 8, .74);
+  --canvas: var(--background-base, #121212);
+  --panel: #000000;
+  --raised: #181818;
+  --raised-2: #242424;
+  --hover: rgba(255, 255, 255, .08);
+  --hover-2: rgba(255, 255, 255, .14);
+  --ink: #FFFFFF;
+  --muted: #B3B3B3;
+  --faint: #7C7C7C;
+  --line: rgba(255, 255, 255, .08);
+  --line-strong: rgba(255, 255, 255, .16);
+  --hero-veil: rgba(18, 18, 18, .74);
   --on-hero: #FFFFFF;
-  --shadow-pop: 0 24px 60px rgba(0, 0, 0, .55);
+  --shadow-pop: 0 24px 60px rgba(0, 0, 0, .65);
   color-scheme: dark;
 }
 
@@ -1763,7 +1825,7 @@ html[data-density="compact"] .artist-grid { gap: 9px; }
 }
 
 .sp-play-btn:hover {
-  transform: scale(1.06);
+  transform: scale(var(--encore-button-hover-scale, 1.04));
   background: #22e668;
 }
 
@@ -3032,4 +3094,19 @@ html[data-motion="off"] *::after {
   color: var(--accent, #1db954);
   font-size: 12.5px;
   font-weight: 600;
+}
+
+
+/* Spotify Background Noise Grain Overlay */
+.sp-hero::after,
+.sp-pl-hero::after,
+.sp-artist-hero::after,
+.sp-album-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--background-noise);
+  pointer-events: none;
+  opacity: 0.6;
+  z-index: 1;
 }
