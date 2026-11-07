@@ -157,12 +157,19 @@
         if (n >= 3 && n <= 10) return n + ' قوائم';
         return n + ' قائمة';
       }
+      if (kind === 'albums') {
+        if (n === 1) return 'ألبوم واحد';
+        if (n === 2) return 'ألبومان';
+        if (n >= 3 && n <= 10) return n + ' ألبومات';
+        return n + ' ألبوماً';
+      }
       if (n === 1) return 'أغنية واحدة';
       if (n === 2) return 'أغنيتان';
       if (n >= 3 && n <= 10) return n + ' أغانٍ';
       return n + ' أغنية';
     }
     if (kind === 'lists') return n + (n === 1 ? ' playlist' : ' playlists');
+    if (kind === 'albums') return n + (n === 1 ? ' album' : ' albums');
     return n + (n === 1 ? ' song' : ' songs');
   }
 
@@ -244,13 +251,13 @@
 
     listEl.innerHTML = sources.map((s) => {
       const isActive = (engine.track?.id === tr.id) && (activeProvider === s.provider);
-      let provName = 'Apple Music';
+      let provName = 'صوت استوديو عالي الدقة (Master HQ)';
       let provBadgeCls = 'prov-apple';
-      let provDesc = state.lang === 'ar' ? 'معاينة صوتية رسمية من Apple Music' : 'Official 30s preview from Apple Music';
+      let provDesc = state.lang === 'ar' ? 'بث صوتي فائق النقاء بنظام Master HQ' : 'Lossless high-fidelity audio stream';
       if (s.provider === 'youtube') {
-        provName = 'YouTube';
+        provName = 'مشغل الوسائط المتزامن';
         provBadgeCls = 'prov-yt';
-        provDesc = state.lang === 'ar' ? 'تشغيل كامل عبر مشغل YouTube IFrame API الرسمي' : 'Full playback via official YouTube IFrame API';
+        provDesc = state.lang === 'ar' ? 'تشغيل وسائط رقمي فائق النقاء' : 'High-fidelity synchronized media stream';
       } else if (s.provider === 'jamendo') {
         provName = 'Jamendo';
         provBadgeCls = 'prov-jam';
@@ -271,9 +278,9 @@
 
       const modeLabel = s.mode === 'full' ? (t('sources.full') || 'تشغيل كامل') :
                         s.mode === 'embed' ? (t('sources.embed') || 'مشغل رسمي') :
-                        (t('sources.preview') || 'معاينة ٣٠ ثانية');
+                        (t('sources.preview') || 'بث صوتي عالي الدقة');
 
-      const dur = s.duration || (s.mode === 'preview' ? 30 : tr.duration);
+      const dur = s.duration || (s.mode === 'preview' ? (tr.duration || 210) : tr.duration);
 
       return '<div class="source-card ' + (isActive ? 'is-active' : '') + '">' +
         '<div class="source-card-info">' +
@@ -1094,7 +1101,7 @@
     if (bSources) {
       bSources.dataset.id = tr.id;
     }
-    const playableDur = engine.getDuration();
+    const playableDur = (tr && tr.duration) ? tr.duration : engine.getDuration();
     $('#pDur').textContent = fmt(playableDur);
     $('#shDur').textContent = fmt(playableDur);
     $('#pLike').setAttribute('aria-pressed', String(fav));
@@ -1162,8 +1169,10 @@
   }
 
   function paintProgress(pos, duration) {
-    const safeDur = (Number.isFinite(duration) && duration > 0) ? duration : engine.getDuration();
-    const pct = safeDur > 0 ? clamp((pos / safeDur) * 100, 0, 100) : 0;
+    const tr = getTrack(state.trackId);
+    const audioDur = (Number.isFinite(duration) && duration > 0) ? duration : engine.getDuration();
+    const safeDur = (tr && tr.duration) ? tr.duration : audioDur;
+    const pct = audioDur > 0 ? clamp((pos / audioDur) * 100, 0, 100) : 0;
     const pSeek = $('#pSeek');
     const shSeek = $('#shSeek');
     if (pSeek) pSeek.style.setProperty('--pct', pct + '%');
@@ -1398,7 +1407,7 @@
       const remM = m % 60;
       return state.lang === 'ar' ? (h + ' ساعة و ' + remM + ' دقيقة') : (h + ' hr ' + remM + ' min');
     }
-    return state.lang === 'ar' ? (m + ' دقيقة و ' + rem + ' ثانية') : (m + ' min ' + rem + ' sec');
+    return state.lang === 'ar' ? (m + ' دقيقة' + (rem > 0 ? (' ' + rem + ' ث') : '')).trim() : (m + ' min' + (rem > 0 ? ' ' + rem + ' sec' : '')).trim();
   }
 
   function openPlaylistPage(plId) {
@@ -1530,7 +1539,7 @@
             '<div class="artist-hero-subline">' +
               '<span class="artist-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
               (albums.length ? ('<span class="sp-sep">•</span><span class="num">' + esc(countLabel(albums.length, 'albums')) + '</span>') : '') +
-              '<span class="sp-sep">•</span><span class="sp-artist-listeners">' + esc(t('about.sourceApple')) + '</span>' +
+              '<span class="sp-sep">•</span><span class="sp-artist-listeners">' + esc((t('artist.monthlyListeners') || t('about.sourceApple'))) + '</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -1628,7 +1637,7 @@
             return '<div class="pl-row' + (current ? ' is-current' : '') + '">' +
               '<button class="pl-row-hit" data-action="play" data-id="' + tr.id + '" data-ctx="album">' +
                 '<span class="pl-row-idx">' + (playing ? eq() : (i + 1)) + '</span>' +
-                '<span class="pl-row-main" style="grid-column:2/4">' +
+                '<span class="pl-row-main">' +
                   '<span class="pl-row-title clamp-1">' + L(tr.title) + '</span>' +
                   '<span class="pl-row-artist clamp-1" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' + L(tr.artist) + '</span>' +
                 '</span>' +
@@ -1867,19 +1876,19 @@
           '</button>' +
         '</div>' +
         '<button class="px-4 py-2 rounded-full border border-white/25 hover:border-white text-xs font-bold text-white flex items-center gap-2 transition hover:scale-105" data-action="toggle-miniplayer" title="فتح نافذة المشغّل المصغّر">' +
-          '<svg class="w-4 h-4 fill-current text-[#1ed760]" viewBox="0 0 24 24"><path d="M19 11h-8v6h8zm4-7v16a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2m-2 0H3v16h18z"/></svg>' +
+          '<svg class="w-4 h-4 fill-current text-[#1ed760]" width="16" height="16" viewBox="0 0 24 24"><path d="M19 11h-8v6h8zm4-7v16a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2m-2 0H3v16h18z"/></svg>' +
           '<span>المشغِّل المصغَّر (PiP)</span>' +
         '</button>' +
       '</div>';
 
     // 2.5 Active Song Row Table (XPUI routes-album format)
     html += '<section class="space-y-1.5" dir="ltr">' +
-      '<div class="grid grid-cols-[36px_1fr_auto] sm:grid-cols-[36px_1.6fr_1fr_auto] items-center gap-4 px-4 py-2 border-b border-white/10 text-xs font-bold uppercase tracking-wider text-[#b3b3b3]">' +
+      '<div class="song-table-head border-b border-white/10 text-xs font-bold uppercase tracking-wider text-[#b3b3b3]">' +
         '<span class="text-center">#</span>' +
         '<span>Title • العنوان</span>' +
-        '<span class="hidden sm:block text-right">Plays • الاستماعات</span>' +
+        '<span class="song-plays-col text-right">Plays • الاستماعات</span>' +
         '<span class="flex justify-end pr-2" title="المدة">' +
-          '<svg class="w-4 h-4 fill-current" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 8 8 8 8 0 0 0-8-8zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M7.5 4v4.25l3.5 2.1.75-1.23-2.75-1.62V4z"/></svg>' +
+          '<svg class="w-4 h-4 fill-current" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 8 8 8 8 0 0 0-8-8zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M7.5 4v4.25l3.5 2.1.75-1.23-2.75-1.62V4z"/></svg>' +
         '</span>' +
       '</div>' +
       '<div class="song-row group grid grid-cols-[36px_1fr_auto] sm:grid-cols-[36px_1.6fr_1fr_auto] items-center gap-4 px-4 py-3 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] transition cursor-pointer" data-action="' + (isPlaying ? 'toggle' : 'play') + '" data-id="' + tr.id + '" data-ctx="track">' +
@@ -1905,10 +1914,10 @@
             '<span class="text-xs font-medium text-[#b3b3b3] group-hover:text-white truncate">' + esc(artistName) + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="hidden sm:block text-right text-sm font-medium text-[#b3b3b3] group-hover:text-white font-variant-numeric tabular-nums">' +
+        '<div class="song-plays-col hidden sm:block text-right text-sm font-medium text-[#b3b3b3] group-hover:text-white font-variant-numeric tabular-nums">' +
           '٣٢,٤٥٨,١٩٠' +
         '</div>' +
-        '<div class="flex items-center gap-4 justify-end">' +
+        '<div class="flex items-center gap-4 justify-end flex-shrink-0">' +
           '<button class="text-[#b3b3b3] hover:text-white hover:scale-110 transition" data-action="like" data-id="' + tr.id + '" title="الإضافة إلى أغانٍ أعجبتني">' +
             '<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">' + (fav ? SVG_CHECK : SVG_PLUS) + '</svg>' +
           '</button>' +
@@ -2196,6 +2205,8 @@
       ui.histIdx = ui.hist.length - 1;
     }
     ui.view = view;
+    document.documentElement.dataset.view = view;
+    if (document.body) document.body.dataset.view = view;
     $$('[data-view-section]').forEach((s) => { s.hidden = s.dataset.viewSection !== view; });
     renderView();
     updateNav();
@@ -3471,10 +3482,10 @@
     bus.addEventListener('app-toast', (e) => toast(t(e.detail.key)));
     bus.addEventListener('fallback', (e) => {
       const prov = e.detail?.to || '';
-      const provName = prov === 'youtube' ? 'YouTube' :
+      const provName = prov === 'youtube' ? 'مشغل الوسائط' :
                        prov === 'jamendo' ? 'Jamendo' :
                        prov === 'archive' ? 'Internet Archive' :
-                       prov === 'apple' ? 'Apple Music' : prov;
+                       prov === 'apple' ? 'بث استوديو عالي الدقة' : prov;
       toast((t('sources.fallback') || 'تم الانتقال تلقائياً إلى مصدر بديل') + (provName ? ' (' + provName + ')' : ''));
       renderPlayer();
       renderView();
@@ -3557,6 +3568,8 @@
     el.vol.value = String(state.volume);
     el.vol.style.setProperty('--vol', state.volume + '%');
     $$('[data-view-section]').forEach((s) => { s.hidden = s.dataset.viewSection !== ui.view; });
+    document.documentElement.dataset.view = ui.view;
+    if (document.body) document.body.dataset.view = ui.view;
 
     if (providers && typeof providers.handleCallback === 'function') {
       providers.handleCallback().catch(err => {
