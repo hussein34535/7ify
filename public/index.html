@@ -5307,7 +5307,51 @@ window.NG = (function () {
     }
 
     // 3. YouTube (Official Embed)
-    const ytVideoId = track.youtubeVideoId || (track.sources?.find(s => s.provider === 'youtube')?.videoId);
+    let ytVideoId = track.youtubeVideoId || (track.sources?.find(s => s.provider === 'youtube')?.videoId);
+    if (!ytVideoId && track.source !== 'file') {
+      try {
+        const titleStr = typeof track.title === 'object' ? (track.title.ar || track.title.en || '') : String(track.title || '');
+        const artistStr = typeof track.artist === 'object' ? (track.artist.ar || track.artist.en || '') : String(track.artist || '');
+        if (titleStr || artistStr) {
+          const query = `${artistStr} - ${titleStr} audio`.trim();
+          const ytRes = await fetch('/api/yt-search?q=' + encodeURIComponent(query));
+          if (ytRes && ytRes.ok) {
+            const ytData = await ytRes.json();
+            if (ytData?.videoId) {
+              ytVideoId = ytData.videoId;
+              track.youtubeVideoId = ytData.videoId;
+              track.youtubeId = ytData.videoId;
+              if (ytData.duration) {
+                const parts = String(ytData.duration).split(':').map(Number);
+                let sec = 0;
+                if (parts.length === 2) sec = (parts[0] * 60) + parts[1];
+                else if (parts.length === 3) sec = (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+                if (sec > 0) {
+                  track.duration = track.duration || sec;
+                  track.fullDuration = track.fullDuration || sec;
+                }
+              }
+              if (!Array.isArray(track.sources)) track.sources = [];
+              const exists = track.sources.some(s => s.provider === 'youtube');
+              if (!exists) {
+                track.sources.unshift({
+                  provider: 'youtube',
+                  providerName: 'YouTube',
+                  label: 'YouTube (مشغل رسمي)',
+                  playbackMode: PLAYBACK_MODES.OFFICIAL_EMBED,
+                  videoId: ytData.videoId,
+                  isFullTrack: true,
+                  duration: track.duration || track.fullDuration || 210
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback gracefully if network fails
+      }
+    }
+
     if (ytVideoId) {
       return {
         type: 'official_embed',
@@ -5936,6 +5980,27 @@ window.NG = (function () {
           }
         } catch (e) {
           console.warn('Spotify resolve on play failed:', e);
+        }
+      }
+
+      // Auto-resolve full playback on YouTube before falling back to short preview
+      if (this.track.source !== 'file' && !this.track.youtubeVideoId && this.mode !== 'spotify') {
+        try {
+          const resolved = await resolvePlaybackSource(this.track);
+          if (this._reqId !== reqId) return;
+          if (resolved?.videoId) {
+            this.track.youtubeVideoId = resolved.videoId;
+            this.track.youtubeId = resolved.videoId;
+            this.track.playbackMode = PLAYBACK_MODES.OFFICIAL_EMBED;
+            this.track.playbackType = 'embed';
+            this.track.playbackProvider = 'youtube';
+            this.track.isAudioPreview = false;
+            this.track.playableDuration = this.track.duration || this.track.fullDuration || resolved.duration || 210;
+            this.mode = 'youtube';
+            emit('meta', { track: this.track });
+          }
+        } catch (e) {
+          console.warn('Auto YouTube resolve on play failed:', e);
         }
       }
 
