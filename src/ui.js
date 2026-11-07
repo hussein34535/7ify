@@ -2120,11 +2120,9 @@
       viewport.addEventListener('scroll', () => {
         if (ui.view !== 'track') return;
         if (viewport.scrollTop > 260) {
-          stickyBar.classList.remove('opacity-0', 'pointer-events-none');
-          stickyBar.classList.add('opacity-100');
+          stickyBar.classList.add('is-visible');
         } else {
-          stickyBar.classList.add('opacity-0', 'pointer-events-none');
-          stickyBar.classList.remove('opacity-100');
+          stickyBar.classList.remove('is-visible');
         }
       });
     }
@@ -3334,7 +3332,7 @@
       const node = e.target.closest('[data-action]');
       if (!node) {
         const brief = e.target.closest('.np-brief, .player-mini-progress');
-        if (brief) openSheet();
+        if (brief || (window.innerWidth <= 980 && e.target.closest('.player') && !e.target.closest('button, [role="button"], a'))) openSheet();
         return;
       }
       const action = node.dataset.action;
