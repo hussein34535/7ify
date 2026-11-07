@@ -1418,7 +1418,7 @@
 
   function renderPlaylistPage() {
     const plId = ui.activePlaylistId || ui.activePl || (state.playlists[0] && state.playlists[0].id);
-    const pl = state.playlists.find((p) => p.id === plId);
+    const pl = state.playlists.find((p) => p.id === plId) || (NG.CURATED_PLAYLISTS && NG.CURATED_PLAYLISTS.find((p) => p.id === plId));
     if (!pl) {
       if (el.playlist) el.playlist.innerHTML = emptyState('music', t('library.emptyPl'), t('library.emptyPlBody'));
       return;
@@ -1429,40 +1429,52 @@
     const durationText = fmtDurationTotal(totalSec);
     const isPlaying = tracks.some((tr) => tr.id === state.trackId && engine.playing);
     const isCustom = !NG.SEED_PLAYLISTS.some((p) => p.id === pl.id);
+    const accentCol = (pl.colors && pl.colors[0]) || '#717a60';
 
-    let html = '<div class="sp-playlist-page">' +
-      '<div class="pl-hero">' +
-        '<div class="pl-hero-art">' + playlistCover(pl, 'pl-hero-cover') + '</div>' +
+    let html = '<div class="sp-playlist-page playlist-page">' +
+      '<div class="playlist-header pl-hero" style="--sp-accent:' + accentCol + ';">' +
+        '<div class="cover-wrapper pl-hero-art">' +
+          (pl.cover ? ('<img class="cover-image pl-hero-cover" src="' + pl.cover + '" alt="' + esc(L(pl.name)) + '" loading="eager">') : playlistCover(pl, 'pl-hero-cover')) +
+        '</div>' +
         '<div class="pl-hero-meta">' +
           '<div class="pl-kicker">' + esc(t('page.playlist') || 'قائمة تشغيل') + '</div>' +
-          '<h1 class="pl-title clamp-2">' + L(pl.name) + '</h1>' +
-          (pl.sub ? ('<p class="pl-desc clamp-2">' + L(pl.sub) + '</p>') : '') +
-          '<div class="pl-info">' +
-            '<span class="pl-owner"><b>7ify</b></span>' +
+          '<h1 class="playlist-title pl-title clamp-2">' + L(pl.name) + '</h1>' +
+          (pl.sub ? ('<p class="playlist-desc pl-desc clamp-2">' + L(pl.sub) + '</p>') : '') +
+          '<div class="owner-row pl-info">' +
+            '<img class="owner-avatar" src="https://i.scdn.co/image/ab67757000003b8255c25988a6cf314394f3f030" alt="Spotify">' +
+            '<span class="pl-owner"><b>' + esc(pl.owner || 'Spotify') + '</b></span>' +
             '<span class="pl-sep">•</span>' +
             '<span class="pl-count num">' + esc(countLabel(tracks.length, 'songs')) + '</span>' +
             (tracks.length ? ('<span class="pl-sep">•</span><span class="pl-dur num">' + esc(durationText) + '</span>') : '') +
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="pl-action-bar">' +
-        '<button class="sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="play-playlist" data-id="' + pl.id + '" aria-label="' + esc(t('library.playAll')) + '">' +
+      '<div class="action-bar pl-action-bar">' +
+        '<div class="action-buttons-right">' +
+          '<button class="icon-btn sp-icon-btn" aria-label="حفظ في مكتبتك الموسيقية" data-action="like-playlist" title="حفظ في مكتبتك الموسيقية">' +
+            '<svg viewBox="0 0 24 24" class="ic"><path d="M5.21 1.57a6.76 6.76 0 0 1 6.708 1.545.124.124 0 0 0 .165 0 6.74 6.74 0 0 1 5.715-1.78l.004.001a6.8 6.8 0 0 1 5.571 5.376v.003a6.69 6.69 0 0 1-1.49 5.655l-7.954 9.48a2.518 2.518 0 0 1-3.857 0L2.12 12.37A6.68 6.68 0 0 1 .627 6.714 6.76 6.76 0 0 1 5.21 1.57m3.12 1.803a4.757 4.757 0 0 0-5.74 3.725l-.001.002a4.68 4.68 0 0 0 1.049 3.969l.009.01 7.958 9.485a.518.518 0 0 0 .79 0l7.968-9.495a4.69 4.69 0 0 0 1.049-3.965 4.8 4.8 0 0 0-3.931-3.794 4.74 4.74 0 0 0-4.023 1.256l-.008.008a2.123 2.123 0 0 1-2.9 0l-.007-.007a4.76 4.76 0 0 0-2.214-1.194z"></path></svg>' +
+          '</button>' +
+          '<button class="icon-btn sp-icon-btn" aria-label="شارك" data-action="share-playlist" title="شارك">' +
+            '<svg viewBox="0 0 24 24" class="ic"><path d="M3 8a1 1 0 0 1 1-1h3.5v2H5v11h14V9h-2.5V7H20a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"></path><path d="M12 12.326a1 1 0 0 0 1-1V3.841l1.793 1.793a1 1 0 1 0 1.414-1.414L12 .012 7.793 4.22a1 1 0 1 0 1.414 1.414L11 3.84v7.485a1 1 0 0 0 1 1z"></path></svg>' +
+          '</button>' +
+          '<button class="icon-btn sp-icon-btn ' + (state.shuffle ? 'is-active' : '') + '" data-action="shuffle-playlist" data-id="' + pl.id + '" title="' + esc(t('player.shuffle')) + '">' +
+            ic('shuffle') +
+          '</button>' +
+          (isCustom ? (
+            '<button class="icon-btn sp-icon-btn is-danger" data-action="delete-playlist" data-id="' + pl.id + '" title="' + esc(t('playlist.delete') || 'حذف القائمة') + '">' +
+              ic('trash') +
+            '</button>'
+          ) : '') +
+        '</div>' +
+        '<button class="play-btn-large sp-play-btn ' + (isPlaying ? 'is-playing' : '') + '" data-action="play-playlist" data-id="' + pl.id + '" aria-label="' + esc(t('library.playAll')) + '">' +
           '<svg class="ic" aria-hidden="true"><use href="#i-' + (isPlaying ? 'pause' : 'play') + '"></use></svg>' +
         '</button>' +
-        '<button class="sp-icon-btn ' + (state.shuffle ? 'is-active' : '') + '" data-action="shuffle-playlist" data-id="' + pl.id + '" title="' + esc(t('player.shuffle')) + '">' +
-          ic('shuffle') +
-        '</button>' +
-        (isCustom ? (
-          '<button class="sp-icon-btn is-danger" data-action="delete-playlist" data-id="' + pl.id + '" title="' + esc(t('playlist.delete') || 'حذف القائمة') + '">' +
-            ic('trash') +
-          '</button>'
-        ) : '') +
       '</div>';
 
     if (!tracks.length) {
       html += emptyState('music', t('toast.playlistEmpty'), 'أضف أغانٍ إلى هذه القائمة من خلال زر + بجوار أي أغنية.');
     } else {
-      html += '<div class="pl-table">' +
+      html += '<div class="track-list pl-table">' +
         '<div class="pl-th">' +
           '<span class="pl-th-idx">#</span>' +
           '<span class="pl-th-title">العنوان</span>' +
@@ -1475,19 +1487,23 @@
             const current = state.trackId === tr.id;
             const playing = current && engine.playing;
             const fav = isFav(tr.id);
-            return '<div class="pl-row' + (current ? ' is-current' : '') + '">' +
+            return '<div class="track-row pl-row' + (current ? ' active is-current' : '') + '">' +
               '<button class="pl-row-hit" data-action="play" data-id="' + tr.id + '" data-ctx="playlist">' +
                 '<span class="pl-row-idx">' + (playing ? eq() : (i + 1)) + '</span>' +
-                '<span class="pl-row-art">' + trackArt(tr) + '</span>' +
-                '<span class="pl-row-main">' +
-                  '<span class="pl-row-title clamp-1">' + L(tr.title) + '</span>' +
-                  '<span class="pl-row-artist clamp-1" data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' + L(tr.artist) + '</span>' +
+                '<span class="track-thumb pl-row-art">' + trackArt(tr) + '</span>' +
+                '<span class="track-info pl-row-main">' +
+                  '<span class="track-title pl-row-title clamp-1">' + L(tr.title) + '</span>' +
+                  '<span class="track-meta pl-row-artist clamp-1">' +
+                    (tr.explicit ? '<span class="explicit-badge" title="محتوى غير لائق">E</span>' : '') +
+                    '<span data-action="artist" data-artist="' + esc(tr.artist?.ar || tr.artist?.en || '') + '">' + L(tr.artist) + '</span>' +
+                  '</span>' +
                 '</span>' +
                 '<span class="pl-row-album clamp-1" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '">' + L(tr.album) + '</span>' +
                 '<span class="pl-row-dur num">' + fmt(tr.duration) + '</span>' +
               '</button>' +
               '<div class="pl-row-tools">' +
                 '<button class="row-like ' + (fav ? 'is-liked' : '') + '" data-action="like" data-id="' + tr.id + '" data-like="' + tr.id + '" aria-pressed="' + fav + '">' + likeIcon(fav) + '</button>' +
+                '<button class="icon-btn track-more" data-action="open-track" data-id="' + tr.id + '" aria-label="المزيد"><svg viewBox="0 0 24 24" class="ic"><path d="M4.5 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m15 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3m-7.5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3"></path></svg></button>' +
                 (isCustom ? ('<button class="pl-remove-btn" data-action="remove-from-playlist" data-pl="' + pl.id + '" data-id="' + tr.id + '" title="إزالة من القائمة">' + ic('trash') + '</button>') : '') +
               '</div>' +
             '</div>';
@@ -1495,6 +1511,76 @@
         '</div>' +
       '</div>';
     }
+
+    // Authentic Spotify Mobile & Desktop Footer
+    html += '<footer class="footer sp-footer">' +
+      '<div class="footer-group">' +
+        '<h4>الشركة</h4>' +
+        '<ul>' +
+          '<li><a href="#about">لمحة</a></li>' +
+          '<li><a href="#jobs">وظائف</a></li>' +
+          '<li><a href="#for-the-record">For the Record</a></li>' +
+        '</ul>' +
+      '</div>' +
+      '<div class="footer-group">' +
+        '<h4>المجتمعات</h4>' +
+        '<ul>' +
+          '<li><a href="#artists">للفنانين</a></li>' +
+          '<li><a href="#creators">لصنَّاع المحتوى</a></li>' +
+          '<li><a href="#developers">المطورون</a></li>' +
+          '<li><a href="#ads">الإعلانات</a></li>' +
+          '<li><a href="#investors">المستثمرون</a></li>' +
+          '<li><a href="#vendors">الموردون</a></li>' +
+        '</ul>' +
+      '</div>' +
+      '<div class="footer-group">' +
+        '<h4>روابط مفيدة</h4>' +
+        '<ul>' +
+          '<li><a href="#support">الدعم</a></li>' +
+          '<li><a href="#mobile-app">تطبيق الهاتف المجاني</a></li>' +
+          '<li><a href="#trending">الرائج حسب البلد</a></li>' +
+          '<li><a href="#lyrics">كلمات أنجح الأغاني</a></li>' +
+        '</ul>' +
+      '</div>' +
+      '<div class="footer-group">' +
+        '<h4>باقات اشتراك Spotify</h4>' +
+        '<ul>' +
+          '<li><a href="#premium-individual">Premium للأفراد</a></li>' +
+          '<li><a href="#premium-duo">Premium للثنائي</a></li>' +
+          '<li><a href="#premium-family">Premium للعائلة</a></li>' +
+          '<li><a href="#premium-student">Premium للطلاب</a></li>' +
+          '<li><a href="#spotify-free">Spotify Free</a></li>' +
+        '</ul>' +
+      '</div>' +
+      '<div class="social-links">' +
+        '<a href="https://instagram.com/spotify" target="_blank" rel="noopener" class="social-btn" aria-label="Instagram">' +
+          '<svg viewBox="0 0 16 16"><path d="M8 1.44c2.136 0 2.389.009 3.233.047.78.036 1.203.166 1.485.276.348.128.663.332.921.598.266.258.47.573.599.921.11.282.24.706.275 1.485.039.844.047 1.097.047 3.233s-.008 2.389-.047 3.232c-.035.78-.166 1.204-.275 1.486a2.65 2.65 0 0 1-1.518 1.518c-.282.11-.706.24-1.486.275-.843.039-1.097.047-3.233.047s-2.39-.008-3.232-.047c-.78-.035-1.204-.165-1.486-.275a2.5 2.5 0 0 1-.921-.599 2.5 2.5 0 0 1-.599-.92c-.11-.282-.24-.706-.275-1.486-.038-.844-.047-1.096-.047-3.232s.009-2.39.047-3.233c.036-.78.166-1.203.275-1.485.129-.348.333-.663.599-.921a2.5 2.5 0 0 1 .92-.599c.283-.11.707-.24 1.487-.275.843-.038 1.096-.047 3.232-.047L8 1.441zm.001-1.442c-2.172 0-2.445.01-3.298.048-.854.04-1.435.176-1.943.373a3.9 3.9 0 0 0-1.417.923c-.407.4-.722.883-.923 1.417-.198.508-.333 1.09-.372 1.942S0 5.826 0 8c0 2.172.01 2.445.048 3.298.04.853.174 1.433.372 1.941.2.534.516 1.017.923 1.417.4.407.883.722 1.417.923.508.198 1.09.333 1.942.372s1.126.048 3.299.048 2.445-.01 3.298-.048c.853-.04 1.433-.174 1.94-.372a4.1 4.1 0 0 0 2.34-2.34c.199-.508.334-1.09.373-1.942S16 10.172 16 7.999s-.01-2.445-.048-3.298c-.04-.853-.174-1.433-.372-1.94a3.9 3.9 0 0 0-.923-1.418A3.9 3.9 0 0 0 13.24.42c-.508-.197-1.09-.333-1.942-.371-.851-.041-1.125-.05-3.298-.05z"></path><path d="M8 3.892a4.108 4.108 0 1 0 0 8.216 4.108 4.108 0 0 0 0-8.216m0 6.775a2.668 2.668 0 1 1 0-5.335 2.668 2.668 0 0 1 0 5.335m4.27-5.978a.96.96 0 1 0 0-1.92.96.96 0 0 0 0 1.92"></path></svg>' +
+        '</a>' +
+        '<a href="https://twitter.com/spotify" target="_blank" rel="noopener" class="social-btn" aria-label="X">' +
+          '<svg viewBox="0 0 16 16"><path d="M9.303 6.928 14.403 1h-1.208L8.766 6.147 5.23 1H1.15L6.5 8.784 1.15 15h1.208l4.676-5.436L10.77 15h4.08zM7.648 8.852l-.542-.775L2.795 1.91H4.65l3.48 4.977.541.775 4.523 6.47H11.34l-3.691-5.28Z"></path></svg>' +
+        '</a>' +
+        '<a href="https://facebook.com/spotify" target="_blank" rel="noopener" class="social-btn" aria-label="Facebook">' +
+          '<svg viewBox="0 0 16 16"><path d="M16 8a8 8 0 1 0-9.25 7.903v-5.59H4.719V8H6.75V6.237c0-2.005 1.194-3.112 3.022-3.112.875 0 1.79.156 1.79.156V5.25h-1.008c-.994 0-1.304.617-1.304 1.25V8h2.219l-.355 2.313H9.25v5.59A8 8 0 0 0 16 8"></path></svg>' +
+        '</a>' +
+      '</div>' +
+      '<div class="footer-bottom">' +
+        '<div class="footer-legal-links">' +
+          '<a href="#legal">إشعار قانوني</a>' +
+          '<a href="#privacy">مركز الخصوصية والأمان</a>' +
+          '<a href="#privacy-policy">سياسة الخصوصية</a>' +
+          '<a href="#cookies">ملفات تعريف الارتباط</a>' +
+          '<a href="#ads-info">حول الإعلانات</a>' +
+          '<a href="#a11y">إمكانية الوصول</a>' +
+        '</div>' +
+        '<div class="footer-copy-row">' +
+          '<button class="lang-btn" data-action="toggle-lang">' +
+            '<svg viewBox="0 0 16 16" class="ic"><path d="M8.152 16H8a8 8 0 1 1 .152 0m-.41-14.202c-.226.273-.463.713-.677 1.323-.369 1.055-.626 2.496-.687 4.129h3.547c-.06-1.633-.318-3.074-.687-4.129-.213-.61-.45-1.05-.676-1.323-.194-.235-.326-.285-.385-.296h-.044c-.055.007-.19.052-.391.296M4.877 7.25c.062-1.771.34-3.386.773-4.624q.148-.427.329-.806a6.51 6.51 0 0 0-4.436 5.43zm-3.334 1.5a6.51 6.51 0 0 0 4.436 5.43 8 8 0 0 1-.33-.806c-.433-1.238-.71-2.853-.772-4.624zm4.835 0c.061 1.633.318 3.074.687 4.129.214.61.451 1.05.677 1.323.202.244.336.29.391.297l.044-.001c.06-.01.19-.061.385-.296.226-.273.463-.713.676-1.323.37-1.055.626-2.496.687-4.129zm5.048 0c-.061 1.771-.339 3.386-.772 4.624q-.123.353-.268.674a6.5 6.5 0 0 0 4.071-5.298zm3.031-1.5a6.51 6.51 0 0 0-4.071-5.298q.145.322.268.674c.433 1.238.711 2.853.772 4.624z"></path></svg>' +
+            'العَرَبِيَّة' +
+          '</button>' +
+          '<span class="copyright">© 2026 Spotify AB</span>' +
+        '</div>' +
+      '</div>' +
+    '</footer>';
 
     html += '</div>';
     if (el.playlist) el.playlist.innerHTML = html;

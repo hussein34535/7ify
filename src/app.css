@@ -5258,3 +5258,444 @@ svg.w-14, .w-14 { width: 56px !important; height: 56px !important; min-width: 56
     display: none !important;
   }
 }
+
+
+/* ==========================================================================
+   AUTHENTIC SPOTIFY ENCORE MOBILE WEB PLAYER & PLAYLIST SPECIFICATION
+   ========================================================================== */
+
+/* Universal Mobile Safeguards: No unexpected zooming, breaking boundaries, or overflow */
+html, body {
+  -webkit-text-size-adjust: 100%;
+  touch-action: pan-x pan-y;
+  overflow-x: hidden;
+}
+
+@media (max-width: 980px) {
+  /* RTL History Back chevron mirroring */
+  [dir="rtl"] .topbar .hist [data-action="back"] svg,
+  [dir="rtl"] .topbar .hist [data-action="back"] .ic {
+    transform: scaleX(-1);
+  }
+
+  /* Authentic Playlist Header */
+  .playlist-header, .pl-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 16px 16px 20px !important;
+    margin-top: -12px !important;
+    background: linear-gradient(var(--sp-accent, #717a60) 0%, transparent 100%) !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+  }
+
+  .cover-wrapper, .pl-hero-art {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 210px !important;
+    height: 210px !important;
+    max-width: 210px !important;
+    max-height: 210px !important;
+    margin: 8px auto 16px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+  }
+
+  .cover-image, .pl-hero-cover {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+  }
+
+  .playlist-title, .pl-title {
+    font-family: var(--encore-title-font-stack, 'SpotifyMixUITitle', 'Cairo', sans-serif) !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin: 0 0 8px !important;
+    text-align: center !important;
+    line-height: 1.25 !important;
+    width: 100% !important;
+  }
+
+  .playlist-desc, .pl-desc {
+    font-size: 13px !important;
+    color: var(--text-subdued, #b3b3b3) !important;
+    margin-bottom: 12px !important;
+    line-height: 1.4 !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .playlist-desc a, .pl-desc a {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+  }
+
+  .owner-row, .pl-info {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 12px !important;
+  }
+
+  .owner-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+  }
+
+  .action-bar, .pl-action-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 0 4px 16px !important;
+    margin-top: 8px !important;
+  }
+
+  .action-buttons-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: var(--text-subdued, #b3b3b3) !important;
+  }
+
+  .action-buttons-right .icon-btn,
+  .action-buttons-right .sp-icon-btn {
+    width: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    color: #b3b3b3 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: transform 0.15s ease, opacity 0.15s ease !important;
+  }
+
+  .action-buttons-right .icon-btn:active,
+  .action-buttons-right .sp-icon-btn:active {
+    transform: scale(0.95) !important;
+    opacity: 0.7 !important;
+  }
+
+  .action-buttons-right .icon-btn svg,
+  .action-buttons-right .sp-icon-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    fill: currentColor !important;
+  }
+
+  .play-btn-large, .sp-play-btn {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 9999px !important;
+    background-color: var(--essential-bright-accent, #1ed760) !important;
+    color: #000000 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+    border: none !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s cubic-bezier(0.3, 0, 0, 1) !important;
+  }
+
+  .play-btn-large:hover, .sp-play-btn:hover {
+    transform: scale(1.04) !important;
+  }
+
+  .play-btn-large svg, .sp-play-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    fill: currentColor !important;
+  }
+
+  /* Single-Row Mobile Track List without desktop headers */
+  .pl-th {
+    display: none !important;
+  }
+
+  .track-list, .pl-table {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    padding: 8px 0 !important;
+    width: 100% !important;
+  }
+
+  .track-row, .pl-row {
+    display: flex !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    gap: 12px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease !important;
+    width: 100% !important;
+  }
+
+  .track-row:active, .track-row:hover,
+  .pl-row:active, .pl-row:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .pl-row-hit {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: inherit !important;
+    text-align: start !important;
+    cursor: pointer !important;
+  }
+
+  .pl-row-idx {
+    display: none !important;
+  }
+
+  .track-thumb, .pl-row-art {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 4px !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .track-thumb img, .pl-row-art img, .pl-row-art .cover-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .track-info, .pl-row-main {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .track-title, .pl-row-title {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .track-row.active .track-title,
+  .pl-row.is-current .track-title,
+  .pl-row.is-current .pl-row-title {
+    color: var(--essential-bright-accent, #1ed760) !important;
+    font-weight: 700 !important;
+  }
+
+  .track-meta, .pl-row-artist {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    color: #b3b3b3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .explicit-badge {
+    background-color: rgba(255, 255, 255, 0.6) !important;
+    color: #121212 !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    width: 15px !important;
+    height: 15px !important;
+    border-radius: 2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+  }
+
+  .pl-row-album {
+    display: none !important;
+  }
+
+  .pl-row-dur {
+    display: none !important;
+  }
+
+  .track-more, .pl-row-tools {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .track-more svg, .pl-row-tools svg {
+    width: 20px !important;
+    height: 20px !important;
+    fill: currentColor !important;
+    color: #b3b3b3 !important;
+  }
+}
+
+/* ==========================================================================
+   AUTHENTIC SPOTIFY ENCORE FOOTER (Desktop & Mobile)
+   ========================================================================== */
+.sp-footer, .footer {
+  padding: 40px 16px 32px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin-top: 36px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.footer-group {
+  margin-bottom: 28px !important;
+}
+
+.footer-group h4 {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  margin: 0 0 12px !important;
+  color: #ffffff !important;
+}
+
+.footer-group ul {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.footer-group li {
+  margin-bottom: 10px !important;
+}
+
+.footer-group a {
+  color: #b3b3b3 !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease !important;
+}
+
+.footer-group a:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+
+.social-links {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 28px !important;
+}
+
+.social-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background-color: #292929 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #ffffff !important;
+  transition: background-color 0.15s ease !important;
+  text-decoration: none !important;
+}
+
+.social-btn:hover {
+  background-color: #3e3e3e !important;
+}
+
+.social-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-top: 20px !important;
+  font-size: 12px !important;
+  color: #b3b3b3 !important;
+}
+
+.footer-legal-links {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px 16px !important;
+  margin-bottom: 16px !important;
+}
+
+.footer-legal-links a {
+  color: #b3b3b3 !important;
+  text-decoration: none !important;
+  font-size: 12px !important;
+}
+
+.footer-legal-links a:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+
+.footer-copy-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+}
+
+.lang-btn {
+  border: 1px solid #727272 !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  transition: border-color 0.15s ease, transform 0.15s ease !important;
+}
+
+.lang-btn:hover {
+  border-color: #ffffff !important;
+  transform: scale(1.04) !important;
+}
+
+.lang-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+}
+
+.copyright {
+  font-size: 12px !important;
+  color: #b3b3b3 !important;
+}
+

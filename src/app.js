@@ -570,7 +570,40 @@ window.NG = (function () {
         { t: 90, ar: 'وانسي يوم الحيرة، ولا نار الغيرة', en: 'Forget the days of confusion, and the fire of jealousy' },
         { t: 115, ar: 'حبك أحلى سيرة قالتها غنوتي', en: 'Your love is the sweetest story told by my song' }
       ]
-    }
+    },
+  
+    // --- 30 Authentic Tracks for R&B Mix Playlist ---
+    { id: 'rnb1', genre: 'rnb', year: 2019, duration: 202, title: { ar: 'Lost in the Fire (feat. The Weeknd)', en: 'Lost in the Fire (feat. The Weeknd)' }, artist: { ar: 'Gesaffelstein، The Weeknd', en: 'Gesaffelstein, The Weeknd' }, album: { ar: 'Hyperion', en: 'Hyperion' }, art: 'https://i.scdn.co/image/ab67616d000048517842fd51802451ff61483dcf', explicit: true, colors: ['#717a60', '#a00010', '#1ed760'], preview: 'https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/6c/42/1d/6c421da6-f033-a3d1-37fa-3a059535bfd3/mzaf_6718471649969641755.plus.aac.p.m4a' },
+    { id: 'rnb2', genre: 'rnb', year: 2024, duration: 158, title: { ar: 'Garee2a Awy - A COLORS SHOW', en: 'Garee2a Awy - A COLORS SHOW' }, artist: { ar: 'TUL8TE، COLORS', en: 'TUL8TE, COLORS' }, album: { ar: 'Garee2a Awy', en: 'Garee2a Awy' }, art: 'https://i.scdn.co/image/ab67616d0000485173aa5127d0871a45c130ea55', explicit: false, colors: ['#a00010', '#717a60', '#1ed760'] },
+    { id: 'rnb3', genre: 'rnb', year: 2023, duration: 185, title: { ar: 'Without a Warning', en: 'Without a Warning' }, artist: { ar: 'The Weeknd', en: 'The Weeknd' }, album: { ar: 'The Idol', en: 'The Idol' }, art: 'https://i.scdn.co/image/ab67616d00004851460b137f921b16041901104a', explicit: false, colors: ['#121212', '#282828', '#1ed760'] },
+    { id: 'rnb4', genre: 'rnb', year: 2021, duration: 226, title: { ar: 'The Color Violet', en: 'The Color Violet' }, artist: { ar: 'Tory Lanez', en: 'Tory Lanez' }, album: { ar: 'Alone At Prom', en: 'Alone At Prom' }, art: 'https://i.scdn.co/image/ab67616d000048510c5f23cbf0b1ab7e37d0dc67', explicit: false, colors: ['#2b1055', '#5b3b8f', '#1ed760'] },
+    { id: 'rnb5', genre: 'rnb', year: 2002, duration: 205, title: { ar: "03' Bonnie & Clyde", en: "03' Bonnie & Clyde" }, artist: { ar: 'JAŸ-Z، Beyoncé', en: 'JAY-Z, Beyonce' }, album: { ar: 'The Blueprint 2', en: 'The Blueprint 2' }, art: 'https://i.scdn.co/image/ab67616d00004851b7c45af95aaf599cee3acf08', explicit: true, colors: ['#1b0b10', '#6b2430', '#1ed760'] },
+    { id: 'rnb6', genre: 'rnb', year: 1987, duration: 229, title: { ar: 'Liberian Girl - 2012 Remastered Version', en: 'Liberian Girl - 2012 Remastered Version' }, artist: { ar: 'Michael Jackson', en: 'Michael Jackson' }, album: { ar: 'Bad 25th Anniversary', en: 'Bad 25th Anniversary' }, art: 'https://i.scdn.co/image/ab67616d00004851eb2087dcd1eb61f833bdedff', explicit: false, colors: ['#120e02', '#463409', '#1ed760'] },
+    { id: 'rnb7', genre: 'rnb', year: 1997, duration: 232, title: { ar: 'My All', en: 'My All' }, artist: { ar: 'Mariah Carey', en: 'Mariah Carey' }, album: { ar: 'Butterfly', en: 'Butterfly' }, art: 'https://i.scdn.co/image/ab67616d0000485198ed501c6a838b2244ebaf75', explicit: false, colors: ['#1a0c06', '#7a3b12', '#1ed760'] },
+    { id: 'rnb8', genre: 'rnb', year: 2023, duration: 219, title: { ar: 'I Wish you Roses', en: 'I Wish you Roses' }, artist: { ar: 'Kali Uchis', en: 'Kali Uchis' }, album: { ar: 'Red Moon In Venus', en: 'Red Moon In Venus' }, art: 'https://i.scdn.co/image/ab67616d00004851e3d0be8859fc9b97c2a8a43e', explicit: false, colors: ['#160610', '#5a1538', '#1ed760'] },
+    { id: 'rnb9', genre: 'rnb', year: 2024, duration: 180, title: { ar: 'MITSUBISHI / متسوبيشي', en: 'MITSUBISHI' }, artist: { ar: 'Saint Levant، هيفاء وهبي', en: 'Saint Levant, Haifa Wehbe' }, album: { ar: 'DEIRA', en: 'DEIRA' }, art: 'https://i.scdn.co/image/ab67616d0000485149f4ace3aeeccdb73a87dffa', explicit: false, colors: ['#1a0508', '#5c0e17', '#1ed760'] },
+    { id: 'rnb10', genre: 'rnb', year: 2015, duration: 198, title: { ar: 'Girl You Loud', en: 'Girl You Loud' }, artist: { ar: 'Chris Brown، Tyga', en: 'Chris Brown, Tyga' }, album: { ar: 'Fan of a Fan The Album', en: 'Fan of a Fan The Album' }, art: 'https://i.scdn.co/image/ab67616d00004851aee727756d5fec0de96dc6d9', explicit: true, colors: ['#0c0b06', '#3b3a1a', '#1ed760'] },
+    { id: 'rnb11', genre: 'rnb', year: 2001, duration: 265, title: { ar: 'Family Affair', en: 'Family Affair' }, artist: { ar: 'Mary J. Blige', en: 'Mary J. Blige' }, album: { ar: 'No More Drama', en: 'No More Drama' }, art: 'https://i.scdn.co/image/ab67616d00004851096a7fc9668305db9d3175fc', explicit: false, colors: ['#121212', '#282828', '#1ed760'] },
+    { id: 'rnb12', genre: 'rnb', year: 2023, duration: 164, title: { ar: 'obsessed', en: 'obsessed' }, artist: { ar: 'zandros، Limi', en: 'zandros, Limi' }, album: { ar: 'obsessed', en: 'obsessed' }, art: 'https://i.scdn.co/image/ab67616d00004851005e90b37681b005f594b049', explicit: false, colors: ['#0b0a14', '#2e2b4f', '#1ed760'] },
+    { id: 'rnb13', genre: 'rnb', year: 2023, duration: 192, title: { ar: 'Me & U', en: 'Me & U' }, artist: { ar: 'Tems', en: 'Tems' }, album: { ar: 'Born in the Wild', en: 'Born in the Wild' }, art: 'https://i.scdn.co/image/ab67616d00004851318f971d63a3a534ee237c9f', explicit: false, colors: ['#1a0c06', '#7a3b12', '#1ed760'] },
+    { id: 'rnb14', genre: 'rnb', year: 2021, duration: 133, title: { ar: 'Yebba’s Heartbreak', en: 'Yebba’s Heartbreak' }, artist: { ar: 'Drake، Yebba', en: 'Drake, Yebba' }, album: { ar: 'Certified Lover Boy', en: 'Certified Lover Boy' }, art: 'https://i.scdn.co/image/ab67616d00004851cd945b4e3de57edd28481a3f', explicit: true, colors: ['#121212', '#282828', '#1ed760'] },
+    { id: 'rnb15', genre: 'rnb', year: 2019, duration: 178, title: { ar: 'Love Songs - Bonus', en: 'Love Songs - Bonus' }, artist: { ar: 'Kaash Paige', en: 'Kaash Paige' }, album: { ar: 'Parked Car Convos', en: 'Parked Car Convos' }, art: 'https://i.scdn.co/image/ab67616d0000485187a86b99f8dde9c7d7e3bf62', explicit: false, colors: ['#1b0b10', '#6b2430', '#1ed760'] },
+    { id: 'rnb16', genre: 'rnb', year: 2022, duration: 153, title: { ar: 'Kill Bill', en: 'Kill Bill' }, artist: { ar: 'SZA', en: 'SZA' }, album: { ar: 'SOS', en: 'SOS' }, art: 'https://i.scdn.co/image/ab67616d00004851c5276ed6cb0287df8d9be07f', explicit: false, colors: ['#160610', '#5a1538', '#1ed760'] },
+    { id: 'rnb17', genre: 'rnb', year: 1998, duration: 294, title: { ar: 'The Boy Is Mine', en: 'The Boy Is Mine' }, artist: { ar: 'Brandy، Monica', en: 'Brandy, Monica' }, album: { ar: 'Never Say Never', en: 'Never Say Never' }, art: 'https://i.scdn.co/image/ab67616d000048510e51dd1d3dc50fc541942c7c', explicit: false, colors: ['#0c0b06', '#3b3a1a', '#1ed760'] },
+    { id: 'rnb18', genre: 'rnb', year: 2023, duration: 162, title: { ar: 'Superposition', en: 'Superposition' }, artist: { ar: 'Avenoir', en: 'Avenoir' }, album: { ar: 'Superposition', en: 'Superposition' }, art: 'https://i.scdn.co/image/ab67616d000048515c2d947b3e7edea482a922ed', explicit: false, colors: ['#050b10', '#0f3446', '#1ed760'] },
+    { id: 'rnb19', genre: 'rnb', year: 1996, duration: 270, title: { ar: 'Un-Break My Heart', en: 'Un-Break My Heart' }, artist: { ar: 'Toni Braxton', en: 'Toni Braxton' }, album: { ar: 'Secrets', en: 'Secrets' }, art: 'https://i.scdn.co/image/ab67616d000048515bc7429f54c5f6745c225fc6', explicit: false, colors: ['#120e02', '#463409', '#1ed760'] },
+    { id: 'rnb20', genre: 'rnb', year: 2006, duration: 201, title: { ar: 'You - (without rap)', en: 'You - (without rap)' }, artist: { ar: 'Lloyd', en: 'Lloyd' }, album: { ar: 'Street Love', en: 'Street Love' }, art: 'https://i.scdn.co/image/ab67616d0000485123d59254da6c25c82ba868aa', explicit: false, colors: ['#1a0508', '#5c0e17', '#1ed760'] },
+    { id: 'rnb21', genre: 'rnb', year: 2010, duration: 195, title: { ar: 'Sure Thing', en: 'Sure Thing' }, artist: { ar: 'Miguel', en: 'Miguel' }, album: { ar: 'All I Want Is You', en: 'All I Want Is You' }, art: 'https://i.scdn.co/image/ab67616d00004851d5a8395b0d80b8c48a5d851c', explicit: false, colors: ['#121212', '#282828', '#1ed760'] },
+    { id: 'rnb22', genre: 'rnb', year: 2023, duration: 175, title: { ar: 'NASTY', en: 'NASTY' }, artist: { ar: 'Zeina', en: 'Zeina' }, album: { ar: 'NASTY', en: 'NASTY' }, art: 'https://i.scdn.co/image/ab67616d0000485114dce0cf11f50d83f8f20062', explicit: false, colors: ['#1a0c06', '#7a3b12', '#1ed760'] },
+    { id: 'rnb23', genre: 'rnb', year: 2023, duration: 188, title: { ar: 'Call Her Right Now', en: 'Call Her Right Now' }, artist: { ar: 'Bayou، HADY MOAMER، Motif Alumni', en: 'Bayou, HADY MOAMER, Motif Alumni' }, album: { ar: 'Call Her Right Now', en: 'Call Her Right Now' }, art: 'https://i.scdn.co/image/ab67616d000048518c16b53bcb2a1b0e472e0fa0', explicit: false, colors: ['#0b0a14', '#2e2b4f', '#1ed760'] },
+    { id: 'rnb24', genre: 'rnb', year: 2001, duration: 210, title: { ar: "Fallin'", en: "Fallin'" }, artist: { ar: 'Alicia Keys', en: 'Alicia Keys' }, album: { ar: 'Songs in A Minor', en: 'Songs in A Minor' }, art: 'https://i.scdn.co/image/ab67616d000048516d684b553a40e4a11e1db96d', explicit: false, colors: ['#1b0b10', '#6b2430', '#1ed760'] },
+    { id: 'rnb25', genre: 'rnb', year: 2012, duration: 256, title: { ar: 'Loveeeeeee Song', en: 'Loveeeeeee Song' }, artist: { ar: 'Rihanna، Future', en: 'Rihanna, Future' }, album: { ar: 'Unapologetic', en: 'Unapologetic' }, art: 'https://i.scdn.co/image/ab67616d000048516dee21d6cd1823e4d6231d37', explicit: true, colors: ['#160610', '#5a1538', '#1ed760'] },
+    { id: 'rnb26', genre: 'rnb', year: 2024, duration: 194, title: { ar: 'On My Own', en: 'On My Own' }, artist: { ar: 'Mara Mandeau', en: 'Mara Mandeau' }, album: { ar: 'On My Own', en: 'On My Own' }, art: 'https://i.scdn.co/image/ab67616d00004851ea9f93d0a03d9fd3e0a0a85f', explicit: false, colors: ['#0c0b06', '#3b3a1a', '#1ed760'] },
+    { id: 'rnb27', genre: 'rnb', year: 2005, duration: 231, title: { ar: 'Real Love', en: 'Real Love' }, artist: { ar: 'Massari', en: 'Massari' }, album: { ar: 'Massari', en: 'Massari' }, art: 'https://i.scdn.co/image/ab67616d0000485174d0bd3e281cee1cf4ee7924', explicit: false, colors: ['#1a0508', '#5c0e17', '#1ed760'] },
+    { id: 'rnb28', genre: 'rnb', year: 2024, duration: 160, title: { ar: 'Smoothies n Snacks', en: 'Smoothies n Snacks' }, artist: { ar: 'Leiah', en: 'Leiah' }, album: { ar: 'Smoothies n Snacks', en: 'Smoothies n Snacks' }, art: 'https://i.scdn.co/image/ab67616d000048517318fabb6c755e278f9de45d', explicit: false, colors: ['#121212', '#282828', '#1ed760'] },
+    { id: 'rnb29', genre: 'rnb', year: 2018, duration: 228, title: { ar: 'Call Out My Name', en: 'Call Out My Name' }, artist: { ar: 'The Weeknd', en: 'The Weeknd' }, album: { ar: 'My Dear Melancholy,', en: 'My Dear Melancholy,' }, art: 'https://i.scdn.co/image/ab67616d000048511f6a2a40bb692936879db730', explicit: false, colors: ['#2b1055', '#5b3b8f', '#1ed760'] },
+    { id: 'rnb30', genre: 'rnb', year: 2020, duration: 172, title: { ar: 'Girls In The Room - Lost Tapes 2020', en: 'Girls In The Room - Lost Tapes 2020' }, artist: { ar: 'Tory Lanez', en: 'Tory Lanez' }, album: { ar: 'The VVS Capsule', en: 'The VVS Capsule' }, art: 'https://i.scdn.co/image/ab67616d00004851538fcee7fdbd815d60fd1242', explicit: true, colors: ['#120e02', '#463409', '#1ed760'] }
+
   ];
 
   const ARTISTS = [
@@ -583,6 +616,19 @@ window.NG = (function () {
     { id: 'a7', name: { ar: 'فيروز', en: 'Fairouz' }, sub: { ar: 'جارة القمر', en: 'Voice of Lebanon' }, track: 't8' },
     { id: 'a8', name: { ar: 'ذا ويكند', en: 'The Weeknd' }, sub: { ar: 'بوب عالمي', en: 'Global pop' }, track: 't10' },
     { id: 'a9', name: { ar: 'جورج وسوف', en: 'George Wassouf' }, sub: { ar: 'سلطان الطرب', en: 'Sultan of Tarab' }, track: 't12' }
+  ];
+
+  const CURATED_PLAYLISTS = [
+    {
+      id: 'p_rnb',
+      name: { ar: 'ميكس R&B', en: 'R&B Mix' },
+      sub: { ar: 'Gesaffelstein وTUL8TE وThe Weeknd والمزيد', en: 'Gesaffelstein, TUL8TE, The Weeknd and more' },
+      cover: 'https://pickasso.spotifycdn.com/image/ab67c0de0000deef/dt/v1/img/topic/r_and_b/3hteYQFiMFbJY7wS0xDymP/ar',
+      colors: ['#717a60', '#a00010', '#1ed760'],
+      motif: 'orb',
+      owner: 'Spotify',
+      trackIds: ['rnb1', 'rnb2', 'rnb3', 'rnb4', 'rnb5', 'rnb6', 'rnb7', 'rnb8', 'rnb9', 'rnb10', 'rnb11', 'rnb12', 'rnb13', 'rnb14', 'rnb15', 'rnb16', 'rnb17', 'rnb18', 'rnb19', 'rnb20', 'rnb21', 'rnb22', 'rnb23', 'rnb24', 'rnb25', 'rnb26', 'rnb27', 'rnb28', 'rnb29', 'rnb30']
+    }
   ];
 
   const SEED_PLAYLISTS = [
@@ -709,7 +755,7 @@ window.NG = (function () {
         !tr.id.startsWith('local-') &&
         !tr.id.startsWith('file-') &&
         tr.source !== 'file' &&
-        !/^t\d+$/.test(tr.id)
+        !/^(t|rnb)\d+$/.test(tr.id)
       ).map((tr) => ({
         id: tr.id,
         appleId: tr.appleId,
@@ -1436,14 +1482,14 @@ window.NG = (function () {
   }
 
   function coverImages(item, eager) {
-    const src = (item && (item.art || item.photo)) || '';
+    const src = (item && (item.art || item.photo || item.cover)) || '';
     if (!src) return '';
     const load = eager ? 'eager' : 'lazy';
     const onerr = ' onerror="this.remove();if(this.parentNode)this.parentNode.classList.remove(\'has-photo\')"';
     return '<img class="cover-img cover-img-front" src="' + src + '" alt="" loading="' + load + '" decoding="async"' + onerr + '>';
   }
 
-  const coverKey = (item) => (item && (item.art || item.photo)) || '';
+  const coverKey = (item) => (item && (item.art || item.photo || item.cover)) || '';
 
   function coverHTML(item, extraClass, eager) {
     const colors = (item && item.colors) || ['#1B1F26', '#2A2F3A', '#6C7683'];
@@ -3044,7 +3090,7 @@ window.NG = (function () {
 
   return {
     $, $$, clamp, esc, fmt, formatDuration, formatPosition, uid, norm, clampText,
-    I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS,
+    I18N, GENRES, THEMES, ACCENTS, TRACKS, ARTISTS, SEED_PLAYLISTS, CURATED_PLAYLISTS,
     state, save, reset, loadState, cleanSavedIds, applyTheme, applyI18n, t, byLang, genreLabel, getTrack, getPlayableDuration,
     getAlbums, getArtistTracks, getArtistAlbums, getAlbumTracks,
     normalizeSearchText, tokenize, levenshteinDistance, scoreTrack, trackMatches, findMatchedLyric, searchTracks, searchArtists, searchAlbums, searchOnline, fetchArtistTracks, fetchLyricsOnline,
