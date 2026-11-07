@@ -5723,49 +5723,203 @@ html, body {
 
 
 /* ==========================================================================
-   AUTHENTIC SPOTIFY NOW PLAYING VIEW MODAL (NPV)
+   AUTHENTIC SPOTIFY MOBILE NOW PLAYING VIEW (NPV FULL-SCREEN MODAL)
    ========================================================================== */
 .npv-modal {
   position: fixed !important;
-  top: 0 !important;
-  left: 50% !important;
+  inset: 0 !important;
   width: 100% !important;
-  max-width: 480px !important;
   height: 100% !important;
+  max-width: 440px !important;
+  margin: 0 auto !important;
   background-color: var(--npv-bg, #1e221e) !important;
-  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.7)) !important;
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(18, 18, 18, 0.95) 100%) !important;
   z-index: 1050 !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 16px 24px 32px !important;
-  transform: translate(-50%, 100%) !important;
-  transition: transform 0.3s cubic-bezier(0.3, 0, 0, 1) !important;
+  transform: translateY(100%) !important;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1) !important;
   box-sizing: border-box !important;
-  overflow-y: auto !important;
+  overflow: hidden !important;
   pointer-events: none !important;
   color: #ffffff !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+@media (min-width: 640px) {
+  .npv-modal {
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, 100%) !important;
+    height: 890px !important;
+    max-height: calc(100dvh - 40px) !important;
+    border-radius: 40px !important;
+  }
+  .npv-modal.open {
+    transform: translate(-50%, -50%) !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .npv-modal {
+    max-width: 100vw !important;
+    border-radius: 0 !important;
+  }
+  .npv-modal.open {
+    transform: translateY(0) !important;
+  }
 }
 
 .npv-modal.open {
-  transform: translate(-50%, 0) !important;
   pointer-events: auto !important;
 }
 
-.npv-header {
+/* 1. Sticky Collapsed Mini-Header on Scroll */
+.sticky-collapsed-header {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 60px !important;
+  padding-top: max(env(safe-area-inset-top), 8px) !important;
+  background-color: var(--sticky-header-bg, #181818) !important;
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(24, 24, 24, 0.96) 100%) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  z-index: 60 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sticky-header-content {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  width: 100% !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  flex-shrink: 0 !important;
-  text-align: center !important;
+  padding: 0 16px !important;
+  height: 56px !important;
 }
 
-.npv-header .icon-btn {
-  width: 40px !important;
-  height: 40px !important;
+.sticky-text-wrap {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  cursor: pointer !important;
+  text-align: right !important;
+  padding-inline-end: 12px !important;
+}
+
+.sticky-song-title {
+  font-family: 'Cairo', 'SpotifyMixUITitle', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  line-height: 1.2 !important;
+}
+
+.sticky-song-artist {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  margin-top: 2px !important;
+}
+
+.sticky-actions-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+.sticky-like-btn {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: var(--spotify-green, #1ed760) !important;
+  color: #000000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease !important;
+}
+
+.sticky-like-btn:active {
+  transform: scale(0.9) !important;
+}
+
+.sticky-check-icon {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.sticky-play-btn {
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease !important;
+}
+
+.sticky-play-btn svg {
+  width: 26px !important;
+  height: 26px !important;
+}
+
+.sticky-play-btn:active {
+  transform: scale(0.9) !important;
+}
+
+.sticky-progress-line {
+  width: 100% !important;
+  height: 2.5px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.sticky-progress-bar {
+  height: 100% !important;
+  background: #ffffff !important;
+  transition: width 0.12s linear !important;
+}
+
+/* 2. Scrollable Body */
+.npv-scroll-body {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 0 20px 48px !important;
+  box-sizing: border-box !important;
+}
+
+/* Top Hero Section */
+.npv-hero-section {
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: max(env(safe-area-inset-top), 16px) !important;
+  padding-bottom: 24px !important;
+}
+
+.npv-top-nav {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: 44px !important;
+  margin-bottom: 16px !important;
+}
+
+.npv-nav-btn {
+  width: 38px !important;
+  height: 38px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -5774,59 +5928,88 @@ html, body {
   color: #ffffff !important;
   cursor: pointer !important;
   border-radius: 50% !important;
+  transition: opacity 0.2s ease !important;
 }
 
-.npv-header .icon-btn svg {
+.npv-nav-btn:hover {
+  opacity: 0.8 !important;
+}
+
+.npv-nav-btn svg {
   width: 24px !important;
   height: 24px !important;
-  fill: currentColor !important;
+}
+
+.npv-context-title {
+  text-align: center !important;
+  min-width: 0 !important;
+}
+
+.npv-context-sub {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  display: block !important;
+}
+
+.npv-context-name {
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .npv-artwork-container {
-  margin: 20px 0 !important;
+  width: 100% !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  flex: 1 1 auto !important;
+  margin-bottom: 28px !important;
 }
 
 .npv-artwork {
   width: 100% !important;
-  max-width: 320px !important;
+  max-width: 360px !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
-  flex-shrink: 0 !important;
+  background-color: #181412 !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6) !important;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
-.npv-bottom-controls {
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  flex-shrink: 0 !important;
+.npv-artwork:hover {
+  transform: scale(1.015) !important;
 }
 
-.npv-meta {
+/* Metadata Row */
+.npv-meta-row {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  margin-bottom: 16px !important;
-  width: 100% !important;
+  margin-bottom: 20px !important;
+  text-align: right !important;
 }
 
 .npv-meta-text {
   flex: 1 1 auto !important;
   min-width: 0 !important;
+  padding-inline-end: 16px !important;
 }
 
 .npv-song-title {
-  font-size: 20px !important;
-  font-weight: 700 !important;
+  font-family: 'Cairo', 'SpotifyMixUITitle', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
   color: #ffffff !important;
-  margin-bottom: 4px !important;
+  line-height: 1.2 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -5834,138 +6017,410 @@ html, body {
 
 .npv-song-artist {
   font-size: 15px !important;
-  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  margin-top: 4px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
 .npv-like-btn {
-  width: 40px !important;
-  height: 40px !important;
-  display: inline-flex !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: transparent !important;
   border: none !important;
   color: #ffffff !important;
   cursor: pointer !important;
+  transition: transform 0.15s ease, color 0.15s ease !important;
+}
+
+.npv-like-btn.is-liked {
+  color: var(--spotify-green, #1ed760) !important;
 }
 
 .npv-like-btn svg {
-  width: 24px !important;
-  height: 24px !important;
-  fill: currentColor !important;
+  width: 26px !important;
+  height: 26px !important;
 }
 
-.npv-progress-area {
-  margin-bottom: 16px !important;
+/* Scrubber */
+.npv-scrubber-wrap {
   width: 100% !important;
+  margin-bottom: 20px !important;
 }
 
-.npv-bar-bg {
+.npv-scrubber-track {
+  width: 100% !important;
   height: 4px !important;
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-radius: 2px !important;
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-radius: 999px !important;
   position: relative !important;
-  overflow: hidden !important;
   cursor: pointer !important;
 }
 
-.npv-bar-fill {
+.npv-scrubber-fill {
   height: 100% !important;
   background: #ffffff !important;
-  border-radius: 2px !important;
+  border-radius: 999px !important;
   transition: width 0.1s linear !important;
 }
 
-.npv-times {
+.npv-scrubber-thumb {
+  position: absolute !important;
+  top: 50% !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  transform: translate(-50%, -50%) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+  pointer-events: none !important;
+}
+
+.npv-times-row {
   display: flex !important;
   justify-content: space-between !important;
-  font-size: 11px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
   color: rgba(255, 255, 255, 0.7) !important;
   margin-top: 8px !important;
   font-variant-numeric: tabular-nums !important;
+  direction: ltr !important;
 }
 
-.npv-controls {
+/* Controls */
+.npv-controls-row {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   direction: ltr !important;
   margin-bottom: 20px !important;
-  width: 100% !important;
 }
 
-.npv-controls .icon-btn {
-  width: 44px !important;
-  height: 44px !important;
-  display: inline-flex !important;
+.npv-ctrl-btn {
+  position: relative !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: transparent !important;
   border: none !important;
   color: #ffffff !important;
   cursor: pointer !important;
-  border-radius: 50% !important;
+  transition: transform 0.15s ease, opacity 0.15s ease !important;
 }
 
-.npv-controls .icon-btn svg {
+.npv-ctrl-btn svg {
   width: 24px !important;
   height: 24px !important;
-  fill: currentColor !important;
 }
 
-.npv-play-circle {
-  width: 64px !important;
-  height: 64px !important;
+.ctrl-dot {
+  position: absolute !important;
+  bottom: 2px !important;
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: 50% !important;
+  background: var(--spotify-green, #1ed760) !important;
+  display: none !important;
+}
+
+.npv-ctrl-btn.is-active .ctrl-dot {
+  display: block !important;
+}
+
+.npv-play-btn {
+  width: 60px !important;
+  height: 60px !important;
   border-radius: 50% !important;
   background: #ffffff !important;
   color: #000000 !important;
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   border: none !important;
   cursor: pointer !important;
-  transition: transform 0.15s ease !important;
-  flex-shrink: 0 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
 }
 
-.npv-play-circle:active {
-  transform: scale(0.96) !important;
-}
-
-.npv-play-circle svg {
+.npv-play-btn svg {
   width: 28px !important;
   height: 28px !important;
-  fill: currentColor !important;
+  margin-inline-start: 2px !important;
 }
 
-.npv-footer {
+.npv-play-btn:active {
+  transform: scale(0.92) !important;
+}
+
+/* Utilities */
+.npv-utility-row {
   display: flex !important;
-  justify-content: space-between !important;
   align-items: center !important;
-  width: 100% !important;
+  justify-content: space-between !important;
+  padding: 0 4px !important;
 }
 
-.npv-footer .icon-btn {
+.npv-util-btn {
   width: 36px !important;
   height: 36px !important;
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: transparent !important;
   border: none !important;
-  color: rgba(255, 255, 255, 0.7) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  cursor: pointer !important;
+  transition: color 0.15s ease !important;
+}
+
+.npv-util-btn:hover {
+  color: #ffffff !important;
+}
+
+.npv-util-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* 3. Lyrics Card */
+.npv-lyrics-card {
+  background-color: var(--lyrics-bg, #9b110e) !important;
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.32) 100%) !important;
+  border-radius: 18px !important;
+  padding: 20px !important;
+  margin-top: 24px !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35) !important;
+  transition: background-color 0.4s ease !important;
+}
+
+.lyrics-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+}
+
+.lyrics-card-title {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+
+.lyrics-share-btn {
+  padding: 4px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+}
+
+.lyrics-share-btn:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+}
+
+.lyrics-lines-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  margin-bottom: 16px !important;
+  max-height: 280px !important;
+  overflow: hidden !important;
+}
+
+.lyrics-line {
+  font-family: 'Cairo', 'SpotifyMixUITitle', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  transition: color 0.2s ease, opacity 0.2s ease !important;
+}
+
+.lyrics-line.active {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.lyrics-more-btn {
+  display: block !important;
+  width: 100% !important;
+  padding: 8px !important;
+  text-align: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
   cursor: pointer !important;
 }
 
-.npv-footer .icon-btn svg {
-  width: 18px !important;
-  height: 18px !important;
-  fill: currentColor !important;
+/* 4. About the Artist Card */
+.npv-artist-card {
+  background: #181818 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  margin-top: 20px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4) !important;
 }
 
+.npv-artist-banner {
+  position: relative !important;
+  width: 100% !important;
+  height: 180px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-color: #242424 !important;
+}
+
+.npv-artist-dim {
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(24, 24, 24, 0.8) 75%, #181818 100%) !important;
+}
+
+.npv-artist-kicker {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+.npv-artist-content {
+  padding: 16px 20px 20px !important;
+}
+
+.npv-artist-title-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 6px !important;
+}
+
+.npv-artist-name-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.npv-artist-name {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+}
+
+.verified-icon {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+}
+
+.artist-follow-pill {
+  padding: 5px 16px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.artist-follow-pill.is-following {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+.npv-artist-listeners {
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-variant-numeric: tabular-nums !important;
+  margin-bottom: 12px !important;
+}
+
+.npv-artist-bio {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  margin: 0 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* 5. Credits Card */
+.npv-credits-card {
+  background: #181818 !important;
+  border-radius: 18px !important;
+  padding: 20px !important;
+  margin-top: 20px !important;
+}
+
+.credits-card-title {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin-bottom: 16px !important;
+}
+
+.credits-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.credit-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.credit-role {
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-weight: 600 !important;
+}
+
+.credit-name {
+  font-size: 14px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* 6. More Tracks */
+.npv-more-tracks {
+  margin-top: 24px !important;
+}
+
+.more-tracks-header {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  margin-bottom: 14px !important;
+}
+
+.more-tracks-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
 
 /* ==========================================================================
    SPOTIFY PROFILE & ACCOUNT INTEGRATION STYLES
@@ -7090,6 +7545,181 @@ html, body {
 <noscript>
   <p style="padding:24px;text-align:center;color:#ccc">هذا التطبيق يحتاج JavaScript للتشغيل.</p>
 </noscript>
+
+
+<!-- ========================================================================= -->
+<!-- AUTHENTIC SPOTIFY MOBILE NOW PLAYING VIEW (NPV FULL-SCREEN MODAL)        -->
+<!-- ========================================================================= -->
+<aside class="npv-modal" id="npvModal" aria-label="مشغل الشاشة الكاملة" role="dialog" aria-hidden="true">
+
+  <!-- 1. STICKY COLLAPSED MINI-HEADER ON SCROLL -->
+  <div id="stickyCollapsedHeader" class="sticky-collapsed-header opacity-0 pointer-events-none">
+    <div class="sticky-header-content">
+      <div class="sticky-text-wrap" data-action="scroll-npv-top">
+        <div id="stickySongTitle" class="sticky-song-title truncate">ستاموني</div>
+        <div id="stickySongArtist" class="sticky-song-artist truncate">Shehab, Dj Totti</div>
+      </div>
+      <div class="sticky-actions-wrap">
+        <button class="sticky-like-btn" id="stickyLikeBtn" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
+          <svg viewBox="0 0 24 24" class="sticky-check-icon"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>
+        </button>
+        <button class="sticky-play-btn" id="stickyPlayBtn" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت">
+          <svg id="stickyPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- Thin Progress Line at Bottom Edge of Sticky Header -->
+    <div class="sticky-progress-line">
+      <div id="stickyProgressBar" class="sticky-progress-bar" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  <!-- 2. SCROLLABLE NOW PLAYING CONTAINER -->
+  <div class="npv-scroll-body no-scrollbar" id="npvScrollContainer">
+
+    <!-- TOP HERO SECTION -->
+    <div class="npv-hero-section">
+      <!-- Top Navigation Bar: Down Chevron | Source Context | "..." -->
+      <div class="npv-top-nav">
+        <button class="icon-btn npv-nav-btn" data-action="close-npv" aria-label="تصغير المشغل" title="تصغير">
+          <svg viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </button>
+        <div class="npv-context-title">
+          <small class="npv-context-sub">تشغيل من قائمة التشغيل</small>
+          <span id="npvPlName" class="npv-context-name">أغانٍ أعجبتني</span>
+        </div>
+        <button class="icon-btn npv-nav-btn" data-action="npv-more" aria-label="المزيد من الخيارات" title="المزيد">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+        </button>
+      </div>
+
+      <!-- Main Square Album Cover -->
+      <div class="npv-artwork-container">
+        <div class="npv-artwork" id="npvArtwork"></div>
+      </div>
+
+      <!-- Track Metadata Row -->
+      <div class="npv-meta-row">
+        <div class="npv-meta-text">
+          <div class="npv-song-title" id="npvTitle">ستاموني</div>
+          <div class="npv-song-artist" id="npvArtist">Shehab, Dj Totti</div>
+        </div>
+        <button class="icon-btn npv-like-btn" id="npvLike" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
+          <svg viewBox="0 0 24 24" id="npvLikeSvg"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </button>
+      </div>
+
+      <!-- Range Scrubber / Progress Bar -->
+      <div class="npv-scrubber-wrap">
+        <div class="npv-scrubber-track" id="npvSeekArea">
+          <div class="npv-scrubber-fill" id="npvBarFill" style="width: 0%;"></div>
+          <div class="npv-scrubber-thumb" id="npvThumb" style="left: 0%;"></div>
+        </div>
+        <div class="npv-times-row">
+          <span id="npvCur" class="num">0:00</span>
+          <span id="npvDur" class="num">3:22</span>
+        </div>
+      </div>
+
+      <!-- Playback Controls Row -->
+      <div class="npv-controls-row">
+        <button class="icon-btn npv-ctrl-btn" id="npvShuffle" data-action="shuffle" aria-label="تشغيل عشوائي" title="تشغيل عشوائي">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+          <span id="npvShuffleDot" class="ctrl-dot"></span>
+        </button>
+        <button class="icon-btn npv-ctrl-btn" id="npvPrev" data-action="prev" aria-label="السابق" title="السابق">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button class="npv-play-btn" id="npvPlay" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت" title="تشغيل">
+          <svg id="npvPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="icon-btn npv-ctrl-btn" id="npvNext" data-action="next" aria-label="التالي" title="التالي">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+        <button class="icon-btn npv-ctrl-btn" id="npvRepeat" data-action="repeat" aria-label="تكرار" title="تكرار">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span id="npvRepeatDot" class="ctrl-dot"></span>
+        </button>
+      </div>
+
+      <!-- Utilities Row: Devices & Share & Queue -->
+      <div class="npv-utility-row">
+        <button class="icon-btn npv-util-btn" data-action="devices" aria-label="الأجهزة المتاحة" title="الأجهزة المتاحة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button class="icon-btn npv-util-btn" data-action="share-track" aria-label="مشاركة الأغنية" title="مشاركة">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+        <button class="icon-btn npv-util-btn" data-action="open-queue" aria-label="قائمة الانتظار" title="قائمة الانتظار">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. SCROLLABLE CONTENT: LYRICS CARD -->
+    <div class="npv-lyrics-card" id="npvLyricsCard">
+      <div class="lyrics-card-header">
+        <span class="lyrics-card-title">الكلمات</span>
+        <button class="lyrics-share-btn" data-action="share-lyrics">مشاركة</button>
+      </div>
+      <div class="lyrics-lines-container" id="npvLyricsLines">
+        <!-- Rendered dynamically -->
+      </div>
+      <button class="lyrics-more-btn" data-action="expand-lyrics">المزيد</button>
+    </div>
+
+    <!-- 4. ABOUT THE ARTIST CARD -->
+    <div class="npv-artist-card" id="npvArtistCard">
+      <div class="npv-artist-banner" id="npvArtistBanner">
+        <div class="npv-artist-dim"></div>
+        <span class="npv-artist-kicker">عن الفنان</span>
+      </div>
+      <div class="npv-artist-content">
+        <div class="npv-artist-title-row">
+          <div class="npv-artist-name-wrap">
+            <span class="npv-artist-name" id="npvArtistCardName">Shehab</span>
+            <svg class="verified-icon" viewBox="0 0 24 24"><path fill="#3d91f4" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </div>
+          <button class="artist-follow-pill" id="npvFollowBtn" data-action="toggle-follow-npv">متابعة</button>
+        </div>
+        <div class="npv-artist-listeners" id="npvArtistListeners">٥,٨٩٢,١٠٤ مستمع شهرياً</div>
+        <p class="npv-artist-bio" id="npvArtistBio"></p>
+      </div>
+    </div>
+
+    <!-- 5. CREDITS CARD -->
+    <div class="npv-credits-card" id="npvCreditsCard">
+      <div class="credits-card-title">فريق العمل</div>
+      <div class="credits-list" id="npvCreditsList">
+        <div class="credit-row">
+          <span class="credit-role">غناء</span>
+          <span class="credit-name" id="npvCreditArtist">Shehab, Dj Totti</span>
+        </div>
+        <div class="credit-row">
+          <span class="credit-role">كلمات وتلحين</span>
+          <span class="credit-name" id="npvCreditWriter">Shehab, Totti</span>
+        </div>
+        <div class="credit-row">
+          <span class="credit-role">إنتاج موسيقي</span>
+          <span class="credit-name" id="npvCreditProducer">Dj Totti</span>
+        </div>
+        <div class="credit-row">
+          <span class="credit-role">المصدر</span>
+          <span class="credit-name">تسجيلات أصلية بدقة استوديو Master HQ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. NEXT / RECOMMENDED TRACKS -->
+    <div class="npv-more-tracks" id="npvMoreTracksSection">
+      <div class="more-tracks-header">المزيد من نفس الفنان</div>
+      <div class="more-tracks-list" id="npvMoreTracksList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+  </div>
+</aside>
 
 <script>
 /* ==========================================================================
@@ -11856,13 +12486,15 @@ window.NG = (function () {
   }
 
   function updateNowPlayingModal() {
-    const tr = getTrack(state.trackId);
+    const tr = getTrack(state.trackId) || TRACKS[0];
     if (!tr) return;
     const npv = $('#npvModal');
     if (!npv) return;
 
     const bgCol = (tr.colors && tr.colors[0]) || '#1e221e';
+    const lyricsBg = (tr.colors && (tr.colors[1] || tr.colors[0])) || '#2e3d30';
     npv.style.setProperty('--npv-bg', bgCol);
+    npv.style.setProperty('--lyrics-bg', lyricsBg);
 
     const art = $('#npvArtwork');
     const artUrl = tr.art || tr.photo || '';
@@ -11870,22 +12502,36 @@ window.NG = (function () {
       art.style.backgroundImage = 'url("' + artUrl + '")';
     }
 
+    const titleText = byLang(tr.title);
+    const artistText = byLang(tr.artist);
+
     const titleEl = $('#npvTitle');
-    if (titleEl) titleEl.textContent = byLang(tr.title);
+    if (titleEl) titleEl.textContent = titleText;
+
+    const stickyTitle = $('#stickySongTitle');
+    if (stickyTitle) stickyTitle.textContent = titleText;
 
     const artistEl = $('#npvArtist');
-    if (artistEl) artistEl.textContent = byLang(tr.artist);
+    if (artistEl) artistEl.textContent = artistText;
+
+    const stickyArtist = $('#stickySongArtist');
+    if (stickyArtist) stickyArtist.textContent = artistText;
 
     const plNameEl = $('#npvPlName');
     if (plNameEl) {
       const pl = (state.playlists && state.playlists.find(p => p.id === ui.activePl)) || (NG.CURATED_PLAYLISTS && NG.CURATED_PLAYLISTS.find(p => p.id === ui.activePl));
-      plNameEl.textContent = pl ? L(pl.name) : 'Spotify';
+      plNameEl.textContent = pl ? L(pl.name) : (state.lang === 'ar' ? 'أغانٍ أعجبتني' : 'Liked Songs');
     }
 
     const playing = engine.playing;
     const playCircle = $('#npvPlay');
     if (playCircle) {
       playCircle.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z' : 'm7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606') + '"></path></svg>';
+    }
+
+    const stickyPlay = $('#stickyPlayBtn');
+    if (stickyPlay) {
+      stickyPlay.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="' + (playing ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z' : 'M8 5v14l11-7z') + '"/></svg>';
     }
 
     const fav = isFav(tr.id);
@@ -11895,16 +12541,108 @@ window.NG = (function () {
       likeBtn.dataset.id = tr.id;
       likeBtn.dataset.like = tr.id;
       likeBtn.style.color = fav ? 'var(--essential-bright-accent, #1ed760)' : '#ffffff';
+      likeBtn.innerHTML = fav
+        ? '<svg viewBox="0 0 24 24"><path fill="#1ed760" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+    }
+
+    const stickyLike = $('#stickyLikeBtn');
+    if (stickyLike) {
+      stickyLike.classList.toggle('is-liked', fav);
+      stickyLike.dataset.id = tr.id;
+      stickyLike.dataset.like = tr.id;
+      stickyLike.innerHTML = fav
+        ? '<svg viewBox="0 0 24 24" class="sticky-check-icon"><path fill="#1ed760" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
     }
 
     const shufBtn = $('#npvShuffle');
     if (shufBtn) {
       shufBtn.style.color = state.shuffle ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+      const dot = $('#npvShuffleDot');
+      if (dot) dot.style.display = state.shuffle ? 'block' : 'none';
     }
 
     const repBtn = $('#npvRepeat');
     if (repBtn) {
       repBtn.style.color = state.repeat !== 'off' ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+      const dot = $('#npvRepeatDot');
+      if (dot) dot.style.display = state.repeat !== 'off' ? 'block' : 'none';
+    }
+
+    // Lyrics Lines
+    const linesWrap = $('#npvLyricsLines');
+    if (linesWrap) {
+      const lyrics = (tr.lyrics && tr.lyrics.length) ? tr.lyrics : [
+        { t: 0, text: titleText },
+        { t: 15, text: artistText },
+        { t: 30, text: '♪ استمع إلى الصوت النقي بجودة استوديو Master HQ ♪' },
+        { t: 60, text: '♪ كلمات وألحان منتقاة بعناية على 7ify ♪' }
+      ];
+      linesWrap.innerHTML = lyrics.map((l) =>
+        '<p class="npv-lyric-line" data-t="' + l.t + '">' + esc(l.text) + '</p>'
+      ).join('');
+    }
+
+    // Artist Card
+    const artistBanner = $('#npvArtistBanner');
+    if (artistBanner) {
+      const aPhoto = tr.artistPhoto || tr.photo || tr.art || '';
+      if (aPhoto) artistBanner.style.backgroundImage = 'url("' + aPhoto + '")';
+    }
+    const artistCardName = $('#npvArtistCardName');
+    if (artistCardName) artistCardName.textContent = artistText;
+
+    const listenersEl = $('#npvArtistListeners');
+    if (listenersEl) {
+      listenersEl.textContent = tr.source === 'file'
+        ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
+        : (state.lang === 'ar' ? '٥,٨٩٢,١٠٤ مستمع شهرياً' : '5,892,104 monthly listeners');
+    }
+
+    const artistData = ARTIST_BIOS[tr.artist && (tr.artist.ar || tr.artist.en)] || null;
+    const bioText = (tr.bio && L(tr.bio)) || (artistData ? byLang(artistData.bio) : (
+      state.lang === 'ar'
+        ? ('استمع إلى أعمال الفنان ' + artistText + ' بأعلى جودة صوتية أصلية على 7ify.')
+        : ('Listen to ' + artistText + ' in master audio quality on 7ify.')
+    ));
+    const bioEl = $('#npvArtistBio');
+    if (bioEl) bioEl.textContent = bioText;
+
+    const artistKey = 'artist:' + (tr.source === 'file' ? artistText : artistText.split('&')[0].trim());
+    const isFollowing = ui.following.has(artistKey);
+    const followBtn = $('#npvFollowBtn');
+    if (followBtn) {
+      followBtn.textContent = isFollowing ? (state.lang === 'ar' ? 'مُتابع' : 'Following') : (state.lang === 'ar' ? 'متابعة' : 'Follow');
+      followBtn.classList.toggle('is-following', isFollowing);
+      followBtn.dataset.artistKey = artistKey;
+    }
+
+    // Credits Card
+    const creditArt = $('#npvCreditArtist');
+    if (creditArt) creditArt.textContent = artistText;
+    const creditWri = $('#npvCreditWriter');
+    if (creditWri) creditWri.textContent = tr.writer || artistText;
+    const creditProd = $('#npvCreditProducer');
+    if (creditProd) creditProd.textContent = tr.producer || artistText;
+
+    // More Tracks Section
+    const moreList = $('#npvMoreTracksList');
+    if (moreList) {
+      const moreTracks = TRACKS.filter(t => t.id !== tr.id).slice(0, 4);
+      moreList.innerHTML = moreTracks.map(m => `
+        <div class="more-track-card" data-action="play" data-id="${m.id}" data-ctx="queue">
+          <div class="more-track-art" style="background-image: url('${m.art || m.photo || ''}')">
+            <button class="more-track-play-btn" aria-label="تشغيل ${esc(byLang(m.title))}">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+          <div class="more-track-info">
+            <span class="more-track-title">${esc(byLang(m.title))}</span>
+            <span class="more-track-artist">${esc(byLang(m.artist))}</span>
+          </div>
+        </div>
+      `).join('');
     }
   }
 
@@ -11921,6 +12659,10 @@ window.NG = (function () {
     if (mini && mini.firstElementChild) mini.firstElementChild.style.width = pct + '%';
     const npvFill = $('#npvBarFill');
     if (npvFill) npvFill.style.width = pct + '%';
+    const npvThumb = $('#npvThumb');
+    if (npvThumb) npvThumb.style.left = pct + '%';
+    const stickyProg = $('#stickyProgressBar');
+    if (stickyProg) stickyProg.style.width = pct + '%';
     const npvCur = $('#npvCur');
     if (npvCur) npvCur.textContent = fmt(pos);
     const npvDur = $('#npvDur');
@@ -11953,21 +12695,39 @@ window.NG = (function () {
   }
 
   function updateLyricHighlight(pos) {
-    const nodes = $$('.lyric[data-t]');
-    if (!nodes.length) return;
-    let active = -1;
-    nodes.forEach((n) => { if (pos >= Number(n.dataset.t)) active = Number(n.dataset.t); });
-    nodes.forEach((n) => {
-      const isAct = Number(n.dataset.t) === active;
-      n.classList.toggle('is-active', isAct);
-      if (isAct && ui.view === 'track') {
-        const list = n.closest('.sp-lyrics-content') || n.closest('.sp-lyrics-list');
-        if (list && !ui.dragging) {
-          const top = n.offsetTop - list.offsetTop - (list.clientHeight / 2) + (n.clientHeight / 2);
-          list.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    const nodes = Array.from(document.querySelectorAll('.lyric[data-t]'));
+    if (nodes.length) {
+      let active = -1;
+      nodes.forEach((n) => { if (pos >= Number(n.dataset.t)) active = Number(n.dataset.t); });
+      nodes.forEach((n) => {
+        const isAct = Number(n.dataset.t) === active;
+        n.classList.toggle('is-active', isAct);
+        if (isAct && ui.view === 'track') {
+          const list = n.closest('.sp-lyrics-content') || n.closest('.sp-lyrics-list');
+          if (list && !ui.dragging) {
+            const top = n.offsetTop - list.offsetTop - (list.clientHeight / 2) + (n.clientHeight / 2);
+            list.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          }
         }
-      }
-    });
+      });
+    }
+
+    const npvLines = Array.from(document.querySelectorAll('#npvLyricsLines .npv-lyric-line[data-t]'));
+    if (npvLines.length) {
+      let npvAct = -1;
+      npvLines.forEach((l) => { if (pos >= Number(l.dataset.t)) npvAct = Number(l.dataset.t); });
+      npvLines.forEach((l) => {
+        const isAct = Number(l.dataset.t) === npvAct;
+        l.classList.toggle('is-active', isAct);
+        if (isAct) {
+          const cont = $('#npvLyricsLines');
+          if (cont && !ui.dragging) {
+            const top = l.offsetTop - cont.offsetTop - (cont.clientHeight / 2) + (l.clientHeight / 2);
+            cont.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          }
+        }
+      });
+    }
   }
 
   /* ---------- now panel --------------------------------------------------- */
@@ -14272,9 +15032,68 @@ window.NG = (function () {
       case 'close-sheet': closeSheet(); break;
       case 'close-npv': closeNowPlaying(); break;
       case 'open-npv': openNowPlaying(); break;
+      case 'scroll-npv-top': {
+        const sc = $('#npvScrollContainer');
+        if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      }
+      case 'share-lyrics': {
+        const tr = getTrack(state.trackId);
+        const lyr = tr && tr.lyrics && tr.lyrics.length ? tr.lyrics.map(l => l.text).join('\n') : (byLang(tr.title) + ' - ' + byLang(tr.artist));
+        try { navigator.clipboard.writeText(lyr); } catch (e) {}
+        toast(state.lang === 'ar' ? 'تم نسخ كلمات الأغنية بنجاح' : 'Lyrics copied to clipboard');
+        break;
+      }
+      case 'expand-lyrics': {
+        const card = $('#npvLyricsCard');
+        if (card) {
+          const exp = card.classList.toggle('is-expanded');
+          const btn = card.querySelector('.lyrics-more-btn');
+          if (btn) btn.textContent = exp ? (state.lang === 'ar' ? 'أقل' : 'Less') : (state.lang === 'ar' ? 'المزيد' : 'More');
+        }
+        break;
+      }
+      case 'toggle-follow-npv': {
+        const tr = getTrack(state.trackId);
+        if (tr) {
+          const aName = byLang(tr.artist);
+          const key = node.dataset.artistKey || ('artist:' + (tr.source === 'file' ? aName : aName.split('&')[0].trim()));
+          if (ui.following.has(key)) {
+            ui.following.delete(key);
+            toast((state.lang === 'ar' ? 'تمت إزالة المتابعة عن ' : 'Unfollowed ') + aName);
+          } else {
+            ui.following.add(key);
+            toast((state.lang === 'ar' ? 'تمت متابعة ' : 'Following ') + aName);
+          }
+          updateNowPlayingModal();
+        }
+        break;
+      }
+      case 'devices': {
+        toast(state.lang === 'ar' ? 'متصل بجهاز الهاتف (Spotify Connect)' : 'Connected to Mobile (Spotify Connect)');
+        break;
+      }
+      case 'share-track': {
+        const tr = getTrack(state.trackId);
+        if (tr) {
+          const s = byLang(tr.title) + ' • ' + byLang(tr.artist) + ' — 7ify';
+          try { navigator.clipboard.writeText(s + ' • ' + window.location.href); } catch (e) {}
+          toast(state.lang === 'ar' ? 'تم نسخ رابط الأغنية' : 'Track link copied');
+        }
+        break;
+      }
+      case 'npv-more': {
+        const tr = getTrack(state.trackId);
+        if (tr) toast((state.lang === 'ar' ? 'خيارات: ' : 'Options: ') + byLang(tr.title));
+        break;
+      }
       case 'open-track': {
         const id = node.dataset.id || state.trackId;
-        openTrackPage(id);
+        if (window.innerWidth <= 768 && (!node.dataset.id || node.dataset.id === state.trackId) && (node.closest('.player') || node.closest('.np-brief'))) {
+          openNowPlaying();
+        } else {
+          openTrackPage(id);
+        }
         break;
       }
       case 'filter-artist': {
@@ -14470,6 +15289,10 @@ window.NG = (function () {
       const node = e.target.closest('[data-action]');
       if (!node) {
         const brief = e.target.closest('.np-brief, .player-mini-progress');
+        if (window.innerWidth <= 768 && (brief || (e.target.closest('.player') && !e.target.closest('button, [role="button"], a')))) {
+          openNowPlaying();
+          return;
+        }
         if (brief || (window.innerWidth <= 980 && e.target.closest('.player') && !e.target.closest('button, [role="button"], a'))) openSheet();
         return;
       }
@@ -14558,6 +15381,37 @@ window.NG = (function () {
         e.preventDefault();
         createPlaylist(el.newPlName.value);
       });
+    }
+
+    // Scroll listener for Sticky Collapsed Mini-Header in NPV
+    const npvScroll = $('#npvScrollContainer');
+    const stickyHeader = $('#stickyCollapsedHeader');
+    if (npvScroll && stickyHeader) {
+      npvScroll.addEventListener('scroll', () => {
+        const show = npvScroll.scrollTop > 180;
+        stickyHeader.classList.toggle('opacity-0', !show);
+        stickyHeader.classList.toggle('pointer-events-none', !show);
+      }, { passive: true });
+    }
+
+    // Seek / scrubber interaction for NPV
+    const npvSeekArea = $('#npvSeekArea');
+    if (npvSeekArea) {
+      const handleNpvSeek = (e) => {
+        const rect = npvSeekArea.getBoundingClientRect();
+        const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+        const pct = clamp((clientX - rect.left) / rect.width, 0, 1);
+        const dur = engine.getDuration();
+        if (dur > 0) engine.seek(pct * dur);
+      };
+      npvSeekArea.addEventListener('click', handleNpvSeek);
+      let isSeekingNpv = false;
+      npvSeekArea.addEventListener('mousedown', (e) => { isSeekingNpv = true; handleNpvSeek(e); });
+      window.addEventListener('mousemove', (e) => { if (isSeekingNpv) handleNpvSeek(e); });
+      window.addEventListener('mouseup', () => { isSeekingNpv = false; });
+      npvSeekArea.addEventListener('touchstart', (e) => { isSeekingNpv = true; handleNpvSeek(e); }, { passive: true });
+      window.addEventListener('touchmove', (e) => { if (isSeekingNpv) handleNpvSeek(e); }, { passive: true });
+      window.addEventListener('touchend', () => { isSeekingNpv = false; });
     }
 
     if (el.fileInput) {
@@ -14731,7 +15585,7 @@ window.NG = (function () {
   else boot();
 
   window.__nagham = {
-    ui, state, playTrack, stepTrack, setView, openSheet, closeSheet,
+    ui, state, engine, playTrack, stepTrack, setView, openSheet, closeSheet,
     openTrackPage, renderTrackPage,
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,

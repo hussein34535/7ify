@@ -71,6 +71,7 @@ const browserTests = [
   { name: 'Dedicated Pages (Playlist/Artist/Album/Library) Verification', file: 'test/verify-pages.mjs' },
   { name: 'Edge Cases & Breakpoints Verification', file: 'test/edge.mjs' },
   { name: 'Spotify MiniPlayer Popup Verification', file: 'test/verify-miniplayer.mjs' },
+  { name: 'Spotify Mobile Now Playing View Verification', file: 'test/verify-npv-modal.mjs' },
   { name: 'Document Picture-in-Picture & MediaSession Verification', file: 'test/verify-doc-pip.mjs' }
 ];
 
