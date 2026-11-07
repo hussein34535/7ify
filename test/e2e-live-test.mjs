@@ -8,9 +8,10 @@ import { tmpdir } from 'node:os';
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, '..');
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const PORT = 9347;
-const LIVE_URL = 'https://7ify.vercel.app/';
-const PROFILE = join(tmpdir(), 'nagham-live-run-' + Date.now());
+const PORT = 9349;
+const RAW_URL = process.env.TARGET_URL || 'https://7ify.vercel.app/';
+const LIVE_URL = RAW_URL.includes('?') ? RAW_URL : (RAW_URL + '?v=' + Date.now());
+const PROFILE = join(tmpdir(), 'nagham-live-final-' + Date.now());
 const OUT = join(projectRoot, 'shots');
 const ARTIFACT_DIR = 'C:\\Users\\husso\\.gemini\\antigravity\\brain\\5f57c978-ef99-41e7-bb99-623d9443f231';
 
@@ -90,10 +91,11 @@ try {
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Network.enable');
+  await send('Network.setCacheDisabled', { cacheDisabled: true });
 
   console.log(`\n🌐 Navigating to Live URL: ${LIVE_URL}...`);
   await send('Page.navigate', { url: LIVE_URL });
-  await sleep(3000);
+  await sleep(3500);
 
   // 1. Page Title & Favicon
   const pageTitle = await ev('document.title');
@@ -128,9 +130,6 @@ try {
       qInput.focus();
       qInput.value = 'عمرو';
       qInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    if (window.__nagham && typeof window.__nagham.runUnifiedSearch === 'function') {
-      window.__nagham.runUnifiedSearch('عمرو');
     }
     const ac = document.getElementById('searchAutocomplete');
     const items = ac ? Array.from(ac.querySelectorAll('.autocomplete-item')) : [];
