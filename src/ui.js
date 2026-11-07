@@ -2120,6 +2120,7 @@
     engine.play();
     save();
     renderAll();
+    triggerAutoPip();
     showPipHintOnce();
   }
 
@@ -2523,7 +2524,26 @@
     }
   }
 
+  let userDismissedPip = false;
+  function setAutoPip(enabled) {
+    userDismissedPip = !enabled;
+  }
+
+  async function triggerAutoPip() {
+    if (userDismissedPip) return;
+    if (!('documentPictureInPicture' in window)) return;
+    if (window.innerWidth <= 640) return; // desktop screens
+    if (currentPipWindow && !currentPipWindow.closed) return;
+
+    try {
+      await openDocumentPip();
+    } catch (e) {
+      console.warn('Auto Document PiP skipped or failed:', e);
+    }
+  }
+
   async function toggleMiniPlayer() {
+    userDismissedPip = false;
     // 1. If Document Picture-in-Picture window is currently open, close it
     if (currentPipWindow && !currentPipWindow.closed) {
       currentPipWindow.close();
@@ -2650,6 +2670,7 @@
 
     // Cleanup when PiP window is closed
     pipWin.addEventListener('pagehide', () => {
+      userDismissedPip = true;
       currentPipWindow = null;
       miniEl.classList.remove('in-document-pip');
       miniEl.style.position = '';
@@ -2782,7 +2803,7 @@
         break;
       }
       case 'like': toggleLike(node.dataset.id); break;
-      case 'toggle': engine.toggle(); break;
+      case 'toggle': { if (!engine.playing) triggerAutoPip(); engine.toggle(); break; }
       case 'next': stepTrack(1); break;
       case 'prev': stepTrack(-1); break;
       case 'shuffle':
@@ -3336,12 +3357,12 @@
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
     openAlbumPage, renderAlbumPage,
-    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer,
+    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip,
     runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
   if (window.NG) {
     Object.assign(window.NG, {
-      ui,
+      ui, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, toggleMiniPlayer, setAutoPip,
       runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
     });
   }

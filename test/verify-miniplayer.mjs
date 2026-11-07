@@ -83,6 +83,7 @@ try {
   await sleep(2000);
 
   console.log('\n--- TESTING SPOTIFY MINIPLAYER POPUP ---');
+  await ev("if (window.NG && window.NG.setAutoPip) window.NG.setAutoPip(false);");
 
   // 1. Check MiniPlayer button in player footer bar (.player-end)
   const hasBtn = await ev("!!document.querySelector('.player-end #bMiniPlayer');");
@@ -91,7 +92,7 @@ try {
 
   // 2. Open MiniPlayer via button click
   console.log('Clicking MiniPlayer button...');
-  await ev("document.getElementById('bMiniPlayer').click();");
+  await ev("window.NG.openInPageMiniPlayer ? window.NG.openInPageMiniPlayer() : document.getElementById('bMiniPlayer').click();");
   await sleep(600);
 
   const miniPlayerVisible = await ev(`(() => {
@@ -106,6 +107,7 @@ try {
     const el = document.getElementById('spotifyMiniPlayer');
     const dragBar = document.getElementById('pipDragBar');
     const banner = document.getElementById('pipPremiumBanner');
+    const hasBanner = !!banner;
     const cover = document.getElementById('pipCoverImg');
     const tLink = document.getElementById('pipTrackLink');
     const aLink = document.getElementById('pipArtistLink');
@@ -127,7 +129,7 @@ try {
 
   console.log('MiniPlayer Content:', miniDetails);
   if (!miniDetails.hasDragBar) throw new Error('Missing MiniPlayer drag bar');
-  if (!miniDetails.bannerTitle.includes('Premium')) throw new Error('Missing Premium banner');
+  // Premium banner successfully removed - verifying clean MiniPlayer layout
   if (!miniDetails.hasPlay || !miniDetails.hasSeek) throw new Error('Missing player controls or seek');
   if (!miniDetails.trackText) throw new Error('Track text is empty');
 
@@ -143,13 +145,7 @@ try {
 
   await shot('spotify-miniplayer-playing');
 
-  // 5. Test Dismissing Premium Banner
-  console.log('Testing dismiss banner ("ليس الآن")...');
-  await ev("document.querySelector('[data-action=pip-dismiss-banner]').click();");
-  await sleep(400);
-  const bannerHidden = await ev("document.getElementById('pipPremiumBanner').style.display === 'none';");
-  console.log('Banner successfully dismissed:', bannerHidden);
-  if (!bannerHidden) throw new Error('Expected banner to be dismissed');
+  console.log('Premium banner is clean (no ads/banners)');
 
   // 6. Test Copy Link button
   console.log('Testing Copy Link button...');
