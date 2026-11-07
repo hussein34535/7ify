@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotify - Web Player: Music for everyone</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            spotify: {
+              green: '#1ed760',
+              greenHover: '#3be477',
+              greenPress: '#1abc54',
+              black: '#000000',
+              base: '#121212',
+              elevated: '#181818',
+              highlight: '#1f1f1f',
+              tinted: '#282828',
+              press: '#000000',
+              subdued: '#b3b3b3',
+              muted: '#727272',
+              border: '#292929',
+              pipBase: '#4E554E',
+              pipContrast: '#939B93',
+              red: '#f3727f',
+              orange: '#ffa42b',
+              blue: '#539df5'
+            }
+          },
+          fontFamily: {
+            sans: ['Cairo', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-black: #000000;
+      --bg-base: #121212;
+      --bg-elevated: #181818;
+      --bg-highlight: #1f1f1f;
+      --bg-tinted: #282828;
+      --text-base: #ffffff;
+      --text-subdued: #b3b3b3;
+      --accent-green: #1ed760;
+      --background-base: #4E554EFF;
+      --background-base-min-contrast: #939B93FF;
+      --encore-graphic-size-decorative-smaller-2: 12px;
+      --encore-graphic-size-decorative-smaller: 16px;
+      --encore-graphic-size-decorative-base: 24px;
+      --encore-graphic-size-informative-smaller: 16px;
+      --cinema-mode-border-radius: 4px;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-black);
+      color: var(--text-base);
+      font-family: 'Cairo', 'Inter', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Custom Scrollbar mimicking Spotify Encore */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    /* Custom Range Sliders (Progress & Volume) */
+    .spotify-slider-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 12px;
+      cursor: pointer;
+    }
+    .spotify-slider-bg {
+      width: 100%;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .spotify-slider-fill {
+      height: 100%;
+      background-color: #ffffff;
+      border-radius: 9999px;
+      transition: background-color 0.1s ease;
+    }
+    .spotify-slider-container:hover .spotify-slider-fill {
+      background-color: #1ed760;
+    }
+    .spotify-slider-thumb {
+      width: 12px;
+      height: 12px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      transition: transform 0.1s ease;
+      pointer-events: none;
+    }
+    .spotify-slider-container:hover .spotify-slider-thumb {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .spotify-range-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    /* Card Play Button Hover Transition */
+    .media-card .play-fab {
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.22s cubic-bezier(0.3, 0, 0, 1);
+    }
+    .media-card:hover .play-fab,
+    .media-card.playing-card .play-fab {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Quick Pick Card Play Button */
+    .quick-card .play-fab {
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.2s ease;
+    }
+    .quick-card:hover .play-fab,
+    .quick-card.playing-card .play-fab {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Equalizer bars animation */
+    @keyframes eqBar1 {
+      0%, 100% { height: 3px; }
+      50% { height: 14px; }
+    }
+    @keyframes eqBar2 {
+      0%, 100% { height: 13px; }
+      33% { height: 4px; }
+      66% { height: 15px; }
+    }
+    @keyframes eqBar3 {
+      0%, 100% { height: 6px; }
+      40% { height: 15px; }
+      80% { height: 3px; }
+    }
+    @keyframes eqBar4 {
+      0%, 100% { height: 11px; }
+      25% { height: 4px; }
+      75% { height: 14px; }
+    }
+    .eq-bar-1 { animation: eqBar1 0.8s infinite ease-in-out; }
+    .eq-bar-2 { animation: eqBar2 0.7s infinite ease-in-out; }
+    .eq-bar-3 { animation: eqBar3 0.9s infinite ease-in-out; }
+    .eq-bar-4 { animation: eqBar4 0.65s infinite ease-in-out; }
+
+    /* Dynamic Ambient Header Transition */
+    #main-gradient-overlay {
+      transition: background 0.6s cubic-bezier(0.3, 0, 0, 1);
+    }
+
+    /* Track Row Hover */
+    .track-row:hover .track-num-text {
+      display: none;
+    }
+    .track-row:hover .track-row-play {
+      display: flex !important;
+    }
+    .track-row .track-action-opacity {
+      opacity: 0;
+    }
+    .track-row:hover .track-action-opacity {
+      opacity: 1;
+    }
+
+    /* PiP Mini-Player exact classes & hover effects */
+    .pip-window-shadow {
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.92), 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+    /* Hide PiP buttons/controls until mouse hovers over the Mini-Player */
+    #pip-mini-player-window .pip-hover-reveal {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #pip-mini-player-window:hover .pip-hover-reveal {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #pip-mini-player-window .pip-art-dim {
+      background: radial-gradient(circle at center, rgba(0, 0, 0, 0.38) 0%, rgba(0, 0, 0, 0.72) 100%);
+    }
+    /* Volume slider popover on speaker hover */
+    .pip-vol-group .pip-vol-popover {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px) scale(0.95);
+      transition: all 0.18s ease;
+    }
+    .pip-vol-group:hover .pip-vol-popover {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    /* Smooth title fade mask on left edge like Spotify PiP */
+    .pip-title-mask {
+      mask-image: linear-gradient(to right, transparent 0%, black 12%, black 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 100%);
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen w-screen bg-black text-white select-none overflow-hidden">
+
+  <!-- ================= 1. EXACT SPOTIFY SPLASH SCREEN OVERLAY (I5RvK2EjtWNfZBCeeLTP) ================= -->
+  <div id="spotify-splash-overlay" class="I5RvK2EjtWNfZBCeeLTP fixed inset-0 z-50 hidden items-center justify-center flex-col" style="background: linear-gradient(rgb(32, 33, 36) 0%, rgb(18, 18, 18) 21.35%);">
+    <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon animate-pulse" viewBox="0 0 24 24" style="width: 117px; height: 117px; max-width: 50vw; max-height: 50vh; color: rgb(30, 215, 96); aspect-ratio: 1 / 1;">
+      <path fill="currentColor" d="M12.438 1.009C6.368.769 1.251 5.494 1.008 11.565c-.24 6.07 4.485 11.186 10.556 11.426 6.07.242 11.185-4.484 11.427-10.554S18.507 1.251 12.438 1.009m4.644 16.114a.657.657 0 0 1-.897.246 13.2 13.2 0 0 0-4.71-1.602 13.2 13.2 0 0 0-4.968.242.658.658 0 0 1-.31-1.278 14.5 14.5 0 0 1 5.46-.265c1.837.257 3.579.851 5.177 1.76.315.178.425.58.246.896zm1.445-2.887a.853.853 0 0 1-1.158.344 16.2 16.2 0 0 0-5.475-1.797 16.2 16.2 0 0 0-5.758.219.855.855 0 0 1-1.018-.65.85.85 0 0 1 .65-1.018 17.9 17.9 0 0 1 6.362-.241 17.9 17.9 0 0 1 6.049 1.985c.415.224.57.743.344 1.158zm1.602-3.255a1.05 1.05 0 0 1-1.418.448 19.7 19.7 0 0 0-6.341-2.025 19.6 19.6 0 0 0-6.655.199 1.05 1.05 0 1 1-.417-2.06 21.7 21.7 0 0 1 7.364-.22 21.7 21.7 0 0 1 7.019 2.24c.515.268.715.903.448 1.418"></path>
+    </svg>
+    <p class="mt-4 text-sm text-[#b3b3b3] font-semibold">جاري تحميل مشغِّل Spotify Web Player...</p>
+    <button id="btn-dismiss-splash" class="mt-5 px-5 py-2 rounded-full bg-[#1ed760] text-black text-xs font-bold hover:scale-105 transition">
+      فتح المشغِّل الآن
+    </button>
+  </div>
+
+  <!-- ================= 2. FLOATING / FULL PIP MINI-PLAYER (EXACT SCREENSHOT + ENCORE REPLICA) ================= -->
+  <div id="pip-mini-player-window" class="encore-dark-theme encore-small-devices-theme ARdTwt0PuIoYx7R0BrJz fixed bottom-24 left-6 z-40 w-[330px] rounded-xl overflow-hidden pip-window-shadow transition-all duration-300 bg-[#121212]" style="--background-base: #4E554EFF; --background-base-min-contrast: #939B93FF;">
+    
+    <!-- Document PiP Browser Title Bar (open.spotify.com header from screenshot) -->
+    <div id="pip-drag-bar" class="z4sqUHOpydUxxrX0vrZG h-9 px-3 bg-[#181818] border-b border-white/[0.08] flex items-center justify-between cursor-move select-none" dir="ltr">
+      <!-- Left: Settings Sliders Icon + open.spotify.com -->
+      <div class="flex items-center gap-2.5 text-[#e5e5e5]">
+        <svg class="w-4 h-4 text-[#b3b3b3]" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 4.75A.75.75 0 0 1 2.75 4h2.5a.75.75 0 0 1 0 1.5h-2.5A.75.75 0 0 1 2 4.75zm7 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm1.75-.75a.75.75 0 0 0 0 1.5h2.5a.75.75 0 0 0 0-1.5h-2.5zM2 11.25a.75.75 0 0 1 .75-.75h6.5a.75.75 0 0 1 0 1.5h-6.5a.75.75 0 0 1-.75-.75zm11 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+        </svg>
+        <span class="text-[12px] font-medium tracking-tight text-white/90">open.spotify.com</span>
+      </div>
+
+      <!-- Right: Back to Tab (Expand) & Close Buttons -->
+      <div class="flex items-center gap-1">
+        <button id="btn-pip-compact-toggle" class="w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-[#b3b3b3] hover:text-white transition" title="العودة إلى علامة التبويب / تصغير">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+            <path d="M5 7L2 4M5 7H2.5M5 7V4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="btn-pip-close" class="O18Fj7ar4YTYwb_d0sB7 w-7 h-7 rounded-md hover:bg-[#e81123] flex items-center justify-center text-[#b3b3b3] hover:text-white transition" title="إغلاق المشغِّل المصغَّر">
+          <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon H7tNzJyGe3svPMlada30 w-3.5 h-3.5 fill-current" viewBox="0 0 16 16">
+            <path d="M2.47 2.47a.75.75 0 0 1 1.06 0L8 6.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L9.06 8l4.47 4.47a.75.75 0 1 1-1.06 1.06L8 9.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L6.94 8 2.47 3.53a.75.75 0 0 1 0-1.06"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main PiP Body (JQpolEIyZYKI45mcyx4H DtdEU6DW3N6BYDMA_78l) -->
+    <div class="JQpolEIyZYKI45mcyx4H DtdEU6DW3N6BYDMA_78l relative flex flex-col">
+
+      <!-- Upper Artwork Stage with Ambient Backdrop & Hover-Only Centered Controls -->
+      <div id="pip-cover-wrapper" class="bZbahvfcpU50g8Bgtnp7 xhpwNPYLJ1joMlibPObM Q3mj39rfFm5hTEOTvs_D relative w-full h-[268px] flex items-center justify-center overflow-hidden" data-testid="pip-hover-element" style="background: radial-gradient(circle at 50% 35%, #656d65 0%, #3a403a 55%, #121212 100%);">
+        
+        <!-- Centered Album Art Card -->
+        <div class="kE5TqNLSJBDg5PUxNsEu w-[212px] h-[212px] rounded-lg overflow-hidden shadow-[0_16px_40px_rgba(0,0,0,0.75)] relative z-10 transition-transform duration-500">
+          <img
+            id="pip-cover-img"
+            aria-hidden="false"
+            draggable="false"
+            loading="eager"
+            src="https://i.scdn.co/image/ab67616d0000aa54a0d99927dabb2a8fc5014760"
+            data-image-status="loaded"
+            data-testid="document-pip-cover-art"
+            alt="Wish I Never Met You - Prison Tapes"
+            class="L6IwYSgXPAr7UR5vlZSa QvWLxeGYFYVlpgyk_B7D TxO4cJyIggVYNxMM2az4 w-full h-full object-cover"
+            onerror="this.style.display='none'; document.getElementById('pip-fallback-svg').classList.remove('hidden');"
+          />
+          <div id="pip-fallback-svg" class="hidden w-full h-full"></div>
+        </div>
+
+        <!-- HOVER-ONLY OVERLAY ON TOP OF ARTWORK (Controls in Center + Progress Bar at Bottom of Art) -->
+        <div class="encore-over-media-set n7BS2oAfcAoFbbqZ2YkA pip-hover-reveal pip-art-dim absolute inset-0 z-20 flex flex-col justify-between p-3" dir="ltr" data-testid="document-pip-hover-element">
+          
+          <!-- Top spacer -->
+          <div class="h-4"></div>
+
+          <!-- Center Row: 6 Controls (Volume, Shuffle, Prev, Big White Play/Pause, Next, Repeat, Share) -->
+          <div class="kia0vSwLS5OGxfNkwx4I flex items-center justify-center gap-3 my-auto" dir="ltr" data-testid="document-pip-player-controls">
+            
+            <!-- 1. Volume Button + Floating Hover Slider -->
+            <div class="HqS2K5JW3dx5Of5VJu9w pip-vol-group relative flex items-center justify-center" data-testid="volume-bar" dir="ltr">
+              <button id="btn-pip-mute" aria-describedby="volume-icon" data-testid="volume-bar-toggle-mute-button" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 transition" aria-label="كتم الصوت" title="كتم الصوت" data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="presentation" aria-label="الصوت عالٍ" aria-hidden="false" class="e-101040-icon w-[18px] h-[18px] fill-current drop-shadow" id="volume-icon" viewBox="0 0 16 16">
+                  <path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8zm8.683 4.29V5.56a2.75 2.75 0 0 1 0 4.88"></path>
+                  <path d="M11.5 13.614a5.752 5.752 0 0 0 0-11.228v1.55a4.252 4.252 0 0 1 0 8.127z"></path>
+                </svg>
+              </button>
+              <!-- Popover Volume Slider -->
+              <div class="pip-vol-popover absolute -top-9 left-0 bg-[#181818]/95 border border-white/15 px-2.5 py-1.5 rounded-full shadow-xl w-24">
+                <div class="spotify-slider-container w-full">
+                  <div class="spotify-slider-bg">
+                    <div id="pip-vol-fill" class="spotify-slider-fill" style="width: 100%;"></div>
+                  </div>
+                  <div id="pip-vol-thumb" class="spotify-slider-thumb" style="left: 100%;"></div>
+                  <input id="pip-vol-input" type="range" min="0" max="100" value="100" class="spotify-range-input" aria-label="غيّر مستوى الصوت" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Shuffle -->
+            <div class="VfBE2GhDfGWMRcv2z0Gv">
+              <button id="btn-pip-shuffle" aria-disabled="false" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 transition" aria-label='تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"' title='تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"' data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-[18px] h-[18px] fill-current drop-shadow" viewBox="0 0 16 16">
+                  <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path>
+                  <path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 3. Skip Back -->
+            <div class="rViq4TGvzMQunoHYgDzh">
+              <button id="btn-pip-prev" data-testid="control-button-skip-back" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white hover:scale-110 transition" aria-label="السابق" title="السابق" data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-[19px] h-[19px] fill-current drop-shadow" viewBox="0 0 16 16">
+                  <path d="M3.3 1a.7.7 0 0 1 .7.7v5.15l9.95-5.744a.7.7 0 0 1 1.05.606v12.575a.7.7 0 0 1-1.05.607L4 9.149V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7a.7.7 0 0 1 .7-.7z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 4. Large White Play / Pause Circle Button (Centerpiece) -->
+            <div class="emmypqxN0Xp0bDur3XGm mx-0.5">
+              <button id="btn-pip-playpause" data-testid="control-button-playpause" aria-label="إيقاف مؤقّت" title="إيقاف مؤقّت / تشغيل" data-encore-id="buttonPrimary" class="w-14 h-14 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-[0_8px_24px_rgba(0,0,0,0.65)] transition">
+                <svg id="pip-playpause-svg" data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 5. Skip Forward -->
+            <div class="BBw8SfQz8Vw4K16sYqtx">
+              <button id="btn-pip-next" data-testid="control-button-skip-forward" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white hover:scale-110 transition" aria-label="التالي" title="التالي" data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-[19px] h-[19px] fill-current drop-shadow" viewBox="0 0 16 16">
+                  <path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 6. Repeat -->
+            <div class="fANmkEsldcYaDiDk5wJL">
+              <button id="btn-pip-repeat" data-testid="control-button-repeat" role="checkbox" aria-checked="false" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 transition" aria-label="تمكين إعادة الأغنية" title="تمكين إعادة الأغنية" data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-[18px] h-[18px] fill-current drop-shadow" viewBox="0 0 16 16">
+                  <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75z"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- 7. Share / Copy Link -->
+            <div class="e6TvsGvSQBbsCCow3_zi">
+              <button id="btn-pip-share" tabindex="0" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 transition" aria-label="نسخ رابط الأغنية" title="نسخ رابط الأغنية" data-encore-id="buttonTertiary">
+                <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-[18px] h-[18px] fill-current drop-shadow" viewBox="0 0 16 16">
+                  <path d="M1 5.75A.75.75 0 0 1 1.75 5H4v1.5H2.5v8h11v-8H12V5h2.25a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-.75.75H1.75a.75.75 0 0 1-.75-.75z"></path>
+                  <path d="M8 9.576a.75.75 0 0 0 .75-.75V2.903l1.454 1.454a.75.75 0 0 0 1.06-1.06L8 .03 4.735 3.296a.75.75 0 0 0 1.06 1.061L7.25 2.903v5.923c0 .414.336.75.75.75"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom of Artwork: Timestamps Above Full-Width Progress Bar (Matches Screenshot 100%) -->
+          <div class="cZt0NetQpFYjWZ5u640r w-full flex flex-col gap-1 px-0.5" dir="ltr">
+            <div class="flex items-center justify-between text-[11px] font-medium text-white/85 font-variant-numeric tabular-nums drop-shadow">
+              <span id="pip-current-time" class="Mm38FVy4i2GXLReeARxE">0:07</span>
+              <span id="pip-total-time" class="Nocfu_yQMHmVKO9vKYio">3:44</span>
+            </div>
+            <div class="KG1YN3LMLTz79IKcHGFk w-full spotify-slider-container h-3" data-testid="playback-progressbar">
+              <div class="spotify-slider-bg h-[4px] bg-white/35">
+                <div id="pip-seek-fill" class="spotify-slider-fill bg-white" style="width: 3.12%;"></div>
+              </div>
+              <div id="pip-seek-thumb" class="spotify-slider-thumb" style="left: 3.12%;"></div>
+              <input id="pip-seek-input" type="range" min="0" max="100" step="0.1" value="3.12" class="spotify-range-input" aria-label="غيّر تقدم الأغنية" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Lower Dark Footer Area: Plus Button on Left + Bold Title & Subdued Artist on Right (Matches Screenshot) -->
+      <div class="biYxJApyzc1MqhNhAglP y5KOtDDlL6Jcy0Q7Mg0t bg-[#0a0a0a] px-4 py-3.5 flex items-center justify-between gap-3 relative" dir="ltr">
+        
+        <!-- Left: Add to Liked Songs Plus-Circle Button -->
+        <div class="aMYFDEFgs5t4R9snXvSZ shrink-0">
+          <button id="btn-pip-add-liked" aria-checked="false" data-testid="add-button" class="e-101040-legacy-button e-101040-legacy-button-tertiary w-8 h-8 rounded-full hover:bg-white/10 hover:scale-110 flex items-center justify-center text-white/90 hover:text-white transition" aria-label='الإضافة إلى "أغانٍ أعجبتني"' title='الإضافة إلى "أغانٍ أعجبتني"' data-encore-id="buttonTertiary">
+            <span aria-hidden="true" class="e-101040-button__icon-wrapper">
+              <svg id="pip-add-svg" data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon w-6 h-6 fill-current" viewBox="0 0 24 24">
+                <path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path>
+                <path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>
+              </svg>
+            </span>
+          </button>
+        </div>
+
+        <!-- Right: Track Title (Bold Large) & Artist Subtitle (Right-aligned) -->
+        <div class="min-w-0 flex-1 flex flex-col items-end text-right overflow-hidden">
+          <div class="pIRf1dOxi5AFfcuAa15H w-full pip-title-mask overflow-hidden">
+            <div class="e-101040-text encore-text-title-small N80ibw2Kbah5PE2N2WTT text-[17px] font-extrabold text-white whitespace-nowrap tracking-tight" data-encore-id="text" data-testid="context-item-info-title">
+              <a id="pip-track-title" draggable="false" data-testid="context-item-link" href="#album-prison-tapes" class="hover:underline">Wish I Never Met You - Prison Tapes</a>
+            </div>
+          </div>
+          <div class="A2Hs2uQfC_nJgtItEPzg mt-0.5">
+            <div class="e-101040-text encore-text-body-small encore-internal-color-text-subdued text-[13px] font-medium text-[#b3b3b3] truncate" data-encore-id="text" data-testid="context-item-info-subtitles">
+              <a id="pip-track-artist" draggable="false" data-testid="context-item-info-track" href="#artist-tory-lanez" class="hover:underline hover:text-white">Tory Lanez</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom-Right Corner Resize Grip SVG (vwQfXi85aGQIF2dfBzSs) -->
+        <svg class="vwQfXi85aGQIF2dfBzSs absolute bottom-1 right-1 pointer-events-none opacity-50" width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="0.823223" y1="8.82322" x2="8.82322" y2="0.823223" stroke="white" stroke-width="0.75"></line>
+          <line x1="4.82322" y1="8.82322" x2="8.82322" y2="4.82322" stroke="white" stroke-width="0.75"></line>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOP GLOBAL NAVIGATION BAR ================= -->
+  <header class="h-16 px-4 flex items-center justify-between gap-4 shrink-0 bg-black z-30">
+    <!-- Right (in RTL): Logo & History Navigation -->
+    <div class="flex items-center gap-3 min-w-[200px]">
+      <button id="btn-brand-home" class="flex items-center gap-2 text-white hover:scale-105 transition-transform focus:outline-none" title="Spotify">
+        <svg class="w-8 h-8 fill-current text-[#1ed760]" viewBox="0 0 24 24">
+          <path d="M12.438 1.009C6.368.769 1.251 5.494 1.008 11.565c-.24 6.07 4.485 11.186 10.556 11.426 6.07.242 11.185-4.484 11.427-10.554S18.507 1.251 12.438 1.009m4.644 16.114a.657.657 0 0 1-.897.246 13.2 13.2 0 0 0-4.71-1.602 13.2 13.2 0 0 0-4.968.242.658.658 0 0 1-.31-1.278 14.5 14.5 0 0 1 5.46-.265c1.837.257 3.579.851 5.177 1.76.315.178.425.58.246.896zm1.445-2.887a.853.853 0 0 1-1.158.344 16.2 16.2 0 0 0-5.475-1.797 16.2 16.2 0 0 0-5.758.219.855.855 0 0 1-1.018-.65.85.85 0 0 1 .65-1.018 17.9 17.9 0 0 1 6.362-.241 17.9 17.9 0 0 1 6.049 1.985c.415.224.57.743.344 1.158zm1.602-3.255a1.05 1.05 0 0 1-1.418.448 19.7 19.7 0 0 0-6.341-2.025 19.6 19.6 0 0 0-6.655.199 1.05 1.05 0 1 1-.417-2.06 21.7 21.7 0 0 1 7.364-.22 21.7 21.7 0 0 1 7.019 2.24c.515.268.715.903.448 1.418"/>
+        </svg>
+        <span class="font-extrabold text-base tracking-tight hidden sm:inline">Spotify</span>
+      </button>
+
+      <div class="hidden sm:flex items-center gap-2 mr-2">
+        <button id="btn-nav-back" class="w-8 h-8 rounded-full bg-[#1f1f1f] hover:bg-[#282828] flex items-center justify-center text-[#b3b3b3] hover:text-white transition" title="رجوع">
+          <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
+        <button id="btn-nav-forward" class="w-8 h-8 rounded-full bg-[#1f1f1f] hover:bg-[#282828] flex items-center justify-center text-[#b3b3b3] hover:text-white transition" title="تقدم">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center: Home Pill + Omni Search Bar -->
+    <div class="flex items-center gap-2 flex-1 max-w-xl justify-center">
+      <button id="btn-home-pill" class="w-12 h-12 rounded-full bg-[#1f1f1f] hover:bg-[#2a2a2a] hover:scale-105 transition flex items-center justify-center text-white shrink-0" title="الصفحة الرئيسية">
+        <i data-lucide="home" class="w-6 h-6"></i>
+      </button>
+
+      <div class="relative flex-1 max-w-md group">
+        <div class="flex items-center w-full h-12 rounded-full bg-[#1f1f1f] hover:bg-[#2a2a2a] focus-within:bg-[#242424] focus-within:ring-2 focus-within:ring-white transition px-3.5 gap-3">
+          <i data-lucide="search" class="w-5 h-5 text-[#b3b3b3] group-hover:text-white shrink-0"></i>
+          <input
+            id="global-search-input"
+            type="text"
+            placeholder="ماذا تريد أن تشغّل؟"
+            class="bg-transparent border-none outline-none text-sm text-white placeholder-[#b3b3b3] w-full font-medium"
+          />
+          <button id="btn-clear-search" class="hidden text-[#b3b3b3] hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+          <div class="h-5 w-[1px] bg-[#3e3e3e] shrink-0"></div>
+          <button id="btn-browse-triggers" class="text-[#b3b3b3] hover:text-white hover:scale-105 transition shrink-0" title="تصفح الفئات">
+            <i data-lucide="compass" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left (in RTL): PiP Toggle, Splash Toggle, Design System & Profile -->
+    <div class="flex items-center gap-2 sm:gap-2.5 justify-end">
+      <button id="btn-toggle-pip-header" class="flex items-center gap-1.5 h-8 px-3.5 rounded-full bg-[#1ed760] text-black hover:bg-[#3be477] text-xs font-extrabold transition hover:scale-105 shadow-md" title="إظهار / إخفاء المشغِّل المصغَّر (Document PiP)">
+        <i data-lucide="picture-in-picture-2" class="w-3.5 h-3.5"></i>
+        <span>المشغِّل المصغَّر (PiP)</span>
+      </button>
+
+      <button id="btn-trigger-splash" class="hidden lg:flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#1f1f1f] hover:bg-[#282828] text-white text-xs font-bold transition" title="معاينة شاشة التحميل الأصلية">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#1ed760]"></i>
+        <span>Splash UI</span>
+      </button>
+
+      <button id="btn-open-design-tokens" class="hidden md:flex items-center gap-1.5 h-8 px-3 rounded-full bg-[#1ed760]/15 border border-[#1ed760]/40 text-[#1ed760] hover:bg-[#1ed760] hover:text-black text-xs font-bold transition">
+        <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+        <span>Encore Tokens</span>
+      </button>
+
+      <button id="btn-explore-premium" class="hidden xl:flex items-center h-8 px-4 rounded-full bg-white text-black hover:bg-neutral-200 hover:scale-105 text-xs font-bold transition">
+        استكشاف اشتراك Premium
+      </button>
+
+      <button id="btn-user-profile" class="w-8 h-8 rounded-full bg-[#282828] p-1 hover:scale-105 transition flex items-center justify-center" title="الملف الشخصي">
+        <div class="w-full h-full rounded-full bg-gradient-to-tr from-[#1ed760] to-emerald-700 text-black font-extrabold text-xs flex items-center justify-center">
+          M
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN 3-PANE WORKSPACE ================= -->
+  <div class="flex-1 flex gap-2 px-2 overflow-hidden min-h-0">
+
+    <!-- 1. SIDEBAR: YOUR LIBRARY (مكتبتك) -->
+    <aside id="left-library-pane" class="w-72 lg:w-80 bg-[#121212] rounded-lg flex flex-col overflow-hidden shrink-0 transition-all duration-200">
+      <div class="p-3 pb-2 flex flex-col gap-3 shadow-md z-10">
+        <div class="flex items-center justify-between px-1">
+          <button id="btn-toggle-library" class="flex items-center gap-3 text-[#b3b3b3] hover:text-white font-bold text-base transition group" title="طي أو توسيع مكتبتك">
+            <i data-lucide="library" class="w-6 h-6 text-[#b3b3b3] group-hover:text-white"></i>
+            <span class="library-label">مكتبتك</span>
+          </button>
+          <div class="flex items-center gap-1 library-actions">
+            <button id="btn-create-playlist" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#1f1f1f] hover:bg-[#282828] text-white text-xs font-bold transition" title="إنشاء قائمة تشغيل">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>إنشاء</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Library Filter Chips -->
+        <div id="library-filter-chips" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <button data-lib-filter="all" class="lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-white text-black transition shrink-0">الكل</button>
+          <button data-lib-filter="Playlist" class="lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white transition shrink-0">قوائم التشغيل</button>
+          <button data-lib-filter="Album" class="lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white transition shrink-0">الألبومات</button>
+          <button data-lib-filter="Artist" class="lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white transition shrink-0">الفنانون</button>
+        </div>
+
+        <!-- Library Search & Sort Row -->
+        <div class="flex items-center justify-between px-1 text-xs text-[#b3b3b3] library-search-row gap-2">
+          <div class="flex items-center bg-[#1f1f1f] rounded-md px-2 py-1 flex-1">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-[#b3b3b3] ml-1.5"></i>
+            <input id="library-search-input" type="text" placeholder="ابحث في مكتبتك" class="bg-transparent border-none outline-none text-xs text-white placeholder-[#b3b3b3] w-full" />
+          </div>
+          <button id="btn-cycle-lib-sort" class="flex items-center gap-1 hover:text-white font-medium shrink-0">
+            <span id="lib-sort-label">الأخيرة</span>
+            <i data-lucide="list" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Library Scrollable List -->
+      <div id="library-list-container" class="flex-1 overflow-y-auto px-2 pb-4 space-y-1"></div>
+    </aside>
+
+    <!-- 2. CENTER MAIN VIEWPORT -->
+    <main id="center-viewport" class="flex-1 bg-[#121212] rounded-lg overflow-y-auto relative min-w-0">
+      <!-- Dynamic Ambient Top Gradient -->
+      <div id="main-gradient-overlay" class="absolute inset-x-0 top-0 h-80 pointer-events-none opacity-75" style="background: linear-gradient(180deg, #4E554E 0%, #121212 100%);"></div>
+
+      <!-- Sticky Top Category Filter Bar -->
+      <div id="home-sticky-filters" class="sticky top-0 z-20 px-6 py-3.5 flex items-center justify-between bg-[#121212]/80 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+          <button data-home-tab="all" class="home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-black transition">الكل</button>
+          <button data-home-tab="music" class="home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#ffffff14] hover:bg-[#ffffff24] text-white transition">موسيقى</button>
+          <button data-home-tab="pip-showcase" class="home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#1ed760]/20 border border-[#1ed760]/40 text-[#1ed760] hover:bg-[#1ed760] hover:text-black transition">عرض المشغِّل المصغَّر (PiP Studio)</button>
+          <button data-home-tab="liked" class="home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#ffffff14] hover:bg-[#ffffff24] text-white transition">أغانٍ أعجبتني</button>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 text-xs text-[#b3b3b3]">
+          <span class="w-2 h-2 rounded-full bg-[#1ed760] animate-pulse"></span>
+          <span dir="ltr">encore-dark-theme • #4E554E</span>
+        </div>
+      </div>
+
+      <!-- Dynamic View Container -->
+      <div id="view-content" class="relative z-10 px-6 pb-12"></div>
+    </main>
+
+    <!-- 3. RIGHT SIDEBAR: NOW PLAYING VIEW & QUEUE / LYRICS -->
+    <aside id="right-now-playing-pane" class="hidden xl:flex w-80 bg-[#121212] rounded-lg flex-col overflow-hidden shrink-0">
+      <div class="p-3.5 flex items-center justify-between border-b border-[#282828]">
+        <div class="flex items-center gap-1 bg-[#181818] p-1 rounded-full">
+          <button data-right-tab="nowplaying" class="right-tab-btn px-3 py-1 rounded-full text-xs font-bold bg-[#282828] text-white transition">قيد التشغيل</button>
+          <button data-right-tab="queue" class="right-tab-btn px-3 py-1 rounded-full text-xs font-bold text-[#b3b3b3] hover:text-white transition">قائمة الانتظار</button>
+          <button data-right-tab="lyrics" class="right-tab-btn px-3 py-1 rounded-full text-xs font-bold text-[#b3b3b3] hover:text-white transition">الكلمات</button>
+        </div>
+        <button id="btn-close-right-pane" class="w-7 h-7 rounded-full hover:bg-[#282828] flex items-center justify-center text-[#b3b3b3] hover:text-white transition" title="إخفاء اللوحة">
+          <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div id="right-pane-body" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+    </aside>
+
+  </div>
+
+  <!-- ================= BOTTOM PERSISTENT PLAYER BAR (EXACT ENCORE SVG ICONS) ================= -->
+  <footer class="h-[88px] px-4 bg-black flex items-center justify-between gap-4 shrink-0 z-30 border-t border-[#181818]" dir="ltr">
+
+    <!-- Left: Active Track Artwork, Title, Artist & Add to Liked Songs Button -->
+    <div class="flex items-center gap-3.5 min-w-[180px] w-[30%] max-w-[340px]">
+      <div id="player-art-box" class="w-14 h-14 rounded-md overflow-hidden shadow-lg shrink-0 relative group cursor-pointer bg-[#282828]">
+        <img id="bottom-player-img" src="https://i.scdn.co/image/ab67616d0000aa54a0d99927dabb2a8fc5014760" alt="" class="w-full h-full object-cover" />
+      </div>
+      <div class="min-w-0 flex-1">
+        <div id="player-track-title" class="text-sm font-bold text-white truncate hover:underline cursor-pointer">Wish I Never Met You - Prison Tapes</div>
+        <div id="player-track-artist" class="text-xs text-[#b3b3b3] truncate hover:underline hover:text-white cursor-pointer">Tory Lanez</div>
+      </div>
+      <button id="btn-player-like" class="text-[#b3b3b3] hover:text-white hover:scale-110 transition shrink-0" title='الإضافة إلى "أغانٍ أعجبتني"'>
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path>
+          <path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Center: Exact Spotify Encore Transport Controls + Seek Bar (1:57 / 3:44) -->
+    <div class="flex flex-col items-center max-w-[620px] w-[40%] gap-1.5">
+      <div class="flex items-center gap-5">
+        <button id="btn-shuffle" class="text-[#b3b3b3] hover:text-white transition relative" title='تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"'>
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+            <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path>
+            <path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path>
+          </svg>
+          <span id="shuffle-dot" class="hidden w-1 h-1 rounded-full bg-[#1ed760] absolute -bottom-1.5 left-1/2 -translate-x-1/2"></span>
+        </button>
+
+        <button id="btn-prev" class="text-[#b3b3b3] hover:text-white transition" title="السابق">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+            <path d="M3.3 1a.7.7 0 0 1 .7.7v5.15l9.95-5.744a.7.7 0 0 1 1.05.606v12.575a.7.7 0 0 1-1.05.607L4 9.149V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7a.7.7 0 0 1 .7-.7z"></path>
+          </svg>
+        </button>
+
+        <button id="btn-play-pause" class="w-8 h-8 rounded-full bg-white hover:scale-105 active:scale-95 text-black flex items-center justify-center transition shadow-md" title="إيقاف مؤقّت / تشغيل">
+          <svg id="bottom-playpause-svg" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>
+          </svg>
+        </button>
+
+        <button id="btn-next" class="text-[#b3b3b3] hover:text-white transition" title="التالي">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+            <path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7z"></path>
+          </svg>
+        </button>
+
+        <button id="btn-repeat" class="text-[#b3b3b3] hover:text-white transition relative" title="تمكين إعادة الأغنية">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+            <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75z"></path>
+          </svg>
+          <span id="repeat-dot" class="hidden w-1 h-1 rounded-full bg-[#1ed760] absolute -bottom-1.5 left-1/2 -translate-x-1/2"></span>
+        </button>
+      </div>
+
+      <!-- Progress Scrubber -->
+      <div class="w-full flex items-center gap-2">
+        <span id="player-current-time" class="text-[11px] text-[#b3b3b3] w-9 text-right font-variant-numeric tabular-nums">1:57</span>
+        <div class="spotify-slider-container flex-1">
+          <div class="spotify-slider-bg">
+            <div id="seek-fill" class="spotify-slider-fill" style="width: 52.71%;"></div>
+          </div>
+          <div id="seek-thumb" class="spotify-slider-thumb" style="left: 52.71%;"></div>
+          <input id="seek-input" type="range" min="0" max="100" step="0.1" value="52.71" class="spotify-range-input" aria-label="غيّر تقدم الأغنية" />
+        </div>
+        <span id="player-total-time" class="text-[11px] text-[#b3b3b3] w-9 font-variant-numeric tabular-nums">3:44</span>
+      </div>
+    </div>
+
+    <!-- Right: Utility Controls (Now Playing, Lyrics, Queue, Volume, Mini-Player Toggle) -->
+    <div class="flex items-center justify-end gap-3 min-w-[180px] w-[30%]">
+      <button id="btn-bottom-nowplaying" class="text-[#1ed760] hover:scale-105 transition hidden sm:inline-flex" title="عرض قيد التشغيل">
+        <i data-lucide="square-play" class="w-4 h-4"></i>
+      </button>
+      <button id="btn-bottom-lyrics" class="text-[#b3b3b3] hover:text-white transition hidden sm:inline-flex" title="الكلمات">
+        <i data-lucide="mic-vocal" class="w-4 h-4"></i>
+      </button>
+      <button id="btn-bottom-queue" class="text-[#b3b3b3] hover:text-white transition hidden sm:inline-flex" title="قائمة الانتظار">
+        <i data-lucide="list-music" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Volume Control -->
+      <div class="flex items-center gap-2 w-24">
+        <button id="btn-mute" class="text-[#b3b3b3] hover:text-white transition shrink-0" title="كتم الصوت">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+            <path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8zm8.683 4.29V5.56a2.75 2.75 0 0 1 0 4.88"></path>
+            <path d="M11.5 13.614a5.752 5.752 0 0 0 0-11.228v1.55a4.252 4.252 0 0 1 0 8.127z"></path>
+          </svg>
+        </button>
+        <div class="spotify-slider-container flex-1">
+          <div class="spotify-slider-bg">
+            <div id="volume-fill" class="spotify-slider-fill" style="width: 100%;"></div>
+          </div>
+          <div id="volume-thumb" class="spotify-slider-thumb" style="left: 100%;"></div>
+          <input id="volume-input" type="range" min="0" max="100" value="100" class="spotify-range-input" aria-label="غيّر مستوى الصوت" />
+        </div>
+      </div>
+
+      <!-- Bottom Mini-Player Toggle Icon -->
+      <button id="btn-bottom-pip-toggle" class="text-[#1ed760] hover:text-white transition" title="فتح المشغِّل المصغَّر (Mini Player)">
+        <i data-lucide="picture-in-picture-2" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+  </footer>
+
+  <!-- ================= CREATE PLAYLIST MODAL ================= -->
+  <div id="modal-create-playlist" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-[#282828] border border-[#3e3e3e] rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-white">إنشاء قائمة تشغيل جديدة</h3>
+        <button id="btn-close-playlist-modal" class="text-[#b3b3b3] hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-[#b3b3b3] mb-1">اسم القائمة</label>
+          <input id="input-playlist-name" type="text" placeholder="ميكس R&B الخاص بي" class="w-full h-10 px-3 rounded-md bg-[#3e3e3e] text-white text-sm outline-none focus:ring-2 focus:ring-[#1ed760]" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-[#b3b3b3] mb-1">الوصف</label>
+          <input id="input-playlist-desc" type="text" placeholder="أضف وصفاً اختيارياً" class="w-full h-10 px-3 rounded-md bg-[#3e3e3e] text-white text-sm outline-none focus:ring-2 focus:ring-[#1ed760]" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btn-cancel-playlist-modal" class="px-4 py-2 rounded-full text-xs font-bold text-white hover:bg-[#3e3e3e] transition">إلغاء</button>
+        <button id="btn-save-playlist-modal" class="px-6 py-2 rounded-full text-xs font-bold bg-[#1ed760] hover:bg-[#3be477] text-black transition hover:scale-105">إنشاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOAST NOTIFICATION ================= -->
+  <div id="spotify-toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-lg bg-[#2e77d0] text-white text-sm font-semibold shadow-2xl pointer-events-none opacity-0 transition-opacity duration-200">
+    تمت الإضافة إلى "أغانٍ أعجبتني"
+  </div>
+
+  <!-- ================= APPLICATION LOGIC ================= -->
+  <script>
+    // SVG Paths from the exact DOM snippet
+    const SVG_PLAY_PATH = '<path d="m7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606z"></path>';
+    const SVG_PAUSE_PATH = '<path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>';
+    const SVG_ADD_PLUS_CIRCLE = '<path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path><path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>';
+    const SVG_ADDED_CHECK_CIRCLE = '<path fill="#1ed760" d="M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11-4.925 11-11 11S1 18.075 1 12zm16.28-2.72a.75.75 0 0 0-1.06-1.06l-5.47 5.47-2.47-2.47a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l6-6z"></path>';
+
+    // ---------- 1. GROUNDED SPOTIFY DATASET (INCLUDING EXACT TORY LANEZ TRACK & R&B MIX) ----------
+    const COLLECTIONS = [
+      {
+        id: 'pl-rnb',
+        title: 'ميكس R&B',
+        subtitle: 'قائمة تشغيل • Spotify',
+        type: 'Playlist',
+        description: 'أفضل أغاني R&B المختارة لك، تتضمن Wish I Never Met You - Prison Tapes لـ Tory Lanez.',
+        color: '#4E554E',
+        gradient: 'linear-gradient(135deg, #4E554E 0%, #191414 100%)',
+        coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a0d99927dabb2a8fc5014760',
+        followers: '4,812,900 حفظ',
+        badge: 'R&B MIX'
+      },
+      {
+        id: 'al-prison-tapes',
+        title: 'Wish I Never Met You - Prison Tapes',
+        subtitle: 'ألبوم • Tory Lanez',
+        type: 'Album',
+        description: 'الإصدار الأصلي من سلسلة Prison Tapes — Tory Lanez (/intl-ar/album/4TLl0R69HVTnS5FWdZ0fOQ).',
+        color: '#4E554E',
+        gradient: 'linear-gradient(135deg, #4E554E 0%, #939B93 100%)',
+        coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a0d99927dabb2a8fc5014760',
+        followers: '2024 • 3:44',
+        badge: 'PRISON TAPES'
+      },
+      {
+        id: 'ar-tory',
+        title: 'Tory Lanez',
+        subtitle: 'فنان • موثّق',
+        type: 'Artist',
+        description: 'الفنان Tory Lanez (/intl-ar/artist/2jku7tDXc6XoB6MO2hFuqg) — R&B & Hip-Hop.',
+        color: '#939B93',
+        gradient: 'linear-gradient(135deg, #4E554E 0%, #121212 100%)',
+        coverUrl: 'https://i.scdn.co/image/ab67616d0000aa54a0d99927dabb2a8fc5014760',
+        followers: '26,400,000 مستمع شهرياً',
+        badge: 'ARTIST'
+      },
+      {
+        id: 'pl-1',
+        title: 'Today’s Top Hits',
+        subtitle: 'قائمة تشغيل • Spotify',
+        type: 'Playlist',
+        description: 'أقوى 50 أغنية متصدرة عالمياً اليوم على مشغل Spotify Web Player.',
+        color: '#1ed760',
+        gradient: 'linear-gradient(135deg, #0f9b4c 0%, #191414 100%)',
+        followers: '34,892,140 حفظ',
+        badge: 'TOP 50'
+      },
+      {
+        id: 'pl-2',
+        title: 'Synthwave Nightdrive',
+        subtitle: 'قائمة تشغيل • Encore Editorial',
+        type: 'Playlist',
+        description: 'موسيقى إلكترونية ليلية للتركيز والبرمجة والقيادة الليلية.',
+        color: '#8b5cf6',
+        gradient: 'linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)',
+        followers: '1,420,890 حفظ',
+        badge: 'SYNTH'
+      },
+      {
+        id: 'pl-4',
+        title: 'أفضل الأغاني العربية',
+        subtitle: 'قائمة تشغيل • الشرق الأوسط',
+        type: 'Playlist',
+        description: 'أحدث الإصدارات والأغاني الأكثر استماعاً في مصر والعالم العربي.',
+        color: '#f59e0b',
+        gradient: 'linear-gradient(135deg, #d97706 0%, #7c2d12 100%)',
+        followers: '1,589,400 حفظ',
+        badge: 'ARABIC'
+      }
+    ];
+
+    const TRACKS = [
+      {
+        id: 't-tory-1',
+        title: 'Wish I Never Met You - Prison Tapes',
+        artist: 'Tory Lanez',
+        album: 'Wish I Never Met You - Prison Tapes',
+        albumUrl: '/intl-ar/album/4TLl0R69HVTnS5FWdZ0fOQ',
+        artistUrl: '/intl-ar/artist/2jku7tDXc6XoB6MO2hFuqg',
+        coverUrl: 'https://i.scdn.co/image/ab67616d0000b273a0d99927dabb2a8fc5014760',
+        collectionId: 'pl-rnb',
+        durationSec: 224, // 224309 ms = 3:44
+        durationStr: '3:44',
+        plays: '48,912,430',
+        color: '#4E554E',
+        liked: false,
+        freq: [220, 261.63, 329.63, 392],
+        lyrics: [
+          'Wish I never met you in the first place',
+          'Late night reflections from the Prison Tapes',
+          'Every memory echoing inside the room',
+          'Trying to find a way out of the gloom',
+          'Streaming in Spotify Document PiP Mini-Player',
+          'Encore dark theme #4E554E contrast #939B93'
+        ]
+      },
+      {
+        id: 't-tory-2',
+        title: 'The Color Violet',
+        artist: 'Tory Lanez',
+        album: 'Alone At Prom',
+        collectionId: 'pl-rnb',
+        coverUrl: 'https://i.scdn.co/image/ab67616d0000aa54a0d99927dabb2a8fc5014760',
+        durationSec: 226,
+        durationStr: '3:46',
+        plays: '892,415,880',
+        color: '#7c3aed',
+        liked: true,
+        freq: [196, 246.94, 293.66, 392],
+        lyrics: [
+          'I took a left on Lafayette',
+          'Violet skies I cannot forget',
+          'Running through the 80s synth horizon',
+          'Waiting for the sun to start rising'
+        ]
+      },
+      {
+        id: 't-1',
+        title: 'Midnight City Synth',
+        artist: 'Aurora Pulse',
+        album: 'Synthwave Nightdrive',
+        collectionId: 'pl-2',
+        durationSec: 222,
+        durationStr: '3:42',
+        plays: '184,920,411',
+        color: '#8b5cf6',
+        liked: true,
+        freq: [220, 277.18, 329.63, 440],
+        lyrics: [
+          'Neon reflections on the wet asphalt',
+          'Chasing horizons through the midnight vault',
+          'Analog heartbeats in a digital stream',
+          'Running forever inside the green dream'
+        ]
+      },
+      {
+        id: 't-3',
+        title: 'Nile Breeze Nocturne',
+        artist: 'Layla Mansour & The Oud Collective',
+        album: 'أفضل الأغاني العربية',
+        collectionId: 'pl-4',
+        durationSec: 254,
+        durationStr: '4:14',
+        plays: '45,112,309',
+        color: '#f59e0b',
+        liked: false,
+        freq: [261.63, 311.13, 392, 523.25],
+        lyrics: [
+          'أضواء النيل تلمع في المساء',
+          'ألحان شرقية تمتزج بالصفاء',
+          'نسمات الليل تحمل كل الذكريات'
+        ]
+      },
+      {
+        id: 't-5',
+        title: 'Electric Mirage',
+        artist: 'Aurora Pulse feat. Luna V',
+        album: 'Today’s Top Hits',
+        collectionId: 'pl-1',
+        durationSec: 209,
+        durationStr: '3:29',
+        plays: '310,504,900',
+        color: '#1ed760',
+        liked: true,
+        freq: [246.94, 311.13, 369.99, 493.88],
+        lyrics: [
+          'Strobe lights flashing in the crowded hall',
+          'Feel the bassline vibrating the wall'
+        ]
+      }
+    ];
+
+    const BROWSE_CATEGORIES = [
+      { name: 'ميكس R&B', color: '#4E554E', tag: 'R&B MIX' },
+      { name: 'موسيقى', color: '#dc148c', tag: 'POP & HITS' },
+      { name: 'بودكاست', color: '#006450', tag: 'SHOWS' },
+      { name: 'الفعاليات المباشرة', color: '#8400e7', tag: 'CONCERTS' },
+      { name: 'مُعدّة من أجلك', color: '#1e3264', tag: 'PERSONALIZED' },
+      { name: 'الإصدارات الجديدة', color: '#e8115b', tag: 'FRESH' },
+      { name: 'أغاني عربية', color: '#b49bc8', tag: 'MENA' },
+      { name: 'التركيز والبرمجة', color: '#503750', tag: 'AMBIENT' }
+    ];
+
+    const ENCORE_TOKENS = [
+      { name: '--background-base (PiP)', hex: '#4E554E', role: 'خلفية مشغل PiP المصغر المستخرجة من غلاف Tory Lanez' },
+      { name: '--background-base-min-contrast', hex: '#939B93', role: 'تباين عناصر المشغل المصغر (pip-hover-element)' },
+      { name: '--spotify-green', hex: '#1ed760', role: 'اللون الأخضر الأساسي لعلامة Spotify وأزرار التشغيل' },
+      { name: '--near-black', hex: '#121212', role: 'الخلفية الأساسية للواجهة (Encore Dark Theme)' },
+      { name: '--dark-surface', hex: '#181818', role: 'خلفية البطاقات والمشغل المصغر' },
+      { name: '--mid-dark', hex: '#1f1f1f', role: 'حقل البحث والأزرار الكبسولية (Pill Buttons)' },
+      { name: '--tinted-hover', hex: '#282828', role: 'حالة التمرير والبطاقات النشطة' },
+      { name: '--text-white', hex: '#ffffff', role: 'النصوص والعناوين الرئيسية' },
+      { name: '--text-subdued', hex: '#b3b3b3', role: 'النصوص الثانوية (encore-internal-color-text-subdued)' }
+    ];
+
+    // ---------- 2. STATE MODEL (INITIALIZED TO EXACT USER SNIPPET VALUES) ----------
+    const state = {
+      currentView: 'home', // 'home' | 'collection' | 'search' | 'design-system'
+      homeTab: 'all',      // 'all' | 'music' | 'pip-showcase' | 'liked'
+      selectedCollectionId: 'pl-rnb',
+      searchQuery: '',
+      libraryFilter: 'all',
+      librarySearch: '',
+      librarySortIndex: 0,
+      libraryCollapsed: false,
+      rightPaneOpen: true,
+      rightPaneTab: 'nowplaying',
+      currentTrackId: 't-tory-1',
+      isPlaying: true,
+      currentTimeSec: 7, // 118235 ms / 224309 ms -> 1:57 / 3:44 (52.71%)
+      volume: 100,         // value="1" -> 100%
+      isMuted: false,
+      isShuffle: false,
+      isRepeat: false,
+      pipOpen: true,
+      pipCompact: false,
+      pipUpsellVisible: true,
+      audioEnabled: true
+    };
+
+    const LIB_SORT_MODES = ['الأخيرة', 'أبجدياً', 'المنشئ'];
+    let playbackInterval = null;
+    let audioCtx = null;
+
+    // ---------- 3. WEB AUDIO SYNTHESIS ----------
+    function playSubtleMusicalPulse(track) {
+      if (!state.audioEnabled || state.isMuted || state.volume === 0) return;
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const notes = track.freq || [220, 261.63, 329.63];
+        const noteFreq = notes[Math.floor(Math.random() * notes.length)];
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(noteFreq, now);
+
+        const volScale = (state.volume / 100) * 0.025;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.001, volScale), now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.65);
+      } catch (e) {}
+    }
+
+    // ---------- 4. HELPER UTILITIES ----------
+    function formatTime(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      return m + ':' + (rem < 10 ? '0' : '') + rem;
+    }
+
+    function getCurrentTrack() {
+      return TRACKS.find(t => t.id === state.currentTrackId) || TRACKS[0];
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('spotify-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 2400);
+    }
+
+    function generateArtworkHTML(item, sizeClass = 'w-full h-full') {
+      if (item.coverUrl) {
+        return `<img src="${item.coverUrl}" alt="${item.title}" class="${sizeClass} object-cover" onerror="this.style.display='none'" />`;
+      }
+      const initials = item.title.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+      const grad = item.gradient || `linear-gradient(135deg, ${item.color || '#4E554E'}, #181818)`;
+      return `
+        <div class="${sizeClass} relative flex flex-col justify-between p-3 overflow-hidden select-none" style="background: ${grad};">
+          <div class="flex items-center justify-between w-full z-10">
+            <svg class="w-4 h-4 fill-current text-white/90" viewBox="0 0 24 24">
+              <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02z"/>
+            </svg>
+            <span class="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded bg-black/40 text-white/90">${item.badge || 'SPOTIFY'}</span>
+          </div>
+          <div class="my-auto flex items-center justify-center z-10">
+            <span class="text-2xl font-black tracking-tighter text-white/90 drop-shadow">${initials}</span>
+          </div>
+          <div class="z-10">
+            <div class="text-[11px] font-extrabold text-white leading-tight truncate drop-shadow">${item.title}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setAmbientColor(hex) {
+      const overlay = document.getElementById('main-gradient-overlay');
+      if (overlay && hex) {
+        overlay.style.background = `linear-gradient(180deg, ${hex}88 0%, #121212 100%)`;
+      }
+    }
+
+    // ---------- 5. RENDER LIBRARY SIDEBAR ----------
+    function renderLibrary() {
+      const container = document.getElementById('library-list-container');
+      if (!container) return;
+
+      let items = [...COLLECTIONS];
+      if (state.libraryFilter !== 'all') {
+        items = items.filter(c => c.type === state.libraryFilter);
+      }
+      if (state.librarySearch.trim() !== '') {
+        const q = state.librarySearch.toLowerCase();
+        items = items.filter(c => c.title.toLowerCase().includes(q) || c.subtitle.toLowerCase().includes(q));
+      }
+
+      const likedCount = TRACKS.filter(t => t.liked).length;
+      const isLikedActive = state.currentView === 'home' && state.homeTab === 'liked';
+
+      let html = `
+        <div data-action="open-liked" class="flex items-center gap-3 p-2 rounded-md cursor-pointer transition ${isLikedActive ? 'bg-[#282828]' : 'hover:bg-[#1f1f1f]'}">
+          <div class="w-12 h-12 rounded-md bg-gradient-to-br from-[#450af5] via-[#8e8ee5] to-[#c4efd9] flex items-center justify-center shrink-0 shadow">
+            <i data-lucide="heart" class="w-5 h-5 text-white fill-current"></i>
+          </div>
+          ${state.libraryCollapsed ? '' : `
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-bold text-white truncate">أغانٍ أعجبتني</div>
+              <div class="text-xs text-[#b3b3b3] truncate flex items-center gap-1">
+                <i data-lucide="pin" class="w-3 h-3 text-[#1ed760] rotate-45 fill-current"></i>
+                <span>قائمة تشغيل • ${likedCount} أغاني</span>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      items.forEach(col => {
+        const isActive = state.currentView === 'collection' && state.selectedCollectionId === col.id;
+        const isCurrentCollectionPlaying = state.isPlaying && getCurrentTrack().collectionId === col.id;
+        const radiusClass = col.type === 'Artist' ? 'rounded-full' : 'rounded-md';
+
+        html += `
+          <div data-collection-id="${col.id}" class="library-item flex items-center justify-between gap-3 p-2 rounded-md cursor-pointer transition ${isActive ? 'bg-[#282828]' : 'hover:bg-[#1f1f1f]'}">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="w-12 h-12 ${radiusClass} overflow-hidden shrink-0 shadow bg-[#282828]">
+                ${generateArtworkHTML(col)}
+              </div>
+              ${state.libraryCollapsed ? '' : `
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-bold truncate ${isCurrentCollectionPlaying ? 'text-[#1ed760]' : 'text-white'}">${col.title}</div>
+                  <div class="text-xs text-[#b3b3b3] truncate">${col.subtitle}</div>
+                </div>
+              `}
+            </div>
+            ${(!state.libraryCollapsed && isCurrentCollectionPlaying) ? `
+              <i data-lucide="volume-2" class="w-4 h-4 text-[#1ed760] shrink-0 ml-1"></i>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+
+      const likedRow = container.querySelector('[data-action="open-liked"]');
+      if (likedRow) {
+        likedRow.addEventListener('click', () => {
+          state.currentView = 'home';
+          state.homeTab = 'liked';
+          updateHomeFilterChips();
+          renderMainView();
+          renderLibrary();
+        });
+      }
+
+      container.querySelectorAll('.library-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const cid = el.getAttribute('data-collection-id');
+          navigateTo('collection', { collectionId: cid });
+        });
+      });
+
+      lucide.createIcons();
+    }
+
+    // ---------- 6. RENDER MAIN CENTER VIEWPORT ----------
+    function renderMainView() {
+      const container = document.getElementById('view-content');
+      const stickyFilters = document.getElementById('home-sticky-filters');
+      if (!container) return;
+
+      if (state.currentView === 'home') {
+        stickyFilters.classList.remove('hidden');
+        renderHomeView(container);
+      } else if (state.currentView === 'collection') {
+        stickyFilters.classList.add('hidden');
+        renderCollectionView(container);
+      } else if (state.currentView === 'search') {
+        stickyFilters.classList.add('hidden');
+        renderSearchView(container);
+      } else if (state.currentView === 'design-system') {
+        stickyFilters.classList.add('hidden');
+        renderDesignSystemView(container);
+      }
+
+      lucide.createIcons();
+    }
+
+    function renderHomeView(container) {
+      const activeTrack = getCurrentTrack();
+
+      if (state.homeTab === 'liked') {
+        const likedTracks = TRACKS.filter(t => t.liked);
+        setAmbientColor('#450af5');
+        container.innerHTML = `
+          <div class="pt-2 pb-6 flex flex-col sm:flex-row items-start sm:items-end gap-6">
+            <div class="w-40 h-40 rounded-lg bg-gradient-to-br from-[#450af5] via-[#8e8ee5] to-[#c4efd9] shadow-2xl flex items-center justify-center shrink-0">
+              <i data-lucide="heart" class="w-16 h-16 text-white fill-current"></i>
+            </div>
+            <div class="space-y-2">
+              <span class="text-xs font-bold uppercase tracking-wider">قائمة تشغيل</span>
+              <h1 class="text-4xl sm:text-5xl font-black tracking-tight">أغانٍ أعجبتني</h1>
+              <p class="text-sm text-[#b3b3b3]">الأغاني التي قمت بحفظها على Spotify • <span class="text-white font-semibold">${likedTracks.length} أغاني</span></p>
+            </div>
+          </div>
+          ${renderTrackTableHTML(likedTracks)}
+        `;
+        bindTrackTableEvents(container);
+        return;
+      }
+
+      if (state.homeTab === 'pip-showcase') {
+        setAmbientColor('#4E554E');
+        container.innerHTML = `
+          <div class="pt-4 space-y-6">
+            <div class="p-6 rounded-xl bg-gradient-to-l from-[#4E554E]/60 via-[#181818] to-[#181818] border border-white/10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div class="space-y-2 max-w-2xl">
+                <span class="px-2.5 py-0.5 rounded-full bg-[#1ed760] text-black text-[11px] font-black">pip-mini-player.620bdaff.css</span>
+                <h1 class="text-2xl sm:text-3xl font-black text-white">معاينة المشغِّل المصغَّر (Document PiP Mini-Player)</h1>
+                <p class="text-xs text-[#b3b3b3] leading-relaxed">
+                  هذا العرض يطابق كود الـ DOM الذي قمت بلصقه بالكامل: ألبوم <strong class="text-white">Wish I Never Met You - Prison Tapes</strong> للفنان <strong class="text-white">Tory Lanez</strong>، مع لافتة اشتراك Premium العربية، وألوان <code class="text-[#1ed760]">#4E554E</code> و <code class="text-[#1ed760]">#939B93</code>، والتوقيت <code class="text-white">1:57 / 3:44 (52.71%)</code>، وشاشة التحميل الأصلية.
+                </p>
+                <div class="flex flex-wrap gap-2 pt-2">
+                  <button id="btn-showcase-show-pip" class="px-4 py-2 rounded-full bg-[#1ed760] text-black text-xs font-extrabold hover:scale-105 transition">
+                    إظهار نافذة المشغِّل المصغَّر
+                  </button>
+
+                  <button id="btn-showcase-show-splash" class="px-4 py-2 rounded-full bg-[#282828] hover:bg-[#3e3e3e] text-white text-xs font-bold transition">
+                    عرض شاشة البداية (Splash Screen)
+                  </button>
+                </div>
+              </div>
+              <div class="w-36 h-36 rounded-lg overflow-hidden shadow-2xl shrink-0 border border-white/15">
+                <img src="https://i.scdn.co/image/ab67616d0000b273a0d99927dabb2a8fc5014760" alt="Prison Tapes" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            ${renderTrackTableHTML(TRACKS)}
+          </div>
+        `;
+        container.querySelector('#btn-showcase-show-pip')?.addEventListener('click', () => {
+          state.pipOpen = true;
+          updatePiPUI();
+        });
+
+        container.querySelector('#btn-showcase-show-splash')?.addEventListener('click', () => {
+          showSplashScreen();
+        });
+        bindTrackTableEvents(container);
+        return;
+      }
+
+      // Quick Picks 6-Grid
+      const quickPicksHTML = COLLECTIONS.map(col => {
+        const isColPlaying = state.isPlaying && activeTrack.collectionId === col.id;
+        return `
+          <div data-quick-col="${col.id}" data-ambient="${col.color}" class="quick-card ${isColPlaying ? 'playing-card' : ''} group h-14 bg-[#ffffff12] hover:bg-[#ffffff26] rounded-md flex items-center justify-between pl-3 overflow-hidden cursor-pointer transition relative">
+            <div class="flex items-center gap-3 min-w-0 flex-1 h-full">
+              <div class="w-14 h-14 shrink-0 shadow-md bg-[#282828]">
+                ${generateArtworkHTML(col)}
+              </div>
+              <span class="text-sm font-bold text-white truncate">${col.title}</span>
+            </div>
+            <button data-quick-play="${col.id}" class="play-fab w-10 h-10 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 text-black flex items-center justify-center shadow-xl shrink-0" title="تشغيل ${col.title}">
+              <i data-lucide="${isColPlaying ? 'pause' : 'play'}" class="w-4 h-4 fill-current"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      // Shelf Cards
+      const shelfCardsHTML = COLLECTIONS.map(col => {
+        const isColPlaying = state.isPlaying && activeTrack.collectionId === col.id;
+        const artRadius = col.type === 'Artist' ? 'rounded-full' : 'rounded-md';
+        return `
+          <div data-card-col="${col.id}" data-ambient="${col.color}" class="media-card ${isColPlaying ? 'playing-card' : ''} p-3 rounded-lg bg-[#181818] hover:bg-[#282828] transition cursor-pointer flex flex-col gap-3 group">
+            <div class="relative aspect-square w-full ${artRadius} overflow-hidden shadow-lg bg-[#282828]">
+              ${generateArtworkHTML(col)}
+              <button data-card-play="${col.id}" class="play-fab absolute bottom-2 left-2 w-12 h-12 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 text-black flex items-center justify-center shadow-2xl" title="تشغيل ${col.title}">
+                <i data-lucide="${isColPlaying ? 'pause' : 'play'}" class="w-5 h-5 fill-current"></i>
+              </button>
+            </div>
+            <div class="min-w-0">
+              <div class="text-sm font-bold text-white truncate">${col.title}</div>
+              <div class="text-xs text-[#b3b3b3] line-clamp-2 mt-1 leading-relaxed">${col.description}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <!-- Quick Picks 6-Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+          ${quickPicksHTML}
+        </section>
+
+        <!-- Section 1: Made For You -->
+        <section class="mt-8">
+          <div class="flex items-end justify-between mb-3">
+            <div>
+              <span class="text-xs font-semibold text-[#b3b3b3]">مُعدّة خصيصاً لك</span>
+              <h2 class="text-2xl font-extrabold text-white hover:underline cursor-pointer">ميكس R&B وإصدارات Tory Lanez</h2>
+            </div>
+            <button data-action="show-all-collections" class="text-xs font-bold text-[#b3b3b3] hover:underline">عرض الكل</button>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            ${shelfCardsHTML}
+          </div>
+        </section>
+
+        <!-- Section 2: Tracks Table -->
+        <section class="mt-9">
+          <div class="flex items-end justify-between mb-3">
+            <div>
+              <span class="text-xs font-semibold text-[#b3b3b3]">قيد التشغيل الآن في المشغِّل المصغَّر</span>
+              <h2 class="text-2xl font-extrabold text-white">الأغاني الأكثر استماعاً</h2>
+            </div>
+            <span class="text-xs text-[#b3b3b3]">اضغط على أي أغنية لتشغيلها</span>
+          </div>
+          ${renderTrackTableHTML(TRACKS)}
+        </section>
+      `;
+
+      container.querySelectorAll('[data-quick-col]').forEach(el => {
+        el.addEventListener('mouseenter', () => setAmbientColor(el.getAttribute('data-ambient')));
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('[data-quick-play]')) return;
+          navigateTo('collection', { collectionId: el.getAttribute('data-quick-col') });
+        });
+      });
+
+      container.querySelectorAll('[data-quick-play]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playCollection(btn.getAttribute('data-quick-play'));
+        });
+      });
+
+      container.querySelectorAll('[data-card-col]').forEach(el => {
+        el.addEventListener('mouseenter', () => setAmbientColor(el.getAttribute('data-ambient')));
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('[data-card-play]')) return;
+          navigateTo('collection', { collectionId: el.getAttribute('data-card-col') });
+        });
+      });
+
+      container.querySelectorAll('[data-card-play]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playCollection(btn.getAttribute('data-card-play'));
+        });
+      });
+
+      container.querySelector('[data-action="show-all-collections"]')?.addEventListener('click', () => navigateTo('search'));
+
+      bindTrackTableEvents(container);
+    }
+
+    function renderCollectionView(container) {
+      const col = COLLECTIONS.find(c => c.id === state.selectedCollectionId) || COLLECTIONS[0];
+      setAmbientColor(col.color);
+
+      const colTracks = TRACKS.filter(t => t.collectionId === col.id);
+      const tracksToShow = colTracks.length > 0 ? colTracks : TRACKS;
+      const isColPlaying = state.isPlaying && getCurrentTrack().collectionId === col.id;
+
+      container.innerHTML = `
+        <div class="pt-6 pb-6 flex flex-col md:flex-row items-start md:items-end gap-6">
+          <div class="w-44 h-44 sm:w-52 sm:h-52 rounded-lg overflow-hidden shadow-2xl shrink-0 bg-[#282828]">
+            ${generateArtworkHTML(col)}
+          </div>
+          <div class="space-y-2.5 min-w-0 flex-1">
+            <span class="text-xs font-bold uppercase tracking-wider">${col.subtitle}</span>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white truncate">${col.title}</h1>
+            <p class="text-sm text-[#b3b3b3] max-w-2xl">${col.description}</p>
+            <div class="flex flex-wrap items-center gap-1.5 text-xs text-[#b3b3b3] pt-1">
+              <span class="font-bold text-white">Spotify</span>
+              <span>•</span>
+              <span>${col.followers}</span>
+              <span>•</span>
+              <span class="text-white font-semibold">${tracksToShow.length} أغاني</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="py-4 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-6">
+            <button id="btn-hero-play" class="w-14 h-14 rounded-full bg-[#1ed760] hover:bg-[#3be477] hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-xl transition" title="تشغيل ${col.title}">
+              <i data-lucide="${isColPlaying ? 'pause' : 'play'}" class="w-6 h-6 fill-current"></i>
+            </button>
+            <button id="btn-hero-shuffle" class="text-[#b3b3b3] hover:text-white transition ${state.isShuffle ? 'text-[#1ed760]' : ''}" title='تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"'>
+              <i data-lucide="shuffle" class="w-6 h-6"></i>
+            </button>
+            <button id="btn-hero-save" class="px-4 py-1.5 rounded-full border border-[#727272] hover:border-white text-xs font-bold text-white transition">
+              متابَع
+            </button>
+          </div>
+          <button id="btn-back-to-home" class="text-xs font-bold text-[#b3b3b3] hover:text-white flex items-center gap-1">
+            <span>العودة للرئيسية</span>
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        ${renderTrackTableHTML(tracksToShow)}
+      `;
+
+      container.querySelector('#btn-hero-play')?.addEventListener('click', () => playCollection(col.id));
+      container.querySelector('#btn-hero-shuffle')?.addEventListener('click', () => {
+        state.isShuffle = !state.isShuffle;
+        showToast(state.isShuffle ? 'تم تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"' : 'تم إيقاف التشغيل العشوائي');
+        updatePlayerBarUI();
+        renderMainView();
+      });
+      container.querySelector('#btn-hero-save')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        btn.textContent = btn.textContent.trim() === 'متابَع' ? 'متابعة' : 'متابَع';
+        showToast('تم تحديث المكتبة');
+      });
+      container.querySelector('#btn-back-to-home')?.addEventListener('click', () => navigateTo('home'));
+
+      bindTrackTableEvents(container);
+    }
+
+    function renderSearchView(container) {
+      setAmbientColor('#1ed760');
+      const q = state.searchQuery.trim().toLowerCase();
+
+      const matchedTracks = q
+        ? TRACKS.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q) || t.album.toLowerCase().includes(q))
+        : TRACKS;
+
+      const browseGridHTML = BROWSE_CATEGORIES.map(cat => `
+        <div data-cat-name="${cat.name}" class="h-36 rounded-lg p-4 relative overflow-hidden cursor-pointer hover:scale-[1.02] transition shadow-md" style="background-color: ${cat.color};">
+          <div class="text-lg font-extrabold text-white leading-snug">${cat.name}</div>
+          <span class="inline-block mt-1 text-[10px] font-black tracking-widest uppercase px-2 py-0.5 rounded bg-black/30 text-white/90">${cat.tag}</span>
+          <div class="w-20 h-20 rounded-md bg-white/15 rotate-[25deg] absolute -bottom-2 -left-3 shadow-xl flex items-center justify-center font-black text-white/40 text-xl">
+            ♫
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="pt-6 space-y-8">
+          ${q ? `
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-4">نتائج البحث عن "${state.searchQuery}"</h2>
+              ${matchedTracks.length > 0 ? renderTrackTableHTML(matchedTracks) : `
+                <div class="p-8 rounded-lg bg-[#181818] text-center space-y-2">
+                  <div class="text-lg font-bold text-white">لم يتم العثور على نتائج لـ "${state.searchQuery}"</div>
+                  <p class="text-xs text-[#b3b3b3]">جرّب البحث عن Tory Lanez أو Prison Tapes أو Aurora.</p>
+                </div>
+              `}
+            </div>
+          ` : ''}
+
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-4">تصفح الكل</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              ${browseGridHTML}
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.querySelectorAll('[data-cat-name]').forEach(card => {
+        card.addEventListener('click', () => {
+          showToast(`تصفح فئة: ${card.getAttribute('data-cat-name')}`);
+          navigateTo('home');
+        });
+      });
+
+      bindTrackTableEvents(container);
+    }
+
+    function renderDesignSystemView(container) {
+      setAmbientColor('#4E554E');
+
+      const colorSwatchesHTML = ENCORE_TOKENS.map(tok => `
+        <div data-copy-hex="${tok.hex}" class="p-3 rounded-lg bg-[#181818] hover:bg-[#282828] border border-[#292929] cursor-pointer transition flex items-center gap-3.5 group">
+          <div class="w-12 h-12 rounded-md shrink-0 shadow-inner border border-white/10" style="background-color: ${tok.hex};"></div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between" dir="ltr">
+              <span class="text-xs font-bold text-white truncate">${tok.name}</span>
+              <span class="text-[11px] font-mono text-[#1ed760] group-hover:underline">${tok.hex}</span>
+            </div>
+            <div class="text-[11px] text-[#b3b3b3] truncate mt-1">${tok.role}</div>
+          </div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div class="pt-6 space-y-8">
+          <div class="p-6 rounded-xl bg-gradient-to-l from-[#1ed760]/20 via-[#181818] to-[#181818] border border-[#1ed760]/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="space-y-1.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-[#1ed760] text-black text-[10px] font-black uppercase tracking-widest">Spotify Encore + pip-mini-player.620bdaff.css</span>
+              <h1 class="text-2xl sm:text-3xl font-black text-white">نظام تصميم Spotify Encore & Document PiP Tokens</h1>
+              <p class="text-xs text-[#b3b3b3] max-w-2xl">
+                جميع متغيرات الـ CSS والألوان المستخرجة من الكود الأصلي (<code class="text-white">--background-base: #4E554EFF</code>، <code class="text-white">--background-base-min-contrast: #939B93FF</code>) مع أيقونات SVG المطابقة. اضغط على أي لون لنسخه.
+              </p>
+            </div>
+            <button id="btn-exit-design-system" class="px-4 py-2 rounded-full bg-white text-black font-bold text-xs hover:scale-105 transition shrink-0">
+              العودة للمشغِّل
+            </button>
+          </div>
+
+          <section class="space-y-3">
+            <h2 class="text-lg font-bold text-white">1. الألوان الأساسية ومتغيرات المشغِّل المصغَّر (Color Tokens)</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              ${colorSwatchesHTML}
+            </div>
+          </section>
+        </div>
+      `;
+
+      container.querySelector('#btn-exit-design-system')?.addEventListener('click', () => navigateTo('home'));
+      container.querySelectorAll('[data-copy-hex]').forEach(el => {
+        el.addEventListener('click', () => {
+          const hex = el.getAttribute('data-copy-hex');
+          try { navigator.clipboard.writeText(hex); } catch (e) {}
+          showToast(`تم نسخ الكود اللوني ${hex}`);
+        });
+      });
+    }
+
+    // ---------- 7. TRACK TABLE RENDERER ----------
+    function renderTrackTableHTML(trackList) {
+      const currentTrack = getCurrentTrack();
+
+      const rowsHTML = trackList.map((t, idx) => {
+        const isCurrent = t.id === currentTrack.id;
+        return `
+          <div data-track-row="${t.id}" class="track-row group grid grid-cols-[36px_1fr_auto] md:grid-cols-[36px_1.5fr_1fr_auto] items-center gap-4 px-4 py-2.5 rounded-md hover:bg-[#ffffff14] transition cursor-pointer ${isCurrent ? 'bg-[#ffffff0d]' : ''}">
+            <div class="flex items-center justify-center w-6">
+              ${(isCurrent && state.isPlaying) ? `
+                <div class="track-num-text flex items-end gap-[2px] h-3.5">
+                  <span class="w-[3px] bg-[#1ed760] eq-bar-1"></span>
+                  <span class="w-[3px] bg-[#1ed760] eq-bar-2"></span>
+                  <span class="w-[3px] bg-[#1ed760] eq-bar-3"></span>
+                  <span class="w-[3px] bg-[#1ed760] eq-bar-4"></span>
+                </div>
+              ` : `
+                <span class="track-num-text text-sm font-medium ${isCurrent ? 'text-[#1ed760]' : 'text-[#b3b3b3]'}">${idx + 1}</span>
+              `}
+              <button data-row-play="${t.id}" class="track-row-play hidden items-center justify-center text-white" title="${isCurrent && state.isPlaying ? 'إيقاف مؤقّت' : 'تشغيل'}">
+                <i data-lucide="${isCurrent && state.isPlaying ? 'pause' : 'play'}" class="w-4 h-4 fill-current"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded overflow-hidden shrink-0 shadow bg-[#282828]">
+                ${generateArtworkHTML(t)}
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold truncate ${isCurrent ? 'text-[#1ed760]' : 'text-white'}" dir="auto">${t.title}</div>
+                <div class="text-xs text-[#b3b3b3] group-hover:text-white truncate" dir="auto">${t.artist}</div>
+              </div>
+            </div>
+
+            <div class="hidden md:block text-xs text-[#b3b3b3] group-hover:text-white truncate" dir="auto">
+              ${t.album}
+            </div>
+
+            <div class="flex items-center gap-4 justify-end">
+              <button data-like-track="${t.id}" class="${t.liked ? 'text-[#1ed760]' : 'text-[#b3b3b3] track-action-opacity'} hover:scale-110 transition" title='الإضافة إلى "أغانٍ أعجبتني"'>
+                <i data-lucide="heart" class="w-4 h-4 ${t.liked ? 'fill-current' : ''}"></i>
+              </button>
+              <span class="text-xs text-[#b3b3b3] font-variant-numeric tabular-nums w-10 text-left" dir="ltr">${t.durationStr}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="w-full">
+          <div class="grid grid-cols-[36px_1fr_auto] md:grid-cols-[36px_1.5fr_1fr_auto] items-center gap-4 px-4 py-2 border-b border-[#282828] text-xs font-bold text-[#b3b3b3] mb-2">
+            <span class="text-center">#</span>
+            <span>العنوان</span>
+            <span class="hidden md:block">الألبوم</span>
+            <span class="flex justify-end pl-2"><i data-lucide="clock" class="w-4 h-4"></i></span>
+          </div>
+          <div class="space-y-0.5">
+            ${rowsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    function bindTrackTableEvents(container) {
+      container.querySelectorAll('[data-track-row]').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('[data-like-track]')) return;
+          selectAndPlayTrack(row.getAttribute('data-track-row'));
+        });
+      });
+
+      container.querySelectorAll('[data-like-track]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleTrackLike(btn.getAttribute('data-like-track'));
+        });
+      });
+    }
+
+    // ---------- 8. RENDER RIGHT NOW PLAYING PANE ----------
+    function renderRightPane() {
+      const pane = document.getElementById('right-now-playing-pane');
+      const body = document.getElementById('right-pane-body');
+      if (!pane || !body) return;
+
+      if (!state.rightPaneOpen) {
+        pane.classList.add('hidden');
+        pane.classList.remove('xl:flex');
+        return;
+      } else {
+        pane.classList.remove('hidden');
+        pane.classList.add('xl:flex');
+      }
+
+      document.querySelectorAll('.right-tab-btn').forEach(btn => {
+        const tab = btn.getAttribute('data-right-tab');
+        btn.className = tab === state.rightPaneTab
+          ? 'right-tab-btn px-3 py-1 rounded-full text-xs font-bold bg-[#282828] text-white transition'
+          : 'right-tab-btn px-3 py-1 rounded-full text-xs font-bold text-[#b3b3b3] hover:text-white transition';
+      });
+
+      const track = getCurrentTrack();
+
+      if (state.rightPaneTab === 'nowplaying') {
+        body.innerHTML = `
+          <div class="text-xs font-bold text-white truncate" dir="auto">${track.album}</div>
+          <div class="aspect-square w-full rounded-lg overflow-hidden shadow-2xl bg-[#282828]">
+            ${generateArtworkHTML(track)}
+          </div>
+          <div class="flex items-start justify-between gap-2 pt-1">
+            <div class="min-w-0">
+              <h3 class="text-base font-extrabold text-white truncate" dir="auto">${track.title}</h3>
+              <p class="text-xs text-[#b3b3b3] truncate" dir="auto">${track.artist}</p>
+            </div>
+            <button id="btn-right-like" class="${track.liked ? 'text-[#1ed760]' : 'text-[#b3b3b3] hover:text-white'} mt-1">
+              <i data-lucide="heart" class="w-5 h-5 ${track.liked ? 'fill-current' : ''}"></i>
+            </button>
+          </div>
+
+          <div class="rounded-lg bg-[#181818] p-4 space-y-2.5 border border-[#282828]">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-[#b3b3b3]">عن الفنان</span>
+              <span class="px-2 py-0.5 rounded-full bg-[#1ed760]/20 text-[#1ed760] text-[10px] font-bold">فنان موثّق</span>
+            </div>
+            <div class="text-sm font-bold text-white" dir="auto">${track.artist}</div>
+            <div class="text-xs text-[#b3b3b3] leading-relaxed">
+              إجمالي مرات الاستماع: <span class="text-white font-semibold" dir="ltr">${track.plays}</span>.
+            </div>
+          </div>
+        `;
+        body.querySelector('#btn-right-like')?.addEventListener('click', () => toggleTrackLike(track.id));
+      } else if (state.rightPaneTab === 'queue') {
+        body.innerHTML = `
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-[#b3b3b3]">قيد التشغيل الآن</div>
+            <div class="p-2 rounded-md bg-[#1f1f1f] flex items-center justify-between" dir="ltr">
+              <span class="text-xs font-bold text-[#1ed760] truncate">${track.title}</span>
+              <span class="text-[11px] text-[#b3b3b3]">${track.durationStr}</span>
+            </div>
+          </div>
+          <div class="space-y-1.5 pt-2">
+            <div class="text-xs font-bold text-[#b3b3b3]">التالي في قائمة الانتظار</div>
+            ${TRACKS.map(t => `
+              <div data-queue-play="${t.id}" class="flex items-center justify-between gap-3 p-2 rounded-md hover:bg-[#1f1f1f] cursor-pointer transition" dir="ltr">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold truncate ${t.id === track.id ? 'text-[#1ed760]' : 'text-white'}">${t.title}</div>
+                  <div class="text-[11px] text-[#b3b3b3] truncate">${t.artist}</div>
+                </div>
+                <span class="text-[11px] text-[#b3b3b3]">${t.durationStr}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        body.querySelectorAll('[data-queue-play]').forEach(el => {
+          el.addEventListener('click', () => selectAndPlayTrack(el.getAttribute('data-queue-play')));
+        });
+      } else if (state.rightPaneTab === 'lyrics') {
+        const activeLineIdx = Math.floor((state.currentTimeSec / track.durationSec) * track.lyrics.length);
+        body.innerHTML = `
+          <div class="p-5 rounded-xl space-y-4 min-h-full" style="background: linear-gradient(180deg, ${track.color}88 0%, #181818 100%);" dir="ltr">
+            <div class="text-xs font-bold uppercase tracking-widest text-white/80">Synced Lyrics</div>
+            <div class="space-y-3 py-2">
+              ${track.lyrics.map((line, i) => `
+                <p class="text-sm font-bold transition-colors leading-snug ${i === activeLineIdx ? 'text-white' : 'text-white/40'}">${line}</p>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      lucide.createIcons();
+    }
+
+    // ---------- 9. UPDATE PIP MINI-PLAYER & BOTTOM BAR ----------
+    function updatePiPUI() {
+      const pipWin = document.getElementById('pip-mini-player-window');
+      const coverWrapper = document.getElementById('pip-cover-wrapper');
+      const track = getCurrentTrack();
+
+      if (!pipWin) return;
+      pipWin.classList.toggle('hidden', !state.pipOpen);
+      if (coverWrapper) coverWrapper.classList.toggle('hidden', state.pipCompact);
+
+      // Update Cover Image & Titles inside PiP
+      const pipImg = document.getElementById('pip-cover-img');
+      const fallbackSvg = document.getElementById('pip-fallback-svg');
+      if (track.coverUrl && pipImg) {
+        pipImg.style.display = 'block';
+        pipImg.src = track.coverUrl;
+        if (fallbackSvg) fallbackSvg.classList.add('hidden');
+      } else if (pipImg && fallbackSvg) {
+        pipImg.style.display = 'none';
+        fallbackSvg.classList.remove('hidden');
+        fallbackSvg.innerHTML = generateArtworkHTML(track);
+      }
+
+      document.getElementById('pip-track-title').textContent = track.title;
+      document.getElementById('pip-track-artist').textContent = track.artist;
+      if (coverWrapper && track.color) {
+        coverWrapper.style.background = `radial-gradient(circle at 50% 35%, ${track.color} 0%, #2a2e2a 60%, #121212 100%)`;
+      }
+
+      // Add-button SVG state
+      const pipAddSvg = document.getElementById('pip-add-svg');
+      if (pipAddSvg) {
+        pipAddSvg.innerHTML = track.liked ? SVG_ADDED_CHECK_CIRCLE : SVG_ADD_PLUS_CIRCLE;
+      }
+
+      // Play/Pause SVG in PiP
+      const pipPlayPauseSvg = document.getElementById('pip-playpause-svg');
+      if (pipPlayPauseSvg) {
+        pipPlayPauseSvg.innerHTML = state.isPlaying ? SVG_PAUSE_PATH : SVG_PLAY_PATH;
+      }
+
+      // Progress in PiP
+      const pct = Math.min(100, Math.max(0, (state.currentTimeSec / track.durationSec) * 100));
+      document.getElementById('pip-seek-fill').style.width = pct.toFixed(2) + '%';
+      document.getElementById('pip-seek-thumb').style.left = pct.toFixed(2) + '%';
+      document.getElementById('pip-seek-input').value = pct;
+      document.getElementById('pip-current-time').textContent = formatTime(state.currentTimeSec);
+      document.getElementById('pip-total-time').textContent = track.durationStr;
+
+      // Volume in PiP
+      const effectiveVol = state.isMuted ? 0 : state.volume;
+      document.getElementById('pip-vol-fill').style.width = effectiveVol + '%';
+      document.getElementById('pip-vol-thumb').style.left = effectiveVol + '%';
+      document.getElementById('pip-vol-input').value = effectiveVol;
+
+      // Shuffle & Repeat Colors in PiP
+      document.getElementById('btn-pip-shuffle').className = `w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center hover:scale-110 transition ${state.isShuffle ? 'text-[#1ed760]' : 'text-white/90 hover:text-white'}`;
+      document.getElementById('btn-pip-repeat').className = `w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center hover:scale-110 transition ${state.isRepeat ? 'text-[#1ed760]' : 'text-white/90 hover:text-white'}`;
+    }
+
+    function updatePlayerBarUI() {
+      const track = getCurrentTrack();
+
+      const artBox = document.getElementById('player-art-box');
+      if (artBox) {
+        artBox.innerHTML = generateArtworkHTML(track);
+      }
+
+      document.getElementById('player-track-title').textContent = track.title;
+      document.getElementById('player-track-artist').textContent = track.artist;
+
+      const likeBtn = document.getElementById('btn-player-like');
+      if (likeBtn) {
+        likeBtn.innerHTML = `<svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">${track.liked ? SVG_ADDED_CHECK_CIRCLE : SVG_ADD_PLUS_CIRCLE}</svg>`;
+      }
+
+      const bottomPlaySvg = document.getElementById('bottom-playpause-svg');
+      if (bottomPlaySvg) {
+        bottomPlaySvg.innerHTML = state.isPlaying ? SVG_PAUSE_PATH : SVG_PLAY_PATH;
+      }
+
+      document.getElementById('btn-shuffle').className = `${state.isShuffle ? 'text-[#1ed760]' : 'text-[#b3b3b3] hover:text-white'} transition relative`;
+      document.getElementById('shuffle-dot').classList.toggle('hidden', !state.isShuffle);
+
+      document.getElementById('btn-repeat').className = `${state.isRepeat ? 'text-[#1ed760]' : 'text-[#b3b3b3] hover:text-white'} transition relative`;
+      document.getElementById('repeat-dot').classList.toggle('hidden', !state.isRepeat);
+
+      const pct = Math.min(100, Math.max(0, (state.currentTimeSec / track.durationSec) * 100));
+      document.getElementById('seek-fill').style.width = pct.toFixed(2) + '%';
+      document.getElementById('seek-thumb').style.left = pct.toFixed(2) + '%';
+      document.getElementById('seek-input').value = pct;
+      document.getElementById('player-current-time').textContent = formatTime(state.currentTimeSec);
+      document.getElementById('player-total-time').textContent = track.durationStr;
+
+      const effectiveVol = state.isMuted ? 0 : state.volume;
+      document.getElementById('volume-fill').style.width = effectiveVol + '%';
+      document.getElementById('volume-thumb').style.left = effectiveVol + '%';
+      document.getElementById('volume-input').value = effectiveVol;
+
+      updatePiPUI();
+    }
+
+    function syncPlaybackTimer() {
+      clearInterval(playbackInterval);
+      if (state.isPlaying) {
+        playbackInterval = setInterval(() => {
+          const track = getCurrentTrack();
+          state.currentTimeSec += 1;
+          if (state.currentTimeSec >= track.durationSec) {
+            if (state.isRepeat) {
+              state.currentTimeSec = 0;
+            } else {
+              skipTrack(1);
+              return;
+            }
+          }
+          updatePlayerBarUI();
+          if (state.rightPaneTab === 'lyrics') renderRightPane();
+        }, 1000);
+      }
+    }
+
+    function selectAndPlayTrack(trackId) {
+      if (state.currentTrackId === trackId) {
+        state.isPlaying = !state.isPlaying;
+      } else {
+        state.currentTrackId = trackId;
+        state.currentTimeSec = 0;
+        state.isPlaying = true;
+      }
+      playSubtleMusicalPulse(getCurrentTrack());
+      syncPlaybackTimer();
+      updatePlayerBarUI();
+      renderMainView();
+      renderLibrary();
+      renderRightPane();
+    }
+
+    function playCollection(collectionId) {
+      const colTracks = TRACKS.filter(t => t.collectionId === collectionId);
+      const firstTrack = colTracks[0] || TRACKS[0];
+      if (getCurrentTrack().collectionId === collectionId) {
+        state.isPlaying = !state.isPlaying;
+      } else {
+        state.currentTrackId = firstTrack.id;
+        state.currentTimeSec = 0;
+        state.isPlaying = true;
+      }
+      playSubtleMusicalPulse(getCurrentTrack());
+      syncPlaybackTimer();
+      updatePlayerBarUI();
+      renderMainView();
+      renderLibrary();
+      renderRightPane();
+    }
+
+    function skipTrack(dir) {
+      const idx = TRACKS.findIndex(t => t.id === state.currentTrackId);
+      const nextIdx = state.isShuffle
+        ? Math.floor(Math.random() * TRACKS.length)
+        : (idx + dir + TRACKS.length) % TRACKS.length;
+      state.currentTrackId = TRACKS[nextIdx].id;
+      state.currentTimeSec = 0;
+      state.isPlaying = true;
+      playSubtleMusicalPulse(getCurrentTrack());
+      syncPlaybackTimer();
+      updatePlayerBarUI();
+      renderMainView();
+      renderLibrary();
+      renderRightPane();
+    }
+
+    function toggleTrackLike(trackId) {
+      const t = TRACKS.find(item => item.id === trackId);
+      if (!t) return;
+      t.liked = !t.liked;
+      showToast(t.liked ? `تمت الإضافة إلى "أغانٍ أعجبتني"` : `تمت الإزالة من "أغانٍ أعجبتني"`);
+      updatePlayerBarUI();
+      renderMainView();
+      renderLibrary();
+      renderRightPane();
+    }
+
+    function showSplashScreen() {
+      const splash = document.getElementById('spotify-splash-overlay');
+      if (!splash) return;
+      splash.classList.remove('hidden');
+      splash.classList.add('flex');
+      clearTimeout(splash._timer);
+      splash._timer = setTimeout(() => {
+        splash.classList.add('hidden');
+        splash.classList.remove('flex');
+      }, 1800);
+    }
+
+    // ---------- 10. DRAGGABLE PIP MINI-PLAYER & EVENT LISTENERS ----------
+    function makePiPDraggable() {
+      const pipWin = document.getElementById('pip-mini-player-window');
+      const dragBar = document.getElementById('pip-drag-bar');
+      if (!pipWin || !dragBar) return;
+
+      let isDragging = false;
+      let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+      dragBar.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        const rect = pipWin.getBoundingClientRect();
+        pipWin.style.bottom = 'auto';
+        pipWin.style.right = 'auto';
+        pipWin.style.left = rect.left + 'px';
+        pipWin.style.top = rect.top + 'px';
+        startX = e.clientX;
+        startY = e.clientY;
+        initialLeft = rect.left;
+        initialTop = rect.top;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        pipWin.style.left = Math.max(8, Math.min(window.innerWidth - 350, initialLeft + dx)) + 'px';
+        pipWin.style.top = Math.max(8, Math.min(window.innerHeight - 120, initialTop + dy)) + 'px';
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+    }
+
+    function navigateTo(view, params = {}) {
+      state.currentView = view;
+      if (params.collectionId) state.selectedCollectionId = params.collectionId;
+      renderMainView();
+      renderLibrary();
+    }
+
+    function updateHomeFilterChips() {
+      document.querySelectorAll('.home-chip').forEach(chip => {
+        const tab = chip.getAttribute('data-home-tab');
+        if (tab === state.homeTab) {
+          chip.className = 'home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white text-black transition';
+        } else if (tab === 'pip-showcase') {
+          chip.className = 'home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#1ed760]/20 border border-[#1ed760]/40 text-[#1ed760] hover:bg-[#1ed760] hover:text-black transition';
+        } else {
+          chip.className = 'home-chip px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#ffffff14] hover:bg-[#ffffff24] text-white transition';
+        }
+      });
+    }
+
+    function initEventListeners() {
+      makePiPDraggable();
+
+      // Splash Overlay Dismiss
+      document.getElementById('btn-dismiss-splash').addEventListener('click', () => {
+        const splash = document.getElementById('spotify-splash-overlay');
+        splash.classList.add('hidden');
+        splash.classList.remove('flex');
+      });
+      document.getElementById('btn-trigger-splash').addEventListener('click', showSplashScreen);
+
+      // PiP Window Controls
+      document.getElementById('btn-pip-close').addEventListener('click', () => {
+        state.pipOpen = false;
+        updatePiPUI();
+      });
+      document.getElementById('btn-pip-compact-toggle').addEventListener('click', () => {
+        state.pipCompact = !state.pipCompact;
+        updatePiPUI();
+        showToast(state.pipCompact ? 'تم تصغير حجم المشغِّل المصغَّر' : 'تم تكبير المشغِّل المصغَّر');
+      });
+
+      document.getElementById('btn-pip-add-liked').addEventListener('click', () => {
+        toggleTrackLike(state.currentTrackId);
+      });
+      document.getElementById('btn-pip-playpause').addEventListener('click', () => {
+        state.isPlaying = !state.isPlaying;
+        playSubtleMusicalPulse(getCurrentTrack());
+        syncPlaybackTimer();
+        updatePlayerBarUI();
+        renderMainView();
+        renderLibrary();
+      });
+      document.getElementById('btn-pip-prev').addEventListener('click', () => skipTrack(-1));
+      document.getElementById('btn-pip-next').addEventListener('click', () => skipTrack(1));
+      document.getElementById('btn-pip-shuffle').addEventListener('click', () => {
+        state.isShuffle = !state.isShuffle;
+        showToast(state.isShuffle ? 'تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"' : 'إيقاف التشغيل العشوائي');
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-pip-repeat').addEventListener('click', () => {
+        state.isRepeat = !state.isRepeat;
+        showToast(state.isRepeat ? 'تمكين إعادة الأغنية' : 'إيقاف الإعادة');
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-pip-share').addEventListener('click', () => {
+        try {
+          navigator.clipboard.writeText('https://open.spotify.com/intl-ar/album/4TLl0R69HVTnS5FWdZ0fOQ');
+        } catch (e) {}
+        showToast('تم نسخ رابط الأغنية (/intl-ar/album/4TLl0R69HVTnS5FWdZ0fOQ)');
+      });
+      document.getElementById('pip-seek-input').addEventListener('input', (e) => {
+        const pct = parseFloat(e.target.value);
+        state.currentTimeSec = Math.floor((pct / 100) * getCurrentTrack().durationSec);
+        updatePlayerBarUI();
+      });
+      document.getElementById('pip-vol-input').addEventListener('input', (e) => {
+        state.volume = parseInt(e.target.value, 10);
+        state.isMuted = state.volume === 0;
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-pip-mute').addEventListener('click', () => {
+        state.isMuted = !state.isMuted;
+        updatePlayerBarUI();
+      });
+      document.getElementById('pip-track-title').addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo('collection', { collectionId: 'al-prison-tapes' });
+      });
+      document.getElementById('pip-track-artist').addEventListener('click', (e) => {
+        e.preventDefault();
+        navigateTo('collection', { collectionId: 'ar-tory' });
+      });
+
+      // Header & Bottom PiP Toggles
+      const togglePiP = () => {
+        state.pipOpen = !state.pipOpen;
+        updatePiPUI();
+      };
+      document.getElementById('btn-toggle-pip-header').addEventListener('click', togglePiP);
+      document.getElementById('btn-bottom-pip-toggle').addEventListener('click', togglePiP);
+
+      // Top Navigation
+      document.getElementById('btn-brand-home').addEventListener('click', () => {
+        state.homeTab = 'all';
+        updateHomeFilterChips();
+        navigateTo('home');
+      });
+      document.getElementById('btn-home-pill').addEventListener('click', () => {
+        state.homeTab = 'all';
+        updateHomeFilterChips();
+        navigateTo('home');
+      });
+      document.getElementById('btn-nav-back').addEventListener('click', () => navigateTo('home'));
+      document.getElementById('btn-nav-forward').addEventListener('click', () => navigateTo('collection', { collectionId: state.selectedCollectionId }));
+
+      // Global Search
+      const searchInput = document.getElementById('global-search-input');
+      const clearSearchBtn = document.getElementById('btn-clear-search');
+      searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        clearSearchBtn.classList.toggle('hidden', !state.searchQuery);
+        if (state.currentView !== 'search') navigateTo('search');
+        else renderMainView();
+      });
+      searchInput.addEventListener('focus', () => {
+        if (state.currentView !== 'search') navigateTo('search');
+      });
+      clearSearchBtn.addEventListener('click', () => {
+        state.searchQuery = '';
+        searchInput.value = '';
+        clearSearchBtn.classList.add('hidden');
+        renderMainView();
+      });
+      document.getElementById('btn-browse-triggers').addEventListener('click', () => navigateTo('search'));
+
+      // Design System & Premium
+      document.getElementById('btn-open-design-tokens').addEventListener('click', () => {
+        navigateTo(state.currentView === 'design-system' ? 'home' : 'design-system');
+      });
+      document.getElementById('btn-explore-premium').addEventListener('click', () => {
+        state.homeTab = 'pip-showcase';
+        updateHomeFilterChips();
+        navigateTo('home');
+      });
+      document.getElementById('btn-user-profile').addEventListener('click', () => navigateTo('design-system'));
+
+      // Home Filter Chips
+      document.querySelectorAll('.home-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          state.homeTab = chip.getAttribute('data-home-tab');
+          updateHomeFilterChips();
+          renderMainView();
+          renderLibrary();
+        });
+      });
+
+      // Library Collapse
+      document.getElementById('btn-toggle-library').addEventListener('click', () => {
+        state.libraryCollapsed = !state.libraryCollapsed;
+        const pane = document.getElementById('left-library-pane');
+        const chips = document.getElementById('library-filter-chips');
+        const searchRow = document.querySelector('.library-search-row');
+        const labels = document.querySelectorAll('.library-label, .library-actions');
+
+        if (state.libraryCollapsed) {
+          pane.className = 'w-20 bg-[#121212] rounded-lg flex flex-col overflow-hidden shrink-0 transition-all duration-200';
+          chips.classList.add('hidden');
+          searchRow.classList.add('hidden');
+          labels.forEach(el => el.classList.add('hidden'));
+        } else {
+          pane.className = 'w-72 lg:w-80 bg-[#121212] rounded-lg flex flex-col overflow-hidden shrink-0 transition-all duration-200';
+          chips.classList.remove('hidden');
+          searchRow.classList.remove('hidden');
+          labels.forEach(el => el.classList.remove('hidden'));
+        }
+        renderLibrary();
+      });
+
+      // Library Filter Chips
+      document.querySelectorAll('.lib-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          state.libraryFilter = chip.getAttribute('data-lib-filter');
+          document.querySelectorAll('.lib-chip').forEach(c => {
+            c.className = c.getAttribute('data-lib-filter') === state.libraryFilter
+              ? 'lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-white text-black transition shrink-0'
+              : 'lib-chip px-3 py-1 rounded-full text-xs font-semibold bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white transition shrink-0';
+          });
+          renderLibrary();
+        });
+      });
+
+      document.getElementById('library-search-input').addEventListener('input', (e) => {
+        state.librarySearch = e.target.value;
+        renderLibrary();
+      });
+
+      document.getElementById('btn-cycle-lib-sort').addEventListener('click', () => {
+        state.librarySortIndex = (state.librarySortIndex + 1) % LIB_SORT_MODES.length;
+        document.getElementById('lib-sort-label').textContent = LIB_SORT_MODES[state.librarySortIndex];
+        renderLibrary();
+      });
+
+      // Create Playlist Modal
+      const modal = document.getElementById('modal-create-playlist');
+      document.getElementById('btn-create-playlist').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      document.getElementById('btn-close-playlist-modal').addEventListener('click', closeModal);
+      document.getElementById('btn-cancel-playlist-modal').addEventListener('click', closeModal);
+      document.getElementById('btn-save-playlist-modal').addEventListener('click', () => {
+        const nameInput = document.getElementById('input-playlist-name');
+        const descInput = document.getElementById('input-playlist-desc');
+        const title = nameInput.value.trim() || `قائمة تشغيل #${COLLECTIONS.length + 1}`;
+        const desc = descInput.value.trim() || 'قائمة تشغيل مخصصة على Spotify.';
+        const newId = 'pl-custom-' + Date.now();
+        COLLECTIONS.unshift({
+          id: newId,
+          title,
+          subtitle: 'قائمة تشغيل • أنت',
+          type: 'Playlist',
+          description: desc,
+          color: '#1ed760',
+          gradient: 'linear-gradient(135deg, #1ed760 0%, #0f172a 100%)',
+          followers: '1 حفظ',
+          badge: 'CUSTOM'
+        });
+        nameInput.value = '';
+        descInput.value = '';
+        closeModal();
+        showToast(`تم إنشاء "${title}"`);
+        navigateTo('collection', { collectionId: newId });
+      });
+
+      // Right Pane Tabs
+      document.querySelectorAll('.right-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.rightPaneTab = btn.getAttribute('data-right-tab');
+          renderRightPane();
+        });
+      });
+      document.getElementById('btn-close-right-pane').addEventListener('click', () => {
+        state.rightPaneOpen = false;
+        renderRightPane();
+      });
+
+      // Bottom Player Controls
+      document.getElementById('btn-play-pause').addEventListener('click', () => {
+        state.isPlaying = !state.isPlaying;
+        playSubtleMusicalPulse(getCurrentTrack());
+        syncPlaybackTimer();
+        updatePlayerBarUI();
+        renderMainView();
+        renderLibrary();
+      });
+      document.getElementById('btn-prev').addEventListener('click', () => skipTrack(-1));
+      document.getElementById('btn-next').addEventListener('click', () => skipTrack(1));
+      document.getElementById('btn-shuffle').addEventListener('click', () => {
+        state.isShuffle = !state.isShuffle;
+        showToast(state.isShuffle ? 'تفعيل ميزة التشغيل العشوائي لألبوم "ميكس R&B"' : 'إيقاف التشغيل العشوائي');
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-repeat').addEventListener('click', () => {
+        state.isRepeat = !state.isRepeat;
+        showToast(state.isRepeat ? 'تمكين إعادة الأغنية' : 'إيقاف الإعادة');
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-player-like').addEventListener('click', () => toggleTrackLike(state.currentTrackId));
+      document.getElementById('seek-input').addEventListener('input', (e) => {
+        const pct = parseFloat(e.target.value);
+        state.currentTimeSec = Math.floor((pct / 100) * getCurrentTrack().durationSec);
+        updatePlayerBarUI();
+      });
+      document.getElementById('volume-input').addEventListener('input', (e) => {
+        state.volume = parseInt(e.target.value, 10);
+        state.isMuted = state.volume === 0;
+        updatePlayerBarUI();
+      });
+      document.getElementById('btn-mute').addEventListener('click', () => {
+        state.isMuted = !state.isMuted;
+        updatePlayerBarUI();
+      });
+
+      document.getElementById('btn-bottom-nowplaying').addEventListener('click', () => {
+        state.rightPaneOpen = true;
+        state.rightPaneTab = 'nowplaying';
+        renderRightPane();
+      });
+      document.getElementById('btn-bottom-lyrics').addEventListener('click', () => {
+        state.rightPaneOpen = true;
+        state.rightPaneTab = 'lyrics';
+        renderRightPane();
+      });
+      document.getElementById('btn-bottom-queue').addEventListener('click', () => {
+        state.rightPaneOpen = true;
+        state.rightPaneTab = 'queue';
+        renderRightPane();
+      });
+
+      // Spacebar Play/Pause
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+          e.preventDefault();
+          state.isPlaying = !state.isPlaying;
+          syncPlaybackTimer();
+          updatePlayerBarUI();
+          renderMainView();
+          renderLibrary();
+        }
+      });
+    }
+
+    // ---------- 11. BOOTSTRAP ----------
+    window.addEventListener('DOMContentLoaded', () => {
+      initEventListeners();
+      renderLibrary();
+      renderMainView();
+      renderRightPane();
+      updatePlayerBarUI();
+      syncPlaybackTimer();
+    });
+  </script>
+</body>
+</html>
