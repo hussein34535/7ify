@@ -5719,6 +5719,252 @@ html, body {
   font-size: 12px !important;
   color: #b3b3b3 !important;
 }
+
+
+
+/* ==========================================================================
+   AUTHENTIC SPOTIFY NOW PLAYING VIEW MODAL (NPV)
+   ========================================================================== */
+.npv-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 50% !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  height: 100% !important;
+  background-color: var(--npv-bg, #1e221e) !important;
+  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.7)) !important;
+  z-index: 1050 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 16px 24px 32px !important;
+  transform: translate(-50%, 100%) !important;
+  transition: transform 0.3s cubic-bezier(0.3, 0, 0, 1) !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  pointer-events: none !important;
+  color: #ffffff !important;
+}
+
+.npv-modal.open {
+  transform: translate(-50%, 0) !important;
+  pointer-events: auto !important;
+}
+
+.npv-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
+}
+
+.npv-header .icon-btn {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+}
+
+.npv-header .icon-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-artwork-container {
+  margin: 20px 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+}
+
+.npv-artwork {
+  width: 100% !important;
+  max-width: 320px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-bottom-controls {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+  width: 100% !important;
+}
+
+.npv-meta-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.npv-song-title {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin-bottom: 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.npv-song-artist {
+  font-size: 15px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.npv-like-btn {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+}
+
+.npv-like-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-progress-area {
+  margin-bottom: 16px !important;
+  width: 100% !important;
+}
+
+.npv-bar-bg {
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 2px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+}
+
+.npv-bar-fill {
+  height: 100% !important;
+  background: #ffffff !important;
+  border-radius: 2px !important;
+  transition: width 0.1s linear !important;
+}
+
+.npv-times {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin-top: 8px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.npv-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  direction: ltr !important;
+  margin-bottom: 20px !important;
+  width: 100% !important;
+}
+
+.npv-controls .icon-btn {
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+}
+
+.npv-controls .icon-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-play-circle {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-play-circle:active {
+  transform: scale(0.96) !important;
+}
+
+.npv-play-circle svg {
+  width: 28px !important;
+  height: 28px !important;
+  fill: currentColor !important;
+}
+
+.npv-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.npv-footer .icon-btn {
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: pointer !important;
+}
+
+.npv-footer .icon-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: currentColor !important;
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -10721,6 +10967,7 @@ window.NG = (function () {
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
     renderMiniPlayer();
+    updateNowPlayingModal();
     updateMediaSession();
   }
 
@@ -10730,6 +10977,75 @@ window.NG = (function () {
     const pos = engine.getPosition();
     const dur = engine.getDuration();
     paintProgress(pos, dur);
+  }
+
+
+  function openNowPlaying() {
+    const npv = $('#npvModal');
+    if (!npv) return;
+    updateNowPlayingModal();
+    npv.classList.add('open');
+    npv.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeNowPlaying() {
+    const npv = $('#npvModal');
+    if (!npv) return;
+    npv.classList.remove('open');
+    npv.setAttribute('aria-hidden', 'true');
+  }
+
+  function updateNowPlayingModal() {
+    const tr = getTrack(state.trackId);
+    if (!tr) return;
+    const npv = $('#npvModal');
+    if (!npv) return;
+
+    const bgCol = (tr.colors && tr.colors[0]) || '#1e221e';
+    npv.style.setProperty('--npv-bg', bgCol);
+
+    const art = $('#npvArtwork');
+    const artUrl = tr.art || tr.photo || '';
+    if (art && artUrl) {
+      art.style.backgroundImage = 'url("' + artUrl + '")';
+    }
+
+    const titleEl = $('#npvTitle');
+    if (titleEl) titleEl.textContent = byLang(tr.title);
+
+    const artistEl = $('#npvArtist');
+    if (artistEl) artistEl.textContent = byLang(tr.artist);
+
+    const plNameEl = $('#npvPlName');
+    if (plNameEl) {
+      const pl = (state.playlists && state.playlists.find(p => p.id === ui.activePl)) || (NG.CURATED_PLAYLISTS && NG.CURATED_PLAYLISTS.find(p => p.id === ui.activePl));
+      plNameEl.textContent = pl ? L(pl.name) : 'Spotify';
+    }
+
+    const playing = engine.playing;
+    const playCircle = $('#npvPlay');
+    if (playCircle) {
+      playCircle.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z' : 'm7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606') + '"></path></svg>';
+    }
+
+    const fav = isFav(tr.id);
+    const likeBtn = $('#npvLike');
+    if (likeBtn) {
+      likeBtn.classList.toggle('is-liked', fav);
+      likeBtn.dataset.id = tr.id;
+      likeBtn.dataset.like = tr.id;
+      likeBtn.style.color = fav ? 'var(--essential-bright-accent, #1ed760)' : '#ffffff';
+    }
+
+    const shufBtn = $('#npvShuffle');
+    if (shufBtn) {
+      shufBtn.style.color = state.shuffle ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+    }
+
+    const repBtn = $('#npvRepeat');
+    if (repBtn) {
+      repBtn.style.color = state.repeat !== 'off' ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+    }
   }
 
   function paintProgress(pos, duration) {
@@ -10743,6 +11059,13 @@ window.NG = (function () {
     if (shSeek) shSeek.style.setProperty('--pct', pct + '%');
     const mini = $('#miniProgress');
     if (mini && mini.firstElementChild) mini.firstElementChild.style.width = pct + '%';
+    const npvFill = $('#npvBarFill');
+    if (npvFill) npvFill.style.width = pct + '%';
+    const npvCur = $('#npvCur');
+    if (npvCur) npvCur.textContent = fmt(pos);
+    const npvDur = $('#npvDur');
+    if (npvDur) npvDur.textContent = fmt(safeDur);
+
     $('#pCur').textContent = fmt(pos);
     $('#shCur').textContent = fmt(pos);
     $('#pDur').textContent = fmt(safeDur);
@@ -12795,6 +13118,8 @@ window.NG = (function () {
         }
         break;
       case 'close-sheet': closeSheet(); break;
+      case 'close-npv': closeNowPlaying(); break;
+      case 'open-npv': openNowPlaying(); break;
       case 'open-track': {
         const id = node.dataset.id || state.trackId;
         openTrackPage(id);
@@ -13257,7 +13582,7 @@ window.NG = (function () {
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
     openAlbumPage, renderAlbumPage,
-    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip,
+    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip, openNowPlaying, closeNowPlaying,
     runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
   if (window.NG) {

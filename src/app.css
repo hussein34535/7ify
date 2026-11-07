@@ -5699,3 +5699,248 @@ html, body {
   color: #b3b3b3 !important;
 }
 
+
+
+/* ==========================================================================
+   AUTHENTIC SPOTIFY NOW PLAYING VIEW MODAL (NPV)
+   ========================================================================== */
+.npv-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 50% !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  height: 100% !important;
+  background-color: var(--npv-bg, #1e221e) !important;
+  background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.7)) !important;
+  z-index: 1050 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 16px 24px 32px !important;
+  transform: translate(-50%, 100%) !important;
+  transition: transform 0.3s cubic-bezier(0.3, 0, 0, 1) !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  pointer-events: none !important;
+  color: #ffffff !important;
+}
+
+.npv-modal.open {
+  transform: translate(-50%, 0) !important;
+  pointer-events: auto !important;
+}
+
+.npv-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  flex-shrink: 0 !important;
+  text-align: center !important;
+}
+
+.npv-header .icon-btn {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+}
+
+.npv-header .icon-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-artwork-container {
+  margin: 20px 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+}
+
+.npv-artwork {
+  width: 100% !important;
+  max-width: 320px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 8px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-bottom-controls {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+  width: 100% !important;
+}
+
+.npv-meta-text {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.npv-song-title {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin-bottom: 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.npv-song-artist {
+  font-size: 15px !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.npv-like-btn {
+  width: 40px !important;
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+}
+
+.npv-like-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-progress-area {
+  margin-bottom: 16px !important;
+  width: 100% !important;
+}
+
+.npv-bar-bg {
+  height: 4px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 2px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+}
+
+.npv-bar-fill {
+  height: 100% !important;
+  background: #ffffff !important;
+  border-radius: 2px !important;
+  transition: width 0.1s linear !important;
+}
+
+.npv-times {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin-top: 8px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.npv-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  direction: ltr !important;
+  margin-bottom: 20px !important;
+  width: 100% !important;
+}
+
+.npv-controls .icon-btn {
+  width: 44px !important;
+  height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+}
+
+.npv-controls .icon-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+  fill: currentColor !important;
+}
+
+.npv-play-circle {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.npv-play-circle:active {
+  transform: scale(0.96) !important;
+}
+
+.npv-play-circle svg {
+  width: 28px !important;
+  height: 28px !important;
+  fill: currentColor !important;
+}
+
+.npv-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.npv-footer .icon-btn {
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  cursor: pointer !important;
+}
+
+.npv-footer .icon-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  fill: currentColor !important;
+}

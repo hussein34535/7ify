@@ -1157,6 +1157,7 @@
     const activePl = state.playlists.find((p) => p.id === ui.activePl);
     if (activePl) ui.activePl = activePl.id;
     renderMiniPlayer();
+    updateNowPlayingModal();
     updateMediaSession();
   }
 
@@ -1166,6 +1167,75 @@
     const pos = engine.getPosition();
     const dur = engine.getDuration();
     paintProgress(pos, dur);
+  }
+
+
+  function openNowPlaying() {
+    const npv = $('#npvModal');
+    if (!npv) return;
+    updateNowPlayingModal();
+    npv.classList.add('open');
+    npv.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeNowPlaying() {
+    const npv = $('#npvModal');
+    if (!npv) return;
+    npv.classList.remove('open');
+    npv.setAttribute('aria-hidden', 'true');
+  }
+
+  function updateNowPlayingModal() {
+    const tr = getTrack(state.trackId);
+    if (!tr) return;
+    const npv = $('#npvModal');
+    if (!npv) return;
+
+    const bgCol = (tr.colors && tr.colors[0]) || '#1e221e';
+    npv.style.setProperty('--npv-bg', bgCol);
+
+    const art = $('#npvArtwork');
+    const artUrl = tr.art || tr.photo || '';
+    if (art && artUrl) {
+      art.style.backgroundImage = 'url("' + artUrl + '")';
+    }
+
+    const titleEl = $('#npvTitle');
+    if (titleEl) titleEl.textContent = byLang(tr.title);
+
+    const artistEl = $('#npvArtist');
+    if (artistEl) artistEl.textContent = byLang(tr.artist);
+
+    const plNameEl = $('#npvPlName');
+    if (plNameEl) {
+      const pl = (state.playlists && state.playlists.find(p => p.id === ui.activePl)) || (NG.CURATED_PLAYLISTS && NG.CURATED_PLAYLISTS.find(p => p.id === ui.activePl));
+      plNameEl.textContent = pl ? L(pl.name) : 'Spotify';
+    }
+
+    const playing = engine.playing;
+    const playCircle = $('#npvPlay');
+    if (playCircle) {
+      playCircle.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + (playing ? 'M6 19h4V5H6v14zm8-14v14h4V5h-4z' : 'm7.05 3.606 13.49 7.788a.7.7 0 0 1 0 1.212L7.05 20.394A.7.7 0 0 1 6 19.788V4.212a.7.7 0 0 1 1.05-.606') + '"></path></svg>';
+    }
+
+    const fav = isFav(tr.id);
+    const likeBtn = $('#npvLike');
+    if (likeBtn) {
+      likeBtn.classList.toggle('is-liked', fav);
+      likeBtn.dataset.id = tr.id;
+      likeBtn.dataset.like = tr.id;
+      likeBtn.style.color = fav ? 'var(--essential-bright-accent, #1ed760)' : '#ffffff';
+    }
+
+    const shufBtn = $('#npvShuffle');
+    if (shufBtn) {
+      shufBtn.style.color = state.shuffle ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+    }
+
+    const repBtn = $('#npvRepeat');
+    if (repBtn) {
+      repBtn.style.color = state.repeat !== 'off' ? 'var(--essential-bright-accent, #1ed760)' : 'rgba(255,255,255,0.7)';
+    }
   }
 
   function paintProgress(pos, duration) {
@@ -1179,6 +1249,13 @@
     if (shSeek) shSeek.style.setProperty('--pct', pct + '%');
     const mini = $('#miniProgress');
     if (mini && mini.firstElementChild) mini.firstElementChild.style.width = pct + '%';
+    const npvFill = $('#npvBarFill');
+    if (npvFill) npvFill.style.width = pct + '%';
+    const npvCur = $('#npvCur');
+    if (npvCur) npvCur.textContent = fmt(pos);
+    const npvDur = $('#npvDur');
+    if (npvDur) npvDur.textContent = fmt(safeDur);
+
     $('#pCur').textContent = fmt(pos);
     $('#shCur').textContent = fmt(pos);
     $('#pDur').textContent = fmt(safeDur);
@@ -3231,6 +3308,8 @@
         }
         break;
       case 'close-sheet': closeSheet(); break;
+      case 'close-npv': closeNowPlaying(); break;
+      case 'open-npv': openNowPlaying(); break;
       case 'open-track': {
         const id = node.dataset.id || state.trackId;
         openTrackPage(id);
@@ -3693,7 +3772,7 @@
     openPlaylistPage, renderPlaylistPage,
     openArtistPage, renderArtistPage,
     openAlbumPage, renderAlbumPage,
-    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip,
+    toggleMiniPlayer, openMiniPlayer, closeMiniPlayer, renderMiniPlayer, openInPageMiniPlayer, closeInPageMiniPlayer, openDocumentPip, setAutoPip, openNowPlaying, closeNowPlaying,
     runUnifiedSearch, closeAutocomplete, setActiveSuggestion, selectAutocompleteItem, renderAutocomplete
   };
   if (window.NG) {
