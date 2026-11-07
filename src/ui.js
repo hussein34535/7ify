@@ -2120,8 +2120,6 @@
     engine.play();
     save();
     renderAll();
-    triggerAutoPip();
-    showPipHintOnce();
   }
 
   function playPlaylist(plId) {
@@ -2353,6 +2351,12 @@
     if (coverImg && artSrc) {
       coverImg.src = artSrc;
     }
+    const mediaWrap = elPip.querySelector('.bZbahvfcpU50g8Bgtnp7');
+    const dominantColor = (tr.colors && tr.colors[0]) || '#1e3264';
+    if (mediaWrap) {
+      mediaWrap.style.setProperty('--background-base', dominantColor);
+      mediaWrap.style.setProperty('--background-base-min-contrast', dominantColor);
+    }
     if (mainBody && artSrc) {
       mainBody.style.setProperty('--background-image-url', 'url("' + artSrc + '")');
     }
@@ -2423,6 +2427,21 @@
     const dragBar = miniEl.querySelector('#pipDragBar');
     const seekWrap = miniEl.querySelector('#pipSeekWrap');
     const volInput = miniEl.querySelector('#pipVolInput');
+    const overlay = miniEl.querySelector('.n7BS2oAfcAoFbbqZ2YkA');
+    const mediaElem = miniEl.querySelector('.bZbahvfcpU50g8Bgtnp7');
+
+    if (mediaElem && overlay && !mediaElem.dataset.tapBound) {
+      mediaElem.dataset.tapBound = 'true';
+      let tapTimer;
+      mediaElem.addEventListener('click', (e) => {
+        if (e.target.closest('button, input, a')) return;
+        overlay.classList.toggle('is-active');
+        clearTimeout(tapTimer);
+        if (overlay.classList.contains('is-active')) {
+          tapTimer = setTimeout(() => overlay.classList.remove('is-active'), 4000);
+        }
+      });
+    }
 
     if (dragBar && !dragBar.dataset.bound) {
       dragBar.dataset.bound = 'true';
@@ -2530,16 +2549,8 @@
   }
 
   async function triggerAutoPip() {
-    if (userDismissedPip) return;
-    if (!('documentPictureInPicture' in window)) return;
-    if (window.innerWidth <= 640) return; // desktop screens
-    if (currentPipWindow && !currentPipWindow.closed) return;
-
-    try {
-      await openDocumentPip();
-    } catch (e) {
-      console.warn('Auto Document PiP skipped or failed:', e);
-    }
+    // Disabled: playback must never auto-open any in-page popups
+    return;
   }
 
   async function toggleMiniPlayer() {
@@ -2803,7 +2814,7 @@
         break;
       }
       case 'like': toggleLike(node.dataset.id); break;
-      case 'toggle': { if (!engine.playing) triggerAutoPip(); engine.toggle(); break; }
+      case 'toggle': engine.toggle(); break;
       case 'next': stepTrack(1); break;
       case 'prev': stepTrack(-1); break;
       case 'shuffle':

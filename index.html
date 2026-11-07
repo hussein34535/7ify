@@ -16,6 +16,7 @@
   <link rel="preload" href="https://encore.scdn.co/fonts/SpotifyMixMono-Regular-134eeb986fc0f94a9f0acb9cedaeb584.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://open.spotifycdn.com/cdn/build/web-player/pip-mini-player.620bdaff.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* Official Spotify Encore Typography Fonts */
@@ -3193,43 +3194,33 @@ html[data-motion="off"] *::after {
 
 
 /* ==========================================================================
-   Spotify MiniPlayer Popup (PIP)
+   Spotify MiniPlayer Popup (PIP) - Authentic Spotify Design
    ========================================================================== */
-
-@media (max-width: 640px) {
-  .spotify-pip-container {
-    bottom: calc(128px + env(safe-area-inset-bottom, 0px)) !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-    max-height: calc(100vh - 150px) !important;
-  }
-}
 
 .spotify-pip-container {
   position: fixed;
   z-index: 9999;
-  bottom: 96px;
+  bottom: 84px;
   inset-inline-end: 24px;
-  width: 350px;
+  width: 340px;
+  height: 460px;
   max-width: calc(100vw - 32px);
-  border-radius: 12px;
-  background-color: var(--background-base, #121212);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  max-height: calc(100vh - 120px);
+  border-radius: 8px;
+  background-color: #121212;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   user-select: none;
-  transition: opacity 0.2s cubic-bezier(0, 0, 0.2, 1), transform 0.2s cubic-bezier(0, 0, 0.2, 1);
-  animation: pipFadeIn 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
-  font-family: var(--encore-body-font-stack, 'SpotifyMixUI', sans-serif);
+  font-family: var(--encore-body-font-stack, 'SpotifyMixUI', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  animation: pipFadeIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
 
 @keyframes pipFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(12px);
+    transform: scale(0.96) translateY(10px);
   }
   to {
     opacity: 1;
@@ -3237,27 +3228,38 @@ html[data-motion="off"] *::after {
   }
 }
 
+@media (max-width: 640px) {
+  .spotify-pip-container {
+    bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 140px) !important;
+  }
+}
+
 .spotify-pip-container.in-document-pip {
-  position: static;
-  width: 100vw;
-  height: 100vh;
-  max-width: 100vw;
-  border-radius: 0;
-  box-shadow: none;
+  position: static !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Header & Drag Handle */
 .z4sqUHOpydUxxrX0vrZG {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px 6px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 10px !important;
   cursor: grab;
-  background: rgba(18, 18, 18, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #202124 !important;
   z-index: 10;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
 }
 
 .z4sqUHOpydUxxrX0vrZG:active {
@@ -3265,285 +3267,162 @@ html[data-motion="off"] *::after {
 }
 
 .O18Fj7ar4YTYwb_d0sB7 {
-  background: transparent;
-  border: none;
-  color: #b3b3b3;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  color: #b3b3b3 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
   transition: color 0.15s, background-color 0.15s;
 }
 
 .O18Fj7ar4YTYwb_d0sB7:hover {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .pip-drag-handle {
-  width: 20px;
-  height: 20px;
-  fill: #b3b3b3;
+  width: 20px !important;
+  height: 20px !important;
+  fill: #b3b3b3 !important;
   opacity: 0.6;
 }
 
 .kR8AfoEnzTi5hmOEwVkE {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 }
 
-/* Main Body & Cinema Glow */
+/* Spotify Grid: media cell + contextinfo bottom bar */
 .JQpolEIyZYKI45mcyx4H {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background-color: #121212;
-  overflow: hidden;
+  --window-header-bg-color: #202124;
+  --mini-player-display: grid;
+  flex: 1 1 auto !important;
+  display: grid !important;
+  grid-template: "media media" 1fr "contextinfo adcontrols" 56px / 1fr auto !important;
+  width: 100% !important;
+  height: calc(100% - 37px) !important;
+  position: relative !important;
+  min-height: 0 !important;
+  background-color: #121212 !important;
+  overflow: hidden !important;
 }
 
-/* Premium Feature Announcement Card */
-._MzIqkUqvXnFzs6PC5GL {
-  margin: 10px 12px 4px;
-  z-index: 4;
-}
-
-.FPOUnNIK5sEJxgYePOe7 {
-  background: linear-gradient(135deg, rgba(30, 215, 96, 0.15) 0%, rgba(28, 28, 28, 0.98) 100%);
-  border: 1px solid rgba(30, 215, 96, 0.3);
-  border-radius: 8px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  position: relative;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.QCu2KIjyoz3lEIKNrBGQ {
-  font-weight: 700;
-  font-size: 13px;
-  color: #fff;
-  font-family: var(--encore-title-font-stack, 'SpotifyMixUITitle', sans-serif);
-}
-
-.qBR9ZwNQwuXveU9pFUDu {
-  font-size: 11px;
-  color: #b3b3b3;
-  line-height: 1.4;
-}
-
-.hMTqNr62GcikVrHZpvI9 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.e-101040-legacy-button-primary {
-  background: #1ed760;
-  color: #000;
-  font-weight: 700;
-  font-size: 11px;
-  border-radius: 500px;
-  padding: 6px 14px;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.15s, background-color 0.15s;
-}
-
-.e-101040-legacy-button-primary:hover {
-  transform: scale(1.04);
-  background-color: #1fdf64;
-}
-
-.e-101040-legacy-button-tertiary {
-  background: transparent;
-  color: #b3b3b3;
-  font-weight: 600;
-  font-size: 11px;
-  border: none;
-  cursor: pointer;
-  padding: 6px 10px;
-  transition: color 0.15s;
-}
-
-.e-101040-legacy-button-tertiary:hover {
-  color: #fff;
-}
-
-/* Artwork Section */
+/* Artwork Area (grid-area: media) */
 .bZbahvfcpU50g8Bgtnp7 {
-  position: relative;
-  width: 100%;
-  height: 250px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  grid-area: media !important;
+  isolation: isolate !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background-color: var(--background-base, #1e3264) !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .bZbahvfcpU50g8Bgtnp7::before {
-  content: "";
-  position: absolute;
-  inset: -20px;
-  background-image: var(--background-image-url);
-  background-size: cover;
-  background-position: center;
-  filter: blur(30px) brightness(0.35);
-  transform: scale(1.15);
-  z-index: 0;
+  display: none !important;
 }
 
-.kE5TqNLSJBDg5PUxNsEu {
-  position: relative;
-  z-index: 1;
-}
-
+.kE5TqNLSJBDg5PUxNsEu,
 .SCaSogBVoxtfQ2MBmVk5 {
-  width: 200px;
-  height: 200px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.SCaSogBVoxtfQ2MBmVk5:hover {
-  transform: scale(1.02);
+.SCaSogBVoxtfQ2MBmVk5 img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
 }
 
-.L6IwYSgXPAr7UR5vlZSa {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+/* Floating Controls Overlay over Artwork (grid-area: media) */
+.encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA {
+  grid-area: media !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  opacity: 0 !important;
+  transition: opacity 0.25s cubic-bezier(0, 0, 0.2, 1) !important;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.45) 0%, rgba(10, 10, 10, 0.92) 100%) !important;
+  padding: 12px 14px !important;
+  box-sizing: border-box !important;
 }
 
-/* Track Details Bar */
-.biYxJApyzc1MqhNhAglP {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px 4px;
-  position: relative;
-  z-index: 2;
-  gap: 12px;
+.JQpolEIyZYKI45mcyx4H:hover .encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA,
+.encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA:hover,
+.encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA.is-active,
+.spotify-pip-container:hover .encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA {
+  opacity: 1 !important;
 }
 
-.pIRf1dOxi5AFfcuAa15H {
-  flex: 1;
-  min-width: 0;
-}
-
-.N80ibw2Kbah5PE2N2WTT {
-  font-weight: 700;
-  font-size: 14px;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.N80ibw2Kbah5PE2N2WTT a {
-  color: #fff;
-  text-decoration: none;
-}
-
-.N80ibw2Kbah5PE2N2WTT a:hover {
-  text-decoration: underline;
-}
-
-.A2Hs2uQfC_nJgtItEPzg {
-  font-size: 12px;
-  color: #b3b3b3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
-}
-
-.A2Hs2uQfC_nJgtItEPzg a {
-  color: #b3b3b3;
-  text-decoration: none;
-}
-
-.A2Hs2uQfC_nJgtItEPzg a:hover {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.aMYFDEFgs5t4R9snXvSZ button {
-  background: transparent;
-  border: none;
-  color: #b3b3b3;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: transform 0.15s, color 0.15s;
-}
-
-.aMYFDEFgs5t4R9snXvSZ button:hover {
-  color: #fff;
-  transform: scale(1.1);
-}
-
-/* Controls Overlay */
-.encore-over-media-set {
-  padding: 6px 16px 14px;
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.kia0vSwLS5OGxfNkwx4I {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
 }
 
 .HqS2K5JW3dx5Of5VJu9w {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 4px !important;
 }
 
-.HqS2K5JW3dx5Of5VJu9w button {
-  background: transparent;
-  border: none;
-  color: #b3b3b3;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  padding: 0;
-  transition: transform 0.15s, color 0.15s;
+.HqS2K5JW3dx5Of5VJu9w button:not(.e-101040-legacy-button-primary) {
+  background: transparent !important;
+  border: none !important;
+  color: #b3b3b3 !important;
+  cursor: pointer !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  transition: color 0.15s ease, transform 0.15s ease !important;
 }
 
-.HqS2K5JW3dx5Of5VJu9w button:hover {
-  color: #fff;
-  transform: scale(1.1);
+.HqS2K5JW3dx5Of5VJu9w button:not(.e-101040-legacy-button-primary):hover {
+  color: #fff !important;
+  transform: scale(1.1) !important;
 }
 
+/* Big White Play / Pause Circle */
 .emmypqxN0Xp0bDur3XGm button {
-  width: 42px !important;
-  height: 42px !important;
+  width: 44px !important;
+  height: 44px !important;
   border-radius: 50% !important;
   background: #fff !important;
   color: #000 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.15s, background-color 0.15s !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, background-color 0.15s ease !important;
 }
 
 .emmypqxN0Xp0bDur3XGm button:hover {
@@ -3551,93 +3430,170 @@ html[data-motion="off"] *::after {
   background-color: #f6f6f6 !important;
 }
 
-/* Volume Slider in MiniPlayer */
+/* Volume Bar inside PiP */
 .dsl5x4j2QJRUvU2Fud50 {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
 }
 
 .pip-volume-range {
-  width: 55px;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
+  width: 46px !important;
+  height: 4px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 2px !important;
+  outline: none !important;
+  cursor: pointer !important;
 }
 
 .pip-volume-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #fff;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  cursor: pointer !important;
 }
 
-.dsl5x4j2QJRUvU2Fud50:hover .pip-volume-range::-webkit-slider-thumb {
-  opacity: 1;
+/* Timeline & Progress Bar */
+.cZt0NetQpFYjWZ5u640r {
+  width: 100% !important;
 }
 
-/* Scrubbable Timeline */
 .DSUa8XQQdkK79aqNQWKv {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #b3b3b3;
-  font-family: var(--encore-bodyMono-font-stack, monospace);
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+  color: #b3b3b3 !important;
+  font-family: var(--encore-bodyMono-font-stack, monospace) !important;
 }
 
 #pipSeekWrap {
-  flex: 1;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  position: relative;
+  flex: 1 !important;
+  height: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  position: relative !important;
 }
 
 .uI8JyD_faatLr66nS5Cb {
-  width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.2);
-  position: relative;
+  width: 100% !important;
+  height: 4px !important;
+  border-radius: 2px !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  position: relative !important;
 }
 
 .GL1sl7EGoJvIn5TUlxIf {
-  height: 100%;
-  border-radius: 2px;
-  background: #fff;
-  transition: width 0.1s linear;
+  height: 100% !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  transition: width 0.1s linear !important;
 }
 
 #pipSeekWrap:hover .GL1sl7EGoJvIn5TUlxIf {
-  background: #1ed760;
+  background: #1ed760 !important;
 }
 
 .qinWev06d0dPqPkQfCov {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #fff;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: opacity 0.15s;
-  pointer-events: none;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  position: absolute !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  opacity: 0 !important;
+  transition: opacity 0.15s ease !important;
+  pointer-events: none !important;
 }
 
 #pipSeekWrap:hover .qinWev06d0dPqPkQfCov {
-  opacity: 1;
+  opacity: 1 !important;
+}
+
+/* Track Details Bar at Bottom (grid-area: contextinfo) */
+.biYxJApyzc1MqhNhAglP {
+  grid-area: contextinfo !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 14px !important;
+  background-color: #121212 !important;
+  z-index: 2 !important;
+  height: 56px !important;
+  box-sizing: border-box !important;
+  gap: 10px !important;
+}
+
+.pIRf1dOxi5AFfcuAa15H {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.N80ibw2Kbah5PE2N2WTT {
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.N80ibw2Kbah5PE2N2WTT a {
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+.N80ibw2Kbah5PE2N2WTT a:hover {
+  text-decoration: underline !important;
+}
+
+.A2Hs2uQfC_nJgtItEPzg {
+  font-size: 12px !important;
+  color: #b3b3b3 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin-top: 2px !important;
+}
+
+.A2Hs2uQfC_nJgtItEPzg a {
+  color: #b3b3b3 !important;
+  text-decoration: none !important;
+}
+
+.A2Hs2uQfC_nJgtItEPzg a:hover {
+  color: #fff !important;
+  text-decoration: underline !important;
+}
+
+.aMYFDEFgs5t4R9snXvSZ button {
+  background: transparent !important;
+  border: none !important;
+  color: #b3b3b3 !important;
+  cursor: pointer !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  transition: transform 0.15s ease, color 0.15s ease !important;
+}
+
+.aMYFDEFgs5t4R9snXvSZ button:hover {
+  color: #fff !important;
+  transform: scale(1.1) !important;
 }
 
 /* Resize Grip Corner */
@@ -3894,25 +3850,24 @@ html[data-motion="off"] *::after {
   </footer>
 
   <!-- Spotify MiniPlayer Popup (PIP) -->
-  <div class="spotify-pip-container encore-dark-theme encore-small-devices-theme" id="spotifyMiniPlayer" style="display: none;" dir="rtl" aria-label="المشغِّل المصغَّر">
-    <!-- Header & Drag Bar -->
+  <div class="spotify-pip-container encore-dark-theme encore-small-devices-theme ARdTwt0PuIoYx7R0BrJz" id="spotifyMiniPlayer" style="--mini-player-display: grid; --mini-player-drag-display: none; display: none;" dir="rtl" aria-label="Spotify MiniPlayer">
+    <!-- Header & Drag Bar (shown on desktop draggable or in window mode) -->
     <div class="z4sqUHOpydUxxrX0vrZG" id="pipDragBar">
       <button class="O18Fj7ar4YTYwb_d0sB7" data-action="close-miniplayer" aria-label="إغلاق المشغِّل المصغَّر" title="إغلاق">
-        <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
+        <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon H7tNzJyGe3svPMlada30" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller-2); --encore-icon-width: var(--encore-graphic-size-decorative-smaller-2);">
           <path d="M2.47 2.47a.75.75 0 0 1 1.06 0L8 6.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L9.06 8l4.47 4.47a.75.75 0 1 1-1.06 1.06L8 9.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L6.94 8 2.47 3.53a.75.75 0 0 1 0-1.06"></path>
         </svg>
       </button>
-      <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon pip-drag-handle" viewBox="0 0 24 24" title="سحب المشغّل">
+      <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon ZD0nrw1VUL5jL6bn9sMQ pip-drag-handle" viewBox="0 0 24 24" title="سحب المشغّل">
         <path d="M6 13a1 1 0 1 1 0 2 1 1 0 0 1 0-2m0-4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m4 4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m0-4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m4 4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m0-4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m4 4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m0-4a1 1 0 1 1 0 2 1 1 0 0 1 0-2"></path>
       </svg>
       <div class="kR8AfoEnzTi5hmOEwVkE"></div>
     </div>
 
-    <!-- Main Body -->
-    <div class="JQpolEIyZYKI45mcyx4H DtdEU6DW3N6BYDMA_78l" id="pipMainBody">
-
-      <!-- Artwork Cover Art -->
-      <div class="bZbahvfcpU50g8Bgtnp7 xhpwNPYLJ1joMlibPObM Q3mj39rfFm5hTEOTvs_D" data-testid="pip-hover-element">
+    <!-- Main Body Grid: media + contextinfo + adcontrols -->
+    <div class="JQpolEIyZYKI45mcyx4H DtdEU6DW3N6BYDMA_78l" id="pipMainBody" style="--mini-player-display: grid; cursor: default;">
+      <!-- Artwork Cover Art (grid-area: media) -->
+      <div class="bZbahvfcpU50g8Bgtnp7 xhpwNPYLJ1joMlibPObM Q3mj39rfFm5hTEOTvs_D" data-testid="pip-hover-element" style="--background-base: #1e3264; --background-base-min-contrast: #1e3264;">
         <div class="kE5TqNLSJBDg5PUxNsEu">
           <div class="SCaSogBVoxtfQ2MBmVk5 _OC7SLYkKdCNJc7zqhr5" role="button" tabindex="0" data-action="open-track">
             <img id="pipCoverImg" aria-hidden="false" draggable="false" loading="eager" src="" data-image-status="loaded" data-testid="document-pip-cover-art" alt="" class="L6IwYSgXPAr7UR5vlZSa QvWLxeGYFYVlpgyk_B7D TxO4cJyIggVYNxMM2az4">
@@ -3920,7 +3875,7 @@ html[data-motion="off"] *::after {
         </div>
       </div>
 
-      <!-- Track Info Row -->
+      <!-- Track Info Row (grid-area: contextinfo) -->
       <div class="biYxJApyzc1MqhNhAglP y5KOtDDlL6Jcy0Q7Mg0t">
         <div class="pIRf1dOxi5AFfcuAa15H">
           <div class="T5aLewckz4uaWaJwdczO">
@@ -3933,11 +3888,12 @@ html[data-motion="off"] *::after {
             </span>
           </div>
         </div>
+        <div class="d35RtoZQMB49lR0Cfq3D"></div>
         <div class="A2Hs2uQfC_nJgtItEPzg">
           <div class="T5aLewckz4uaWaJwdczO">
             <span class="IBnrNsgqHIWVDw3LDnUh">
               <span class="VcSlLI0HN6xjW1DS4FNM">
-                <div class="e-101040-text encore-text-body-small encore-internal-color-text-subdued" data-encore-id="text" data-testid="context-item-info-subtitles">
+                <div class="e-101040-text encore-text-body-small encore-internal-color-text-subdued A2Hs2uQfC_nJgtItEPzg" data-encore-id="text" data-testid="context-item-info-subtitles">
                   <span><a draggable="false" data-testid="context-item-info-track" id="pipArtistLink" dir="auto" href="#" data-action="filter-artist"></a></span>
                 </div>
               </span>
@@ -3947,9 +3903,12 @@ html[data-motion="off"] *::after {
         <div class="aMYFDEFgs5t4R9snXvSZ">
           <div class="nUSVJGFiU1ZDmdt3bR2U">
             <div class="AUvuj0Agnl7w6WoOUQ33">
-              <button aria-checked="false" id="pipLikeBtn" data-testid="add-button" class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="الإضافة إلى 'أغانٍ أعجبتني'" data-encore-id="buttonTertiary" data-action="like">
+              <button aria-checked="false" id="pipLikeBtn" data-testid="add-button" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-medium e-101040-button-tertiary--icon-only e-101040-button-tertiary--condensed e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued I_U8VxUEkqjpBUqhe0Yf" aria-label="الإضافة إلى 'أغانٍ أعجبتني'" data-encore-id="buttonTertiary" data-action="like">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" id="pipLikeIcon" viewBox="0 0 24 24" style="width:22px;height:22px;fill:currentColor"><path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path><path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" id="pipLikeIcon" viewBox="0 0 24 24" style="--encore-icon-height: var(--encore-graphic-size-decorative-base); --encore-icon-width: var(--encore-graphic-size-decorative-base);">
+                    <path d="M11.999 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m-11 9c0-6.075 4.925-11 11-11s11 4.925 11 11-4.925 11-11 11-11-4.925-11-11"></path>
+                    <path d="M17.999 12a1 1 0 0 1-1 1h-4v4a1 1 0 1 1-2 0v-4h-4a1 1 0 1 1 0-2h4V7a1 1 0 1 1 2 0v4h4a1 1 0 0 1 1 1"></path>
+                  </svg>
                 </span>
               </button>
             </div>
@@ -3957,75 +3916,93 @@ html[data-motion="off"] *::after {
         </div>
       </div>
 
-      <!-- Controls Overlay -->
+      <!-- Controls Overlay: Floating directly on top of Artwork (grid-area: media) -->
       <div class="encore-over-media-set n7BS2oAfcAoFbbqZ2YkA" dir="ltr" data-testid="document-pip-hover-element">
         <div class="kia0vSwLS5OGxfNkwx4I" dir="ltr" data-testid="document-pip-player-controls">
-          <div class="HqS2K5JW3dx5Of5VJu9w">
-            <!-- Volume Control -->
-            <div class="dsl5x4j2QJRUvU2Fud50" data-testid="volume-bar" dir="ltr">
-              <button data-testid="volume-bar-toggle-mute-button" class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="كتم الصوت" data-encore-id="buttonTertiary" data-action="mute">
+          <div class="HqS2K5JW3dx5Of5VJu9w" data-hold-to-double-speed-interactive="true">
+            <!-- Volume Bar -->
+            <div class="dsl5x4j2QJRUvU2Fud50 e6TvsGvSQBbsCCow3_zi TTvu8wGHHpx29U_uMH6m EcHuTf6xmwloutl2qGA0 K7Qtm6YBQsm2MvYDW5Id" data-testid="volume-bar" dir="ltr" style="--button-size: 32px; --slider-width: 80px;">
+              <button aria-describedby="volume-icon" data-testid="volume-bar-toggle-mute-button" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued vTJTMuDgiz0tGXKYoxK3 fq4d1fw6GLioH4yoZBv8" aria-label="كتم الصوت" data-encore-id="buttonTertiary" data-action="mute">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="presentation" aria-label="الصوت" aria-hidden="false" class="e-101040-icon" id="pipVolumeIcon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor">
+                  <svg data-encore-id="icon" role="presentation" aria-label="الصوت" aria-hidden="false" class="e-101040-icon" id="pipVolumeIcon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-informative-smaller); --encore-icon-width: var(--encore-graphic-size-informative-smaller);">
                     <path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.64 3.64 0 0 1-1.33-4.967 3.64 3.64 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.14 2.14 0 0 0 0 3.7l5.8 3.35V2.8zm8.683 4.29V5.56a2.75 2.75 0 0 1 0 4.88"></path>
                     <path d="M11.5 13.614a5.752 5.752 0 0 0 0-11.228v1.55a4.252 4.252 0 0 1 0 8.127z"></path>
                   </svg>
                 </span>
               </button>
-              <div class="f6qznX9ZxqApiZY21CjR">
-                <input type="range" min="0" max="100" value="70" step="1" id="pipVolInput" class="pip-volume-range" aria-label="مستوى الصوت">
+              <div class="f6qznX9ZxqApiZY21CjR BbvskFurY2ErUOMerplg">
+                <div class="sFPdqIr8t2xI75iScCuj CTG2kuUAISyh9_NteS8D">
+                  <label class="hidden-visually">غيّر مستوى الصوت<input type="range" min="0" max="100" value="70" step="1" id="pipVolInput" aria-label="مستوى الصوت" class="pip-volume-range"></label>
+                </div>
               </div>
             </div>
 
             <!-- Shuffle Button -->
-            <div class="VfBE2GhDfGWMRcv2z0Gv">
-              <button class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="تشغيل عشوائي" data-encore-id="buttonTertiary" data-action="shuffle" id="pipShuffleBtn">
+            <div class="VfBE2GhDfGWMRcv2z0Gv e6TvsGvSQBbsCCow3_zi">
+              <button aria-disabled="false" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued _QIaMww_F2Pew2EED7Si" aria-label="تشغيل عشوائي" data-encore-id="buttonTertiary" data-action="shuffle" id="pipShuffleBtn">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path><path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller); --encore-icon-width: var(--encore-graphic-size-decorative-smaller);">
+                    <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path>
+                    <path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path>
+                  </svg>
                 </span>
               </button>
             </div>
 
             <!-- Skip Back -->
             <div class="rViq4TGvzMQunoHYgDzh">
-              <button data-testid="control-button-skip-back" class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="السابق" data-encore-id="buttonTertiary" data-action="prev">
+              <button data-testid="control-button-skip-back" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued PWHnRQoDjB29bsAL7H7K" aria-label="السابق" data-encore-id="buttonTertiary" data-action="prev">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M3.3 1a.7.7 0 0 1 .7.7v5.15l9.95-5.744a.7.7 0 0 1 1.05.606v12.575a.7.7 0 0 1-1.05.607L4 9.149V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7a.7.7 0 0 1 .7-.7z"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller); --encore-icon-width: var(--encore-graphic-size-decorative-smaller);">
+                    <path d="M3.3 1a.7.7 0 0 1 .7.7v5.15l9.95-5.744a.7.7 0 0 1 1.05.606v12.575a.7.7 0 0 1-1.05.607L4 9.149V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7a.7.7 0 0 1 .7-.7z"></path>
+                  </svg>
                 </span>
               </button>
             </div>
 
-            <!-- Play / Pause -->
+            <!-- Big Round Play/Pause Button -->
             <div class="emmypqxN0Xp0bDur3XGm">
-              <button data-testid="control-button-playpause" aria-label="تشغيل/إيقاف مؤقت" data-encore-id="buttonPrimary" class="e-101040-legacy-button-primary" data-action="toggle" id="pipPlayBtn">
-                <span class="e-101040-button-primary__inner encore-inverted-light-set">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" id="pipPlayIcon" viewBox="0 0 24 24" style="width:20px;height:20px;fill:currentColor"><path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path></svg>
+              <button data-testid="control-button-playpause" aria-label="تشغيل/إيقاف مؤقت" data-encore-id="buttonPrimary" data-is-icon-only="true" class="e-101040-legacy-button-primary e-101040-legacy-button" data-action="toggle" id="pipPlayBtn">
+                <span class="e-101040-overflow-wrap-anywhere e-101040-button-primary__inner encore-inverted-light-set e-101040-button-icon-only--medium e6TvsGvSQBbsCCow3_zi TgMFGDi7iKhnGlKd94Qp tprwlAJF5Pvz58NuKtV1">
+                  <span aria-hidden="true" class="e-101040-button__icon-wrapper">
+                    <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" id="pipPlayIcon" viewBox="0 0 24 24" style="--encore-icon-height: var(--encore-graphic-size-decorative-base); --encore-icon-width: var(--encore-graphic-size-decorative-base);">
+                      <path d="M5.7 3a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7zm10 0a.7.7 0 0 0-.7.7v16.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V3.7a.7.7 0 0 0-.7-.7z"></path>
+                    </svg>
+                  </span>
                 </span>
               </button>
             </div>
 
             <!-- Skip Forward -->
             <div class="BBw8SfQz8Vw4K16sYqtx">
-              <button data-testid="control-button-skip-forward" class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="التالي" data-encore-id="buttonTertiary" data-action="next">
+              <button data-testid="control-button-skip-forward" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued PWHnRQoDjB29bsAL7H7K" aria-label="التالي" data-encore-id="buttonTertiary" data-action="next">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7z"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller); --encore-icon-width: var(--encore-graphic-size-decorative-smaller);">
+                    <path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7z"></path>
+                  </svg>
                 </span>
               </button>
             </div>
 
             <!-- Repeat Button -->
             <div class="fANmkEsldcYaDiDk5wJL">
-              <button data-testid="control-button-repeat" role="checkbox" aria-checked="false" class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="تكرار" data-encore-id="buttonTertiary" data-action="repeat" id="pipRepeatBtn">
+              <button data-testid="control-button-repeat" role="checkbox" aria-checked="false" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued iXMdjBIomEigmZnzEJhY" aria-label="تكرار" data-encore-id="buttonTertiary" data-action="repeat" id="pipRepeatBtn">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75z"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller); --encore-icon-width: var(--encore-graphic-size-decorative-smaller);">
+                    <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75z"></path>
+                  </svg>
                 </span>
               </button>
             </div>
 
-            <!-- Copy Song Link -->
+            <!-- Share / Copy Song Link -->
             <div class="e6TvsGvSQBbsCCow3_zi">
-              <button class="e-101040-legacy-button e-101040-legacy-button-tertiary" aria-label="نسخ رابط الأغنية" title="نسخ رابط الأغنية" data-encore-id="buttonTertiary" data-action="pip-copy-link" id="pipCopyBtn">
+              <button tabindex="0" class="e-101040-legacy-button e-101040-legacy-button-tertiary e-101040-overflow-wrap-anywhere e-101040-button-tertiary--icon-only-small e-101040-button-tertiary--icon-only e-101040-button-tertiary--condensed e-101040-button-tertiary--text-subdued encore-internal-color-text-subdued BN7c5TxzDA6GtIligg0z XPWmr7nrGNEZr9YsRjCM" aria-label="نسخ رابط الأغنية" aria-hidden="false" data-encore-id="buttonTertiary" data-action="pip-copy-link" id="pipCopyBtn">
                 <span aria-hidden="true" class="e-101040-button__icon-wrapper">
-                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="width:16px;height:16px;fill:currentColor"><path d="M1 5.75A.75.75 0 0 1 1.75 5H4v1.5H2.5v8h11v-8H12V5h2.25a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-.75.75H1.75a.75.75 0 0 1-.75-.75z"></path><path d="M8 9.576a.75.75 0 0 0 .75-.75V2.903l1.454 1.454a.75.75 0 0 0 1.06-1.06L8 .03 4.735 3.296a.75.75 0 0 0 1.06 1.061L7.25 2.903v5.923c0 .414.336.75.75.75"></path></svg>
+                  <svg data-encore-id="icon" role="img" aria-hidden="true" class="e-101040-icon" viewBox="0 0 16 16" style="--encore-icon-height: var(--encore-graphic-size-decorative-smaller); --encore-icon-width: var(--encore-graphic-size-decorative-smaller);">
+                    <path d="M1 5.75A.75.75 0 0 1 1.75 5H4v1.5H2.5v8h11v-8H12V5h2.25a.75.75 0 0 1 .75.75v9.5a.75.75 0 0 1-.75.75H1.75a.75.75 0 0 1-.75-.75z"></path>
+                    <path d="M8 9.576a.75.75 0 0 0 .75-.75V2.903l1.454 1.454a.75.75 0 0 0 1.06-1.06L8 .03 4.735 3.296a.75.75 0 0 0 1.06 1.061L7.25 2.903v5.923c0 .414.336.75.75.75"></path>
+                  </svg>
                 </span>
               </button>
             </div>
@@ -4034,7 +4011,7 @@ html[data-motion="off"] *::after {
           <!-- Progress Bar & Timeline -->
           <div class="cZt0NetQpFYjWZ5u640r" dir="ltr" data-hold-to-double-speed-interactive="true">
             <div class="DSUa8XQQdkK79aqNQWKv DFM9TfB_VNDtw0TVvZWC">
-              <div class="e-101040-text encore-text-marginal encore-internal-color-text-subdued Ffws6AUxL3EjVpYbWveP" data-encore-id="text">
+              <div class="e-101040-text encore-text-marginal encore-internal-color-text-subdued Ffws6AUxL3EjVpYbWveP" data-encore-id="text" data-testid="playback-position">
                 <span class="Mm38FVy4i2GXLReeARxE" id="pipCur">0:00</span>
               </div>
               <div class="KG1YN3LMLTz79IKcHGFk">
@@ -4047,7 +4024,7 @@ html[data-motion="off"] *::after {
                   </div>
                 </div>
               </div>
-              <div class="e-101040-text encore-text-marginal encore-internal-color-text-subdued Y3QsUYA_lx_2_SlfrMDw cN9abBVMEnKtkyU4ng4w" data-encore-id="text">
+              <div class="e-101040-text encore-text-marginal encore-internal-color-text-subdued Y3QsUYA_lx_2_SlfrMDw cN9abBVMEnKtkyU4ng4w" data-encore-id="text" data-testid="playback-duration">
                 <span class="Nocfu_yQMHmVKO9vKYio" id="pipDur">0:00</span>
               </div>
             </div>
@@ -4056,13 +4033,12 @@ html[data-motion="off"] *::after {
       </div>
 
       <!-- Resize Grip Indicator -->
-      <svg class="vwQfXi85aGQIF2dfBzSs" width="12" height="12" viewBox="0 0 9 9" fill="none">
-        <line x1="0.82" y1="8.82" x2="8.82" y2="0.82" stroke="currentColor" stroke-width="0.8" opacity="0.4"></line>
-        <line x1="4.82" y1="8.82" x2="8.82" y2="4.82" stroke="currentColor" stroke-width="0.8" opacity="0.4"></line>
+      <svg class="vwQfXi85aGQIF2dfBzSs" width="9" height="9" viewBox="0 0 9 9" fill="none">
+        <line x1="0.823223" y1="8.82322" x2="8.82322" y2="0.823223" stroke-width="0.5"></line>
+        <line x1="4.82322" y1="8.82322" x2="8.82322" y2="4.82322" stroke-width="0.5"></line>
       </svg>
     </div>
   </div>
-
 
   <nav class="tabbar" aria-label="التنقل السفلي">
     <button class="tab is-active" data-action="go" data-view="home" data-nav="home">
@@ -9405,8 +9381,6 @@ window.NG = (function () {
     engine.play();
     save();
     renderAll();
-    triggerAutoPip();
-    showPipHintOnce();
   }
 
   function playPlaylist(plId) {
@@ -9638,6 +9612,12 @@ window.NG = (function () {
     if (coverImg && artSrc) {
       coverImg.src = artSrc;
     }
+    const mediaWrap = elPip.querySelector('.bZbahvfcpU50g8Bgtnp7');
+    const dominantColor = (tr.colors && tr.colors[0]) || '#1e3264';
+    if (mediaWrap) {
+      mediaWrap.style.setProperty('--background-base', dominantColor);
+      mediaWrap.style.setProperty('--background-base-min-contrast', dominantColor);
+    }
     if (mainBody && artSrc) {
       mainBody.style.setProperty('--background-image-url', 'url("' + artSrc + '")');
     }
@@ -9708,6 +9688,21 @@ window.NG = (function () {
     const dragBar = miniEl.querySelector('#pipDragBar');
     const seekWrap = miniEl.querySelector('#pipSeekWrap');
     const volInput = miniEl.querySelector('#pipVolInput');
+    const overlay = miniEl.querySelector('.n7BS2oAfcAoFbbqZ2YkA');
+    const mediaElem = miniEl.querySelector('.bZbahvfcpU50g8Bgtnp7');
+
+    if (mediaElem && overlay && !mediaElem.dataset.tapBound) {
+      mediaElem.dataset.tapBound = 'true';
+      let tapTimer;
+      mediaElem.addEventListener('click', (e) => {
+        if (e.target.closest('button, input, a')) return;
+        overlay.classList.toggle('is-active');
+        clearTimeout(tapTimer);
+        if (overlay.classList.contains('is-active')) {
+          tapTimer = setTimeout(() => overlay.classList.remove('is-active'), 4000);
+        }
+      });
+    }
 
     if (dragBar && !dragBar.dataset.bound) {
       dragBar.dataset.bound = 'true';
@@ -9815,16 +9810,8 @@ window.NG = (function () {
   }
 
   async function triggerAutoPip() {
-    if (userDismissedPip) return;
-    if (!('documentPictureInPicture' in window)) return;
-    if (window.innerWidth <= 640) return; // desktop screens
-    if (currentPipWindow && !currentPipWindow.closed) return;
-
-    try {
-      await openDocumentPip();
-    } catch (e) {
-      console.warn('Auto Document PiP skipped or failed:', e);
-    }
+    // Disabled: playback must never auto-open any in-page popups
+    return;
   }
 
   async function toggleMiniPlayer() {
@@ -10088,7 +10075,7 @@ window.NG = (function () {
         break;
       }
       case 'like': toggleLike(node.dataset.id); break;
-      case 'toggle': { if (!engine.playing) triggerAutoPip(); engine.toggle(); break; }
+      case 'toggle': engine.toggle(); break;
       case 'next': stepTrack(1); break;
       case 'prev': stepTrack(-1); break;
       case 'shuffle':

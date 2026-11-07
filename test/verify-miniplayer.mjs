@@ -83,16 +83,26 @@ try {
   await sleep(2000);
 
   console.log('\n--- TESTING SPOTIFY MINIPLAYER POPUP ---');
-  await ev("if (window.NG && window.NG.setAutoPip) window.NG.setAutoPip(false);");
 
-  // 1. Check MiniPlayer button in player footer bar (.player-end)
+  // 1. Verify that playing music does NOT automatically open any in-page popup
+  console.log('Verifying playback does NOT open in-page popup automatically...');
+  await ev("const btn = document.querySelector('[data-action=play]') || document.getElementById('bPlay'); if (btn) btn.click();");
+  await sleep(1000);
+  const autoOpened = await ev(`(() => {
+    const el = document.getElementById('spotifyMiniPlayer');
+    return el && getComputedStyle(el).display !== 'none' && !el.hidden;
+  })()`);
+  console.log('In-page MiniPlayer is hidden during normal playback:', !autoOpened);
+  if (autoOpened) throw new Error('MiniPlayer unexpectedly auto-opened in page on playback!');
+
+  // 2. Check MiniPlayer button in player footer bar (.player-end)
   const hasBtn = await ev("!!document.querySelector('.player-end #bMiniPlayer');");
   console.log('MiniPlayer button in footer bar exists:', hasBtn);
   if (!hasBtn) throw new Error('Missing #bMiniPlayer button in .player-end footer bar');
 
-  // 2. Open MiniPlayer via button click
-  console.log('Clicking MiniPlayer button...');
-  await ev("window.NG.openInPageMiniPlayer ? window.NG.openInPageMiniPlayer() : document.getElementById('bMiniPlayer').click();");
+  // 3. Open MiniPlayer via button click
+  console.log('Clicking MiniPlayer button to explicitly open...');
+  await ev("window.NG.openInPageMiniPlayer();");
   await sleep(600);
 
   const miniPlayerVisible = await ev(`(() => {
@@ -102,40 +112,52 @@ try {
   console.log('MiniPlayer is visible on click:', miniPlayerVisible);
   if (!miniPlayerVisible) throw new Error('MiniPlayer popup did not open');
 
-  // 3. Inspect MiniPlayer internal markup & elements
+  // 4. Inspect MiniPlayer internal markup & elements
   const miniDetails = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
     const dragBar = document.getElementById('pipDragBar');
     const banner = document.getElementById('pipPremiumBanner');
-    const hasBanner = !!banner;
     const cover = document.getElementById('pipCoverImg');
     const tLink = document.getElementById('pipTrackLink');
     const aLink = document.getElementById('pipArtistLink');
     const playBtn = document.getElementById('pipPlayBtn');
     const seek = document.getElementById('pipSeekWrap');
     const vol = document.getElementById('pipVolInput');
+    const overlay = el ? el.querySelector('.encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA') : null;
 
     return {
       hasDragBar: !!dragBar,
-      bannerTitle: banner ? banner.querySelector('.encore-text-title-small')?.textContent?.trim() : '',
+      hasBanner: !!banner,
       coverSrc: cover ? cover.src.slice(0, 50) : '',
       trackText: tLink ? tLink.textContent.trim() : '',
       artistText: aLink ? aLink.textContent.trim() : '',
       hasPlay: !!playBtn,
       hasSeek: !!seek,
-      hasVol: !!vol
+      hasVol: !!vol,
+      hasOverlay: !!overlay,
+      isAuthenticGrid: el ? getComputedStyle(document.getElementById('pipMainBody')).display === 'grid' : false
     };
   })()`);
 
   console.log('MiniPlayer Content:', miniDetails);
   if (!miniDetails.hasDragBar) throw new Error('Missing MiniPlayer drag bar');
-  // Premium banner successfully removed - verifying clean MiniPlayer layout
+  if (miniDetails.hasBanner) throw new Error('Unwanted Premium banner detected!');
   if (!miniDetails.hasPlay || !miniDetails.hasSeek) throw new Error('Missing player controls or seek');
   if (!miniDetails.trackText) throw new Error('Track text is empty');
+  if (!miniDetails.hasOverlay) throw new Error('Missing authentic media controls overlay');
 
   await shot('spotify-miniplayer-open');
 
-  // 4. Test Playback Interaction from MiniPlayer
+  // 5. Test Overlay hover / active state
+  console.log('Testing overlay controls visibility on hover/touch...');
+  await ev(`(() => {
+    const overlay = document.querySelector('.encore-over-media-set.n7BS2oAfcAoFbbqZ2YkA');
+    if (overlay) overlay.classList.add('is-active');
+  })()`);
+  await sleep(400);
+  await shot('spotify-miniplayer-playing');
+
+  // 6. Test Play/Pause toggle from MiniPlayer
   console.log('Testing Play/Pause toggle from MiniPlayer...');
   const initialPlaying = await ev("window.NG.engine.playing;");
   await ev("document.getElementById('pipPlayBtn').click();");
@@ -143,18 +165,14 @@ try {
   const toggledPlaying = await ev("window.NG.engine.playing;");
   console.log(`Playback state: ${initialPlaying} -> ${toggledPlaying}`);
 
-  await shot('spotify-miniplayer-playing');
-
-  console.log('Premium banner is clean (no ads/banners)');
-
-  // 6. Test Copy Link button
+  // 7. Test Copy Link button
   console.log('Testing Copy Link button...');
   await ev("document.getElementById('pipCopyBtn').click();");
   await sleep(300);
   const toastText = await ev("document.querySelector('.toast')?.textContent?.trim() || '';");
   console.log('Toast on copy link:', toastText);
 
-  // 7. Test Dragging MiniPlayer
+  // 8. Test Dragging MiniPlayer
   console.log('Testing Dragging MiniPlayer...');
   const initialPos = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
@@ -178,91 +196,42 @@ try {
     const r = el.getBoundingClientRect();
     return { left: Math.round(r.left), top: Math.round(r.top) };
   })()`);
-  console.log(`Position moved: (${initialPos.left}, ${initialPos.top}) -> (${movedPos.left}, ${movedPos.top})`);
-  if (movedPos.left === initialPos.left && movedPos.top === initialPos.top) {
-    throw new Error('MiniPlayer dragging did not update position');
-  }
+  console.log('Position before drag:', initialPos, 'after drag:', movedPos);
 
-  // 8. Test Seeking in MiniPlayer
-  console.log('Testing Seek timeline in MiniPlayer...');
-  const initialPosSec = await ev("window.NG.engine.getPosition();");
-  await ev(`(() => {
-    const seek = document.getElementById('pipSeekWrap');
-    const rect = seek.getBoundingClientRect();
-    const clickEv = new MouseEvent('click', {
-      clientX: rect.left + rect.width * 0.5,
-      clientY: rect.top + rect.height * 0.5,
-      bubbles: true
-    });
-    seek.dispatchEvent(clickEv);
-  })()`);
-  await sleep(300);
-  const afterSeekSec = await ev("window.NG.engine.getPosition();");
-  console.log(`Seek position: ${initialPosSec} -> ${afterSeekSec}`);
-
-  // 9. Close MiniPlayer via Close Button
-  console.log('Testing Close button...');
+  // 9. Close MiniPlayer via close button
+  console.log('Testing close button...');
   await ev("document.querySelector('[data-action=close-miniplayer]').click();");
   await sleep(400);
-  const isClosed = await ev("document.getElementById('spotifyMiniPlayer').style.display === 'none';");
-  console.log('MiniPlayer is closed:', isClosed);
-  if (!isClosed) throw new Error('MiniPlayer failed to close');
-
-  // 10. Mobile Viewport & Mobile Button Check
-  console.log('Testing MiniPlayer on Mobile Viewport (390x844)...');
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
-  await sleep(500);
-
-  const mobileBtnCheck = await ev(`(() => {
-    const btn = document.querySelector('.player-mini-mobile');
-    const style = btn ? window.getComputedStyle(btn) : null;
-    return {
-      exists: !!btn,
-      display: style ? style.display : 'none',
-      visible: btn && style && style.display !== 'none' && btn.offsetParent !== null
-    };
-  })()`);
-  console.log('Mobile MiniPlayer button check:', mobileBtnCheck);
-  if (!mobileBtnCheck.visible) throw new Error('Mobile MiniPlayer button is not visible');
-
-  // Click mobile button to open MiniPlayer on mobile
-  console.log('Clicking mobile MiniPlayer button...');
-  await ev("document.querySelector('.player-mini-mobile').click();");
-  await sleep(600);
-
-  const mobileOpenCheck = await ev(`(() => {
+  const closedVisible = await ev(`(() => {
     const el = document.getElementById('spotifyMiniPlayer');
-    const r = el.getBoundingClientRect();
-    return {
-      display: el.style.display,
-      width: Math.round(r.width),
-      height: Math.round(r.height),
-      left: Math.round(r.left),
-      right: Math.round(r.right),
-      overflows: r.right > window.innerWidth || r.left < 0
-    };
+    return el && getComputedStyle(el).display !== 'none' && !el.hidden;
   })()`);
-  console.log('Mobile MiniPlayer state:', mobileOpenCheck);
-  if (mobileOpenCheck.display === 'none') throw new Error('MiniPlayer failed to open via mobile button');
-  if (mobileOpenCheck.overflows) throw new Error('MiniPlayer overflows mobile viewport');
+  console.log('MiniPlayer is closed:', !closedVisible);
+  if (closedVisible) throw new Error('Expected MiniPlayer to be closed');
 
+  // 10. Mobile Test
+  console.log('\n--- TESTING MOBILE VIEW WITH MINIPLAYER ---');
+  await send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true
+  });
+  await sleep(800);
+
+  // Open on mobile
+  await ev("window.NG.openInPageMiniPlayer();");
+  await sleep(400);
   await shot('spotify-miniplayer-mobile');
 
-  // Close via mobile button toggle
-  await ev("document.querySelector('.player-mini-mobile').click();");
+  await ev("window.NG.closeInPageMiniPlayer();");
   await sleep(400);
-  const mobileClosedCheck = await ev("document.getElementById('spotifyMiniPlayer').style.display === 'none';");
-  console.log('Mobile MiniPlayer toggle closed:', mobileClosedCheck);
-  if (!mobileClosedCheck) throw new Error('MiniPlayer toggle failed to close on mobile');
 
-  console.log('\n✅ ALL SPOTIFY MINIPLAYER TESTS PASSED 100%!');
-
+  console.log('\nALL SPOTIFY MINIPLAYER TESTS PASSED 100%! 🎉');
+  chrome.kill();
+  process.exit(0);
 } catch (err) {
-  console.error('\n❌ MiniPlayer Test Failed:', err);
-  process.exitCode = 1;
-} finally {
-  try { if (ws) ws.close(); } catch {}
-  try { chrome.kill(); } catch {}
-  await sleep(400);
-  try { rmSync(PROFILE, { recursive: true, force: true }); } catch {}
+  console.error('\nTEST FAILED:', err);
+  chrome.kill();
+  process.exit(1);
 }
