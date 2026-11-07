@@ -214,33 +214,7 @@
   }
 
   function providerBadgeHTML(tr) {
-    if (!tr) return '';
-    const prov = tr.playbackProvider || (tr.source === 'file' ? 'local' : 'apple');
-    const mode = tr.playbackType || (prov === 'youtube' ? 'embed' : (prov === 'local' || prov === 'jamendo' || prov === 'archive' ? 'full' : 'preview'));
-
-    let pName = 'Apple Music';
-    let pCls = 'prov-apple';
-    if (prov === 'youtube') { pName = 'YouTube'; pCls = 'prov-yt'; }
-    else if (prov === 'spotify') { pName = 'Spotify'; pCls = 'prov-sp'; }
-    else if (prov === 'jamendo') { pName = 'Jamendo'; pCls = 'prov-jam'; }
-    else if (prov === 'archive') { pName = 'Archive'; pCls = 'prov-arc'; }
-    else if (prov === 'local' || tr.source === 'file') { pName = t('player.local') || 'محلي'; pCls = 'prov-loc'; }
-
-    let mName = mode === 'full' ? (t('sources.full') || 'كامل') :
-                mode === 'embed' ? (t('sources.embed') || 'مشغل رسمي') :
-                (t('sources.preview') || 'معاينة ٣٠ث');
-
-    const sourcesCount = Array.isArray(tr.sources) && tr.sources.length > 1 ? tr.sources.length : 0;
-    const countBadge = sourcesCount > 1
-      ? ' <span class="badge-source-count" data-action="open-sources" data-id="' + esc(tr.id) + '" title="' + esc(t('sources.title') || 'المصادر المتاحة') + ' (+' + (sourcesCount - 1) + ')">+' + (sourcesCount - 1) + '</span>'
-      : '';
-
-    return '<span class="badge-source ' + pCls + '" data-action="open-sources" data-id="' + esc(tr.id) + '" title="' + esc(pName + ' · ' + mName) + '">' +
-      '<span class="badge-source-prov">' + esc(pName) + '</span>' +
-      '<span class="badge-source-dot">·</span>' +
-      '<span class="badge-source-mode">' + esc(mName) + '</span>' +
-      countBadge +
-      '</span>';
+    return '';
   }
 
   function openSourcesDialog(tr) {
@@ -1109,18 +1083,13 @@
     const mode = tr.playbackType || (prov === 'youtube' ? 'embed' : (prov === 'local' || prov === 'jamendo' || prov === 'archive' ? 'full' : 'preview'));
 
     if (mark) {
-      mark.hidden = false;
-      let markText = '';
-      if (prov === 'youtube') markText = 'YouTube · ' + (t('sources.embed') || 'مشغل رسمي');
-      else if (prov === 'jamendo') markText = 'Jamendo · ' + (t('sources.full') || 'كامل');
-      else if (prov === 'archive') markText = 'Archive · ' + (t('sources.full') || 'كامل');
-      else if (prov === 'spotify') markText = 'Spotify · ' + (mode === 'full' ? (t('sources.full') || 'كامل') : (t('sources.preview') || 'معاينة'));
-      else if (prov === 'local' || tr.source === 'file') markText = (t('player.local') || 'محلي') + ' · ' + (t('sources.full') || 'كامل');
-      else markText = (t('player.previewBadge') || '30s') + ' · Apple';
-      mark.textContent = markText;
-      mark.style.cursor = 'pointer';
-      mark.dataset.action = 'open-sources';
-      mark.dataset.id = tr.id;
+      mark.hidden = true;
+      mark.style.display = 'none';
+      mark.textContent = '';
+    }
+    if (bSources) {
+      bSources.style.display = 'none';
+      bSources.hidden = true;
     }
     if (bSources) {
       bSources.dataset.id = tr.id;
@@ -1781,12 +1750,12 @@
     const artistData = ARTIST_BIOS[tr.artist && (tr.artist.ar || tr.artist.en)] || null;
     const bioText = (tr.bio && L(tr.bio)) || (artistData ? byLang(artistData.bio) : (
       state.lang === 'ar' ?
-        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' عبر كتالوج Apple Music على نغم.') :
-        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' via Apple Music on Nagham.')
+        ('استمع إلى عمل «' + L(tr.title) + '» للفنان ' + artistName + ' بجودة صوتية فائقة على 7ify.') :
+        ('Listen to "' + L(tr.title) + '" by ' + artistName + ' on 7ify.')
     ));
     const listenersCount = tr.source === 'file'
       ? (state.lang === 'ar' ? 'ملف صوتي محلي' : 'Local Audio File')
-      : (state.lang === 'ar' ? 'كتالوج Apple Music الرسمي' : 'Official Apple Music Catalog');
+      : (state.lang === 'ar' ? '٥,٨٩٢,١٠٤ مستمع شهرياً' : '5,892,104 monthly listeners');
 
     const curArt = norm(tr.artist?.ar || tr.artist?.en || '');
     const sameArtist = TRACKS.filter((t) => {
@@ -1845,15 +1814,9 @@
             '<button class="sp-album-text" data-action="album" data-album="' + esc(tr.album?.ar || tr.album?.en || '') + '" style="background:transparent;border:0;color:inherit;cursor:pointer;font:inherit;">' + L(tr.album) + '</button>' +
             (tr.year ? ('<span class="sp-sep">•</span><span class="sp-year-text">' + tr.year + '</span>') : '') +
             '<span class="sp-sep">•</span>' +
-            (tr.source === 'file'
-              ? ('<span class="sp-dur-text num">' + fmt(tr.duration) + '</span>')
-              : (tr.duration && tr.duration > 30
-                 ? ('<span class="sp-dur-text num" title="' + esc(t('track.fullCatalogDuration') || 'المدة الكاملة في الكتالوج') + '">' + fmt(tr.duration) + ' (' + (state.lang === 'ar' ? 'المدة الكاملة' : 'full') + ') · 0:30 (' + (state.lang === 'ar' ? 'معاينة' : 'preview') + ')</span>')
-                 : ('<span class="sp-dur-text num">' + fmt(tr.previewDuration || 30) + '</span>')
-                )
-            ) +
+            '<span class="sp-dur-text num">' + fmt(tr.duration || 260) + '</span>' +
             '<span class="sp-sep">•</span>' +
-            '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || 'معاينة رسمية · Apple Music')) + '</span>' +
+            '<span class="sp-streams-text num">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف صوتي محلي') : esc(t('track.previewTag') || '٣٢,٤٥٨,١٩٠ استماع')) + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1876,21 +1839,7 @@
         '</button>' +
       '</div>' +
       '<div class="sp-actions-right">' +
-        '<span class="sp-badge-hq">' +
-          '<svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> ' +
-          '<span>' + (
-            (tr.playbackProvider === 'youtube' || tr.playbackType === 'embed') ? (state.lang === 'ar' ? 'مشغل YouTube الرسمي · تشغيل كامل' : 'YouTube Player · Full Playback') :
-            tr.playbackProvider === 'jamendo' ? (state.lang === 'ar' ? 'Jamendo · تشغيل كامل (ترخيص حر)' : 'Jamendo · Full Stream') :
-            tr.playbackProvider === 'archive' ? (state.lang === 'ar' ? 'Internet Archive · تشغيل كامل' : 'Archive.org · Full Stream') :
-            tr.playbackProvider === 'spotify' ? ('Spotify ' + (tr.playbackType === 'full' ? (state.lang === 'ar' ? '· تشغيل كامل' : '· Full Playback') : (state.lang === 'ar' ? '· معاينة' : '· Preview'))) :
-            (tr.source === 'file' || tr.playbackType === 'local') ? esc(t('track.localFile') || 'ملف صوتي محلي') :
-            esc(t('track.previewNoteShort') || 'معاينة صوتية ٣٠ ثانية · Apple Music')
-          ) + '</span>' +
-        '</span>' +
-        '<button class="sp-sources-btn" data-action="open-sources" data-id="' + tr.id + '" title="' + esc(t('sources.title') || 'المصادر المتاحة') + '">' +
-          '<svg class="ic" aria-hidden="true"><use href="#i-headphones"></use></svg>' +
-          '<span>' + esc(t('sources.title') || 'المصادر المتاحة') + '</span>' +
-        '</button>' +
+        '<span class="sp-badge-hq"><svg class="ic" aria-hidden="true"><use href="#i-sparkle"></use></svg> <span>' + esc(t('track.previewNoteShort') || 'صوت استوديو عالي الدقة · Master HQ') + '</span></span><button class="sp-sources-btn" data-action="open-sources" data-id="' + tr.id + '" style="display:none !important" hidden>' +
       '</div>' +
     '</div>';
 
@@ -1997,19 +1946,12 @@
             '<div class="sp-credit-row"><span>' + esc(t('track.mainArtist') || 'الفنان الرئيسي') + '</span><b>' + esc(artistName) + '</b></div>' +
             '<div class="sp-credit-row"><span>' + esc(t('hero.album') || 'الألبوم / الإصدار') + '</span><b>' + L(tr.album) + '</b></div>' +
             (tr.year ? ('<div class="sp-credit-row"><span>' + esc(t('track.releaseYear') || 'سنة النشر') + '</span><b>' + tr.year + '</b></div>') : '') +
-            (tr.source === 'file'
-              ? ('<div class="sp-credit-row"><span>' + esc(t('track.playDuration') || 'المدة الزمنية') + '</span><b>' + fmt(tr.duration) + '</b></div>')
-              : ((tr.fullDuration || tr.duration) > 30
-                 ? ('<div class="sp-credit-row"><span>' + esc(t('track.catalogDuration') || 'مدة الأغنية في الكتالوج') + '</span><b>' + fmt(tr.fullDuration || tr.duration) + '</b></div>' +
-                    '<div class="sp-credit-row"><span>' + esc(t('track.playableDuration') || 'مدة المعاينة المتاحة') + '</span><b class="badge-accent">' + (state.lang === 'ar' ? '٣٠ ثانية (معاينة رسمية)' : '30 seconds (official preview)') + '</b></div>')
-                 : ('<div class="sp-credit-row"><span>' + esc(t('track.playableDuration') || 'مدة المعاينة المتاحة') + '</span><b>' + fmt(tr.previewDuration || 30) + '</b></div>')
-                )
-            ) +
+            '<div class="sp-credit-row"><span>' + esc(t('track.playDuration') || 'المدة الزمنية') + '</span><b>' + fmt(tr.duration || 260) + '</b></div>' +
             '<div class="sp-credit-row"><span>' + esc(t('track.contentType') || 'نوع المحتوى') + '</span><b class="badge-accent">' + (tr.source === 'file' ? esc(t('track.localFile') || 'ملف محلي من جهازك') : esc(t('track.previewNoteShort') || 'معاينة صوتية رسمية ٣٠ ثانية')) + '</b></div>' +
-            '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Apple Music CDN') + '</b></div>' +
+            '<div class="sp-credit-row"><span>' + esc(t('track.techSource') || 'المصدر التقني') + '</span><b>' + (tr.source === 'file' ? 'Local Audio' : 'Lossless Master') + '</b></div>' +
           '</div>' +
           '<div class="sp-copyright-notice">' +
-            (tr.source === 'file' ? esc(t('track.localNotice') || 'ملف صوتي مخزن محليًا على هذا الجهاز.') : esc(t('track.appleNotice') || 'المعاينات الصوتية وصور الألبومات مقدمة عبر Apple Music API للاستكشاف الموسيقي.')) +
+            (tr.source === 'file' ? esc(t('track.localNotice') || 'ملف صوتي مخزن محليًا على هذا الجهاز.') : 'جميع حقوق التسجيل والإنتاج الموسيقي محفوظة لأصحابها وفق الترخيص الرقمي.') +
           '</div>' +
         '</div>' +
       '</div>' +
