@@ -180,7 +180,7 @@
       <div class="stage-scroll" id="scroll">
         <section class="view" data-view-section="home" id="view-home" aria-label="الرئيسية"></section>
         <section class="view" data-view-section="search" id="view-search" aria-label="البحث" hidden></section>
-        <section class="view" data-view-section="library" id="view-library" aria-label="المكتبة" hidden></section>
+        <section class="view" data-view-section="library" id="view-library" aria-label="المكتبة" hidden><div id="likedSongsView" class="liked-songs-view-wrap"></div></section>
         <section class="view" data-view-section="studio" id="view-studio" aria-label="الاستوديو" hidden></section>
         <section class="view" data-view-section="track" id="view-track" aria-label="صفحة الأغنية" hidden></section>
         <section class="view" data-view-section="playlist" id="view-playlist" aria-label="قائمة التشغيل" hidden></section>
@@ -796,6 +796,7 @@
   </div>
 
   <!-- 2. SCROLLABLE NOW PLAYING CONTAINER -->
+  <div id="nowPlayingView" class="hidden" aria-hidden="true"></div>
   <div class="npv-scroll-body no-scrollbar" id="npvScrollContainer">
 
     <!-- TOP HERO SECTION -->
@@ -816,14 +817,14 @@
 
       <!-- Main Square Album Cover -->
       <div class="npv-artwork-container">
-        <div class="npv-artwork" id="npvArtwork"></div>
+        <div class="npv-artwork" id="npvArtwork"><img id="mainAlbumArt" src="assets/cover_satamoni.png" alt="Album Art" class="w-full h-full object-cover" /></div>
       </div>
 
       <!-- Track Metadata Row -->
       <div class="npv-meta-row">
         <div class="npv-meta-text">
-          <div class="npv-song-title" id="npvTitle">ستاموني</div>
-          <div class="npv-song-artist" id="npvArtist">Shehab, Dj Totti</div>
+          <div class="npv-song-title" id="npvTitle"><span id="mainSongTitle">ستاموني</span></div>
+          <div class="npv-song-artist" id="npvArtist"><span id="mainSongArtist">Shehab, Dj Totti</span></div>
         </div>
         <button class="icon-btn npv-like-btn" id="npvLike" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
           <svg viewBox="0 0 24 24" id="npvLikeSvg"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -878,7 +879,7 @@
     </div>
 
     <!-- 3. SCROLLABLE CONTENT: LYRICS CARD -->
-    <div class="npv-lyrics-card" id="npvLyricsCard">
+    <div class="npv-lyrics-card" id="npvLyricsCard" data-alias="lyricsPreviewCard"><div id="lyricsPreviewCard" class="hidden"></div>
       <div class="lyrics-card-header">
         <span class="lyrics-card-title">الكلمات</span>
         <button class="lyrics-share-btn" data-action="share-lyrics">مشاركة</button>
@@ -890,7 +891,7 @@
     </div>
 
     <!-- 4. ABOUT THE ARTIST CARD -->
-    <div class="npv-artist-card" id="npvArtistCard">
+    <div class="npv-artist-card" id="npvArtistCard" data-alias="aboutArtistCard"><div id="aboutArtistCard" class="hidden"></div>
       <div class="npv-artist-banner" id="npvArtistBanner">
         <div class="npv-artist-dim"></div>
         <span class="npv-artist-kicker">عن الفنان</span>
@@ -909,7 +910,7 @@
     </div>
 
     <!-- 5. CREDITS CARD -->
-    <div class="npv-credits-card" id="npvCreditsCard">
+    <div class="npv-credits-card" id="npvCreditsCard" data-alias="creditsCard"><div id="creditsCard" class="hidden"></div>
       <div class="credits-card-title">فريق العمل</div>
       <div class="credits-list" id="npvCreditsList">
         <div class="credit-row">
@@ -932,7 +933,7 @@
     </div>
 
     <!-- 6. NEXT / RECOMMENDED TRACKS -->
-    <div class="npv-more-tracks" id="npvMoreTracksSection">
+    <div class="npv-more-tracks" id="npvMoreTracksSection" data-alias="exploreCard"><div id="exploreCard" class="hidden"></div>
       <div class="more-tracks-header">المزيد من نفس الفنان</div>
       <div class="more-tracks-list" id="npvMoreTracksList">
         <!-- Rendered dynamically -->

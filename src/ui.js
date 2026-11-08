@@ -1219,6 +1219,8 @@
     if (art && artUrl) {
       art.style.backgroundImage = 'url("' + artUrl + '")';
     }
+    const mainArtImg = $('#mainAlbumArt');
+    if (mainArtImg) mainArtImg.src = artUrl || 'assets/cover_satamoni.png';
 
     const titleText = byLang(tr.title);
     const artistText = byLang(tr.artist);

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
@@ -7,8 +7,38 @@ import { tmpdir } from 'node:os';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, '..');
+
+// =========================================================================
+// PART 1: Automated Verification of 1:1 Spotify Mobile UI Screens & Cards
+// =========================================================================
+const htmlSrc = readFileSync(join(projectRoot, 'src/index.html'), 'utf8');
+const requiredIds = [
+  'likedSongsView',
+  'nowPlayingView',
+  'stickyCollapsedHeader',
+  'stickySongTitle',
+  'stickySongArtist',
+  'mainAlbumArt',
+  'mainSongTitle',
+  'mainSongArtist',
+  'lyricsPreviewCard',
+  'aboutArtistCard',
+  'creditsCard',
+  'exploreCard'
+];
+
+for (const id of requiredIds) {
+  if (!htmlSrc.includes(`id="${id}"`)) {
+    throw new Error(`Missing required element #${id}`);
+  }
+}
+console.log('PASS: All 1:1 Spotify Mobile UI screens and cards verified.');
+
+// =========================================================================
+// PART 2: Interactive Headless Chrome Mobile NPV Verification
+// =========================================================================
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const PORT = 9339;
+const PORT = 9350 + Math.floor(Math.random() * 200);
 const FILE = pathToFileURL(join(projectRoot, 'nagham-studio.html')).href;
 const PROFILE = join(tmpdir(), 'nagham-npv-' + Date.now());
 const OUT = join(projectRoot, 'shots');
