@@ -56,8 +56,8 @@ console.log('PASS: All 1:1 Spotify Mobile UI screens and cards verified (none ar
 // PART 2: Interactive Headless Chrome Mobile NPV Verification
 // =========================================================================
 const CHROME = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const PORT = 9350 + Math.floor(Math.random() * 200);
-const FILE = pathToFileURL(join(projectRoot, 'nagham-studio.html')).href;
+const PORT = 9345;
+const FILE = pathToFileURL(join(projectRoot, 'index.html')).href;
 const PROFILE = join(tmpdir(), 'nagham-npv-' + Date.now());
 const OUT = join(projectRoot, 'shots');
 
