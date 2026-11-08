@@ -28,11 +28,29 @@ const requiredIds = [
 ];
 
 for (const id of requiredIds) {
-  if (!htmlSrc.includes(`id="${id}"`)) {
+  const tagMatch = htmlSrc.match(new RegExp(`<([a-z0-9_-]+)[^>]*id=["']${id}["'][^>]*>`, 'i'));
+  if (!tagMatch) {
     throw new Error(`Missing required element #${id}`);
   }
+  const [tag, tagName] = tagMatch;
+  // Anti-evasion check: MUST NOT have class="hidden" or hidden attribute on required elements
+  if (/\bhidden\b/i.test(tag)) {
+    throw new Error(`Anti-evasion check failed: #${id} has class="hidden" or hidden attribute! Tag: ${tag}`);
+  }
+
+  // Anti-evasion check: MUST NOT be an empty tag
+  if (tagName.toLowerCase() === 'img') {
+    if (!/src=["'][^"']+["']/i.test(tag)) {
+      throw new Error(`Anti-evasion check failed: #${id} (<img>) must have a valid non-empty src attribute!`);
+    }
+  } else {
+    const emptyTagRegex = new RegExp(`<(${tagName})[^>]*id=["']${id}["'][^>]*>\\s*<\\/\\1>`, 'i');
+    if (emptyTagRegex.test(htmlSrc)) {
+      throw new Error(`Anti-evasion check failed: #${id} is an empty <${tagName}> tag! It must contain real UI content.`);
+    }
+  }
 }
-console.log('PASS: All 1:1 Spotify Mobile UI screens and cards verified.');
+console.log('PASS: All 1:1 Spotify Mobile UI screens and cards verified (none are hidden or empty in src/index.html).');
 
 // =========================================================================
 // PART 2: Interactive Headless Chrome Mobile NPV Verification
@@ -119,6 +137,39 @@ try {
   const isOpen = await ev("document.querySelector('#npvModal').classList.contains('open');");
   console.log('Now Playing Modal open:', isOpen);
   if (!isOpen) throw new Error('Expected #npvModal to have class "open"');
+
+  // Verify at runtime that all required elements exist, are NOT hidden with class="hidden", and are NOT empty
+  const runtimeCheck = await ev(`(() => {
+    const ids = [
+      'likedSongsView',
+      'nowPlayingView',
+      'stickyCollapsedHeader',
+      'stickySongTitle',
+      'stickySongArtist',
+      'mainAlbumArt',
+      'mainSongTitle',
+      'mainSongArtist',
+      'lyricsPreviewCard',
+      'aboutArtistCard',
+      'creditsCard',
+      'exploreCard'
+    ];
+    return ids.map(id => {
+      const el = document.getElementById(id);
+      if (!el) return { id, ok: false, error: 'Element missing in live DOM' };
+      if (el.classList.contains('hidden')) return { id, ok: false, error: 'Element has class "hidden"' };
+      const isImg = el.tagName === 'IMG';
+      const hasContent = isImg ? (!!el.src && el.src.length > 0) : (el.textContent.trim().length > 0 || el.children.length > 0);
+      if (!hasContent) return { id, ok: false, error: 'Element is empty in live DOM' };
+      return { id, ok: true, tag: el.tagName, childCount: el.children.length };
+    });
+  })()`);
+
+  console.log('Runtime Non-Empty & Unhidden Elements Verification:', runtimeCheck);
+  const failedEls = runtimeCheck.filter(r => !r.ok);
+  if (failedEls.length > 0) {
+    throw new Error(`Runtime anti-evasion verification failed for elements: ${JSON.stringify(failedEls)}`);
+  }
 
   // 3. Check Track Info in Hero
   const title = await ev("document.querySelector('#npvTitle').textContent;");

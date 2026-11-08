@@ -180,7 +180,153 @@
       <div class="stage-scroll" id="scroll">
         <section class="view" data-view-section="home" id="view-home" aria-label="الرئيسية"></section>
         <section class="view" data-view-section="search" id="view-search" aria-label="البحث" hidden></section>
-        <section class="view" data-view-section="library" id="view-library" aria-label="المكتبة" hidden><div id="likedSongsView" class="liked-songs-view-wrap"></div></section>
+        <section class="view" data-view-section="library" id="view-library" aria-label="المكتبة" hidden>
+          <div id="likedSongsView" class="liked-songs-view-container pt-4 pb-24 overflow-y-auto no-scrollbar liked-songs-bg">
+            <!-- Search + Sort Row -->
+            <div class="px-4 flex items-center gap-2.5 mb-5">
+              <div class="flex-1 h-[38px] rounded-[8px] bg-white/[0.14] px-3 flex items-center gap-2.5">
+                <svg class="w-[18px] h-[18px] text-white/90 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="7"/>
+                  <path stroke-linecap="round" d="M20 20l-4.2-4.2"/>
+                </svg>
+                <input
+                  id="likedSearchInput"
+                  type="text"
+                  placeholder="ابحث في الأغاني المعجب بها"
+                  class="w-full bg-transparent text-[14px] font-semibold text-white placeholder-white/90 focus:outline-none"
+                />
+              </div>
+              <button class="h-[38px] px-4 rounded-[8px] bg-white/[0.14] hover:bg-white/[0.22] text-[14px] font-bold text-white shrink-0 transition">
+                ترتيب
+              </button>
+            </div>
+
+            <!-- Title & Count -->
+            <div class="px-4 mb-2.5">
+              <h1 class="text-[28px] font-extrabold tracking-tight text-white leading-tight">أغانٍ أعجبتني</h1>
+              <p id="likedSongCountText" class="text-[13.5px] font-medium text-[#b3b3b3] mt-0.5">70 أغنية</p>
+            </div>
+
+            <!-- Action Row: Stack Thumbnail + Download | Smart Shuffle + Big Green Play -->
+            <div class="px-4 py-1 flex items-center justify-between mb-3">
+              <div class="flex items-center gap-5">
+                <button class="relative w-[38px] h-[46px] rounded-[6px] overflow-hidden shadow-md transform -rotate-2 hover:scale-105 transition">
+                  <img src="assets/stack_preview.png" alt="Preview stack" class="w-full h-full object-cover" />
+                </button>
+                <button id="downloadToggleBtn" class="text-[#b3b3b3] hover:text-white transition" title="تحميل الأغاني المعجب بها">
+                  <svg class="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                    <circle cx="12" cy="12" r="9.5"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5v8m0 0l-3.2-3.2M12 15.5l3.2-3.2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-5">
+                <button id="shuffleBtn" class="relative flex flex-col items-center justify-center text-[#1ed760] hover:scale-105 transition" title="تشغيل عشوائي ذكي">
+                  <svg class="w-[27px] h-[27px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                  </svg>
+                  <span id="shuffleDot" class="w-1.5 h-1.5 rounded-full bg-[#1ed760] mt-0.5"></span>
+                </button>
+                <button data-action="toggle" class="w-[54px] h-[54px] rounded-full bg-[#1ed760] hover:bg-[#22e668] active:scale-95 flex items-center justify-center text-black shadow-lg transition" title="تشغيل">
+                  <svg id="likedBigPlayIcon" class="w-6 h-6 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 5.2v13.6c0 .8.9 1.3 1.6.8l10.6-6.8c.6-.4.6-1.3 0-1.7L8.6 4.4c-.7-.5-1.6 0-1.6.8z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mood Filter Pills Row -->
+            <div id="moodPillsContainer" class="px-4 flex items-center gap-2 overflow-x-auto no-scrollbar mb-4">
+              <button class="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/80 hover:text-white shrink-0">ويجز</button>
+              <button class="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/80 hover:text-white shrink-0">شهاب</button>
+              <button class="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/80 hover:text-white shrink-0">راب مصري</button>
+              <button class="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/80 hover:text-white shrink-0">هدوء</button>
+              <button class="px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/80 hover:text-white shrink-0">بوب</button>
+            </div>
+
+            <!-- Add Songs Row -->
+            <div class="px-4">
+              <button class="w-full py-2 flex items-center gap-3.5 text-right hover:bg-white/5 rounded-lg transition">
+                <div class="w-[54px] h-[54px] rounded-[4px] bg-[#222222] flex items-center justify-center text-[#b3b3b3]">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                  </svg>
+                </div>
+                <span class="text-[16px] font-bold text-white">إضافة أغانٍ</span>
+              </button>
+            </div>
+
+            <!-- Song List Container -->
+            <div id="likedSongsList" class="px-4 mt-1 space-y-1">
+              <div class="song-row flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer" data-action="play" data-id="satamoni">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img src="assets/cover_satamoni.png" class="w-12 h-12 rounded object-cover shrink-0" alt="ستاموني" />
+                  <div class="min-w-0">
+                    <div class="font-arabic text-[15px] font-bold text-white leading-tight truncate">ستاموني</div>
+                    <div class="text-[12.5px] font-medium text-[#b3b3b3] truncate mt-0.5">Shehab, Dj Totti</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#1ed760]"></span>
+                  <button class="text-[#b3b3b3] hover:text-white text-base">⋯</button>
+                </div>
+              </div>
+              <div class="song-row flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer" data-action="play" data-id="song_1">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img src="assets/song_1.png" class="w-12 h-12 rounded object-cover shrink-0" alt="نصيني" />
+                  <div class="min-w-0">
+                    <div class="font-arabic text-[15px] font-bold text-white leading-tight truncate">نصيني</div>
+                    <div class="text-[12.5px] font-medium text-[#b3b3b3] truncate mt-0.5">Wegz</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#1ed760]"></span>
+                  <button class="text-[#b3b3b3] hover:text-white text-base">⋯</button>
+                </div>
+              </div>
+              <div class="song-row flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer" data-action="play" data-id="song_2">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img src="assets/song_2.png" class="w-12 h-12 rounded object-cover shrink-0" alt="تملي معاك" />
+                  <div class="min-w-0">
+                    <div class="font-arabic text-[15px] font-bold text-white leading-tight truncate">تملي معاك</div>
+                    <div class="text-[12.5px] font-medium text-[#b3b3b3] truncate mt-0.5">عمرو دياب</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#1ed760]"></span>
+                  <button class="text-[#b3b3b3] hover:text-white text-base">⋯</button>
+                </div>
+              </div>
+              <div class="song-row flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer" data-action="play" data-id="song_3">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img src="assets/song_3.png" class="w-12 h-12 rounded object-cover shrink-0" alt="البخت" />
+                  <div class="min-w-0">
+                    <div class="font-arabic text-[15px] font-bold text-white leading-tight truncate">البخت</div>
+                    <div class="text-[12.5px] font-medium text-[#b3b3b3] truncate mt-0.5">Wegz</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#1ed760]"></span>
+                  <button class="text-[#b3b3b3] hover:text-white text-base">⋯</button>
+                </div>
+              </div>
+              <div class="song-row flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer" data-action="play" data-id="song_4">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <img src="assets/song_4.png" class="w-12 h-12 rounded object-cover shrink-0" alt="عيني" />
+                  <div class="min-w-0">
+                    <div class="font-arabic text-[15px] font-bold text-white leading-tight truncate">عيني</div>
+                    <div class="text-[12.5px] font-medium text-[#b3b3b3] truncate mt-0.5">Shehab</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#1ed760]"></span>
+                  <button class="text-[#b3b3b3] hover:text-white text-base">⋯</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         <section class="view" data-view-section="studio" id="view-studio" aria-label="الاستوديو" hidden></section>
         <section class="view" data-view-section="track" id="view-track" aria-label="صفحة الأغنية" hidden></section>
         <section class="view" data-view-section="playlist" id="view-playlist" aria-label="قائمة التشغيل" hidden></section>
@@ -770,176 +916,220 @@
 
 <!-- ========================================================================= -->
 <!-- AUTHENTIC SPOTIFY MOBILE NOW PLAYING VIEW (NPV FULL-SCREEN MODAL)        -->
-<!-- ========================================================================= -->
 <aside class="npv-modal" id="npvModal" aria-label="مشغل الشاشة الكاملة" role="dialog" aria-hidden="true">
+  <div id="nowPlayingView" class="now-playing-view-wrapper w-full h-full relative">
 
-  <!-- 1. STICKY COLLAPSED MINI-HEADER ON SCROLL -->
-  <div id="stickyCollapsedHeader" class="sticky-collapsed-header opacity-0 pointer-events-none">
-    <div class="sticky-header-content">
-      <div class="sticky-text-wrap" data-action="scroll-npv-top">
-        <div id="stickySongTitle" class="sticky-song-title truncate">ستاموني</div>
-        <div id="stickySongArtist" class="sticky-song-artist truncate">Shehab, Dj Totti</div>
-      </div>
-      <div class="sticky-actions-wrap">
-        <button class="sticky-like-btn" id="stickyLikeBtn" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
-          <svg viewBox="0 0 24 24" class="sticky-check-icon"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>
-        </button>
-        <button class="sticky-play-btn" id="stickyPlayBtn" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت">
-          <svg id="stickyPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-      </div>
-    </div>
-    <!-- Thin Progress Line at Bottom Edge of Sticky Header -->
-    <div class="sticky-progress-line">
-      <div id="stickyProgressBar" class="sticky-progress-bar" style="width: 0%;"></div>
-    </div>
-  </div>
-
-  <!-- 2. SCROLLABLE NOW PLAYING CONTAINER -->
-  <div id="nowPlayingView" class="hidden" aria-hidden="true"></div>
-  <div class="npv-scroll-body no-scrollbar" id="npvScrollContainer">
-
-    <!-- TOP HERO SECTION -->
-    <div class="npv-hero-section">
-      <!-- Top Navigation Bar: Down Chevron | Source Context | "..." -->
-      <div class="npv-top-nav">
-        <button class="icon-btn npv-nav-btn" data-action="close-npv" aria-label="تصغير المشغل" title="تصغير">
-          <svg viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-        </button>
-        <div class="npv-context-title">
-          <small class="npv-context-sub">تشغيل من قائمة التشغيل</small>
-          <span id="npvPlName" class="npv-context-name">أغانٍ أعجبتني</span>
+    <!-- 1. STICKY COLLAPSED MINI-HEADER ON SCROLL -->
+    <div id="stickyCollapsedHeader" class="sticky-collapsed-header opacity-0 pointer-events-none transition-opacity duration-200">
+      <div class="sticky-header-content">
+        <div class="sticky-text-wrap cursor-pointer" data-action="scroll-npv-top">
+          <div id="stickySongTitle" class="sticky-song-title truncate font-arabic">ستاموني</div>
+          <div id="stickySongArtist" class="sticky-song-artist truncate">Shehab, Dj Totti</div>
         </div>
-        <button class="icon-btn npv-nav-btn" data-action="npv-more" aria-label="المزيد من الخيارات" title="المزيد">
-          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
-        </button>
-      </div>
-
-      <!-- Main Square Album Cover -->
-      <div class="npv-artwork-container">
-        <div class="npv-artwork" id="npvArtwork"><img id="mainAlbumArt" src="assets/cover_satamoni.png" alt="Album Art" class="w-full h-full object-cover" /></div>
-      </div>
-
-      <!-- Track Metadata Row -->
-      <div class="npv-meta-row">
-        <div class="npv-meta-text">
-          <div class="npv-song-title" id="npvTitle"><span id="mainSongTitle">ستاموني</span></div>
-          <div class="npv-song-artist" id="npvArtist"><span id="mainSongArtist">Shehab, Dj Totti</span></div>
-        </div>
-        <button class="icon-btn npv-like-btn" id="npvLike" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
-          <svg viewBox="0 0 24 24" id="npvLikeSvg"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        </button>
-      </div>
-
-      <!-- Range Scrubber / Progress Bar -->
-      <div class="npv-scrubber-wrap">
-        <div class="npv-scrubber-track" id="npvSeekArea">
-          <div class="npv-scrubber-fill" id="npvBarFill" style="width: 0%;"></div>
-          <div class="npv-scrubber-thumb" id="npvThumb" style="left: 0%;"></div>
-        </div>
-        <div class="npv-times-row">
-          <span id="npvCur" class="num">0:00</span>
-          <span id="npvDur" class="num">3:22</span>
+        <div class="sticky-actions-wrap">
+          <button class="sticky-like-btn" id="stickyLikeBtn" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
+            <svg viewBox="0 0 24 24" class="sticky-check-icon"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9z"/></svg>
+          </button>
+          <button class="sticky-play-btn" id="stickyPlayBtn" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت">
+            <svg id="stickyPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
         </div>
       </div>
-
-      <!-- Playback Controls Row -->
-      <div class="npv-controls-row">
-        <button class="icon-btn npv-ctrl-btn" id="npvShuffle" data-action="shuffle" aria-label="تشغيل عشوائي" title="تشغيل عشوائي">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
-          <span id="npvShuffleDot" class="ctrl-dot"></span>
-        </button>
-        <button class="icon-btn npv-ctrl-btn" id="npvPrev" data-action="prev" aria-label="السابق" title="السابق">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-        </button>
-        <button class="npv-play-btn" id="npvPlay" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت" title="تشغيل">
-          <svg id="npvPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        <button class="icon-btn npv-ctrl-btn" id="npvNext" data-action="next" aria-label="التالي" title="التالي">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-        </button>
-        <button class="icon-btn npv-ctrl-btn" id="npvRepeat" data-action="repeat" aria-label="تكرار" title="تكرار">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-          <span id="npvRepeatDot" class="ctrl-dot"></span>
-        </button>
-      </div>
-
-      <!-- Utilities Row: Devices & Share & Queue -->
-      <div class="npv-utility-row">
-        <button class="icon-btn npv-util-btn" data-action="devices" aria-label="الأجهزة المتاحة" title="الأجهزة المتاحة">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </button>
-        <button class="icon-btn npv-util-btn" data-action="share-track" aria-label="مشاركة الأغنية" title="مشاركة">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        </button>
-        <button class="icon-btn npv-util-btn" data-action="open-queue" aria-label="قائمة الانتظار" title="قائمة الانتظار">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        </button>
+      <!-- Thin Progress Line at Bottom Edge of Sticky Header -->
+      <div class="sticky-progress-line">
+        <div id="stickyProgressBar" class="sticky-progress-bar" style="width: 0%;"></div>
       </div>
     </div>
 
-    <!-- 3. SCROLLABLE CONTENT: LYRICS CARD -->
-    <div class="npv-lyrics-card" id="npvLyricsCard" data-alias="lyricsPreviewCard"><div id="lyricsPreviewCard" class="hidden"></div>
-      <div class="lyrics-card-header">
-        <span class="lyrics-card-title">الكلمات</span>
-        <button class="lyrics-share-btn" data-action="share-lyrics">مشاركة</button>
-      </div>
-      <div class="lyrics-lines-container" id="npvLyricsLines">
-        <!-- Rendered dynamically -->
-      </div>
-      <button class="lyrics-more-btn" data-action="expand-lyrics">المزيد</button>
-    </div>
+    <!-- 2. SCROLLABLE NOW PLAYING CONTAINER -->
+    <div class="npv-scroll-body no-scrollbar" id="npvScrollContainer">
 
-    <!-- 4. ABOUT THE ARTIST CARD -->
-    <div class="npv-artist-card" id="npvArtistCard" data-alias="aboutArtistCard"><div id="aboutArtistCard" class="hidden"></div>
-      <div class="npv-artist-banner" id="npvArtistBanner">
-        <div class="npv-artist-dim"></div>
-        <span class="npv-artist-kicker">عن الفنان</span>
-      </div>
-      <div class="npv-artist-content">
-        <div class="npv-artist-title-row">
-          <div class="npv-artist-name-wrap">
-            <span class="npv-artist-name" id="npvArtistCardName">Shehab</span>
-            <svg class="verified-icon" viewBox="0 0 24 24"><path fill="#3d91f4" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      <!-- TOP HERO SECTION -->
+      <div class="npv-hero-section now-playing-top-bg">
+        <!-- Top Navigation Bar: Down Chevron | Source Context | "..." -->
+        <div class="npv-top-nav">
+          <button class="icon-btn npv-nav-btn npv-dismiss-btn" data-action="close-npv" aria-label="تصغير المشغل" title="تصغير">
+            <svg viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+          <div class="npv-context-title">
+            <small class="npv-context-sub">تشغيل من قائمة التشغيل</small>
+            <span id="npvPlName" class="npv-context-name">أغانٍ أعجبتني</span>
           </div>
-          <button class="artist-follow-pill" id="npvFollowBtn" data-action="toggle-follow-npv">متابعة</button>
+          <button class="icon-btn npv-nav-btn" data-action="npv-more" aria-label="المزيد من الخيارات" title="المزيد">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
         </div>
-        <div class="npv-artist-listeners" id="npvArtistListeners">٥,٨٩٢,١٠٤ مستمع شهرياً</div>
-        <p class="npv-artist-bio" id="npvArtistBio"></p>
-      </div>
-    </div>
 
-    <!-- 5. CREDITS CARD -->
-    <div class="npv-credits-card" id="npvCreditsCard" data-alias="creditsCard"><div id="creditsCard" class="hidden"></div>
-      <div class="credits-card-title">فريق العمل</div>
-      <div class="credits-list" id="npvCreditsList">
-        <div class="credit-row">
-          <span class="credit-role">غناء</span>
-          <span class="credit-name" id="npvCreditArtist">Shehab, Dj Totti</span>
+        <!-- Main Square Album Cover -->
+        <div class="npv-artwork-container">
+          <div class="npv-artwork" id="npvArtwork"><img id="mainAlbumArt" src="assets/cover_satamoni.png" alt="Album Art" class="w-full h-full object-cover" /></div>
         </div>
-        <div class="credit-row">
-          <span class="credit-role">كلمات وتلحين</span>
-          <span class="credit-name" id="npvCreditWriter">Shehab, Totti</span>
+
+        <!-- Track Metadata Row -->
+        <div class="npv-meta-row">
+          <div class="npv-meta-text">
+            <h2 class="npv-song-title font-arabic" id="mainSongTitle"><span id="npvTitle">ستاموني</span></h2>
+            <p class="npv-song-artist" id="mainSongArtist"><span id="npvArtist">Shehab, Dj Totti</span></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="icon-btn text-white/70 hover:text-white" data-action="dislike" title="إخفاء الأغنية">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+            <button class="icon-btn npv-like-btn" id="npvLike" data-action="like" aria-label="حفظ في الأغاني المعجب بها">
+              <svg viewBox="0 0 24 24" id="npvLikeSvg"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </button>
+          </div>
         </div>
-        <div class="credit-row">
-          <span class="credit-role">إنتاج موسيقي</span>
-          <span class="credit-name" id="npvCreditProducer">Dj Totti</span>
+
+        <!-- Range Scrubber / Progress Bar -->
+        <div class="npv-scrubber-wrap">
+          <div class="npv-scrubber-track" id="npvSeekArea">
+            <div class="npv-scrubber-fill" id="npvBarFill" style="width: 0%;"></div>
+            <div class="npv-scrubber-thumb" id="npvThumb" style="left: 0%;"></div>
+          </div>
+          <div class="npv-times-row">
+            <span id="npvCur" class="num">0:00</span>
+            <span id="npvDur" class="num">3:22</span>
+          </div>
         </div>
-        <div class="credit-row">
-          <span class="credit-role">المصدر</span>
-          <span class="credit-name">تسجيلات أصلية بدقة استوديو Master HQ</span>
+
+        <!-- Playback Controls Row -->
+        <div class="npv-controls-row">
+          <button class="icon-btn npv-ctrl-btn" id="npvShuffle" data-action="shuffle" aria-label="تشغيل عشوائي" title="تشغيل عشوائي">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+            <span id="npvShuffleDot" class="ctrl-dot"></span>
+          </button>
+          <button class="icon-btn npv-ctrl-btn" id="npvPrev" data-action="prev" aria-label="السابق" title="السابق">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+          </button>
+          <button class="npv-play-btn" id="npvPlay" data-action="toggle" aria-label="تشغيل أو إيقاف مؤقت" title="تشغيل">
+            <svg id="npvPlayIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <button class="icon-btn npv-ctrl-btn" id="npvNext" data-action="next" aria-label="التالي" title="التالي">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+          </button>
+          <button class="icon-btn npv-ctrl-btn" id="npvRepeat" data-action="repeat" aria-label="تكرار" title="تكرار">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <span id="npvRepeatDot" class="ctrl-dot"></span>
+          </button>
+        </div>
+
+        <!-- Utilities Row: Devices & Share & Queue -->
+        <div class="npv-utility-row">
+          <button class="icon-btn npv-util-btn" data-action="devices" aria-label="الأجهزة المتاحة" title="الأجهزة المتاحة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+          <button class="icon-btn npv-util-btn" data-action="share-track" aria-label="مشاركة الأغنية" title="مشاركة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
+          <button class="icon-btn npv-util-btn" data-action="open-queue" aria-label="قائمة الانتظار" title="قائمة الانتظار">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- 6. NEXT / RECOMMENDED TRACKS -->
-    <div class="npv-more-tracks" id="npvMoreTracksSection" data-alias="exploreCard"><div id="exploreCard" class="hidden"></div>
-      <div class="more-tracks-header">المزيد من نفس الفنان</div>
-      <div class="more-tracks-list" id="npvMoreTracksList">
-        <!-- Rendered dynamically -->
+      <!-- 3. SCROLLABLE CONTENT: LYRICS CARD -->
+      <div class="npv-lyrics-card lyrics-card-bg" id="lyricsPreviewCard">
+        <div class="lyrics-card-header">
+          <span class="lyrics-card-title">الكلمات</span>
+          <button class="lyrics-share-btn" data-action="share-lyrics">مشاركة</button>
+        </div>
+        <div class="lyrics-lines-container font-arabic" id="npvLyricsLines" dir="rtl">
+          <p data-line="0" class="lyric-line npv-lyric-line">ابيه</p>
+          <p data-line="1" class="lyric-line npv-lyric-line">ايه ده ليه ده أ. لولو كدة</p>
+          <p data-line="2" class="lyric-line npv-lyric-line">فلوهات دي منتاش ناتشها</p>
+          <p data-line="3" class="lyric-line npv-lyric-line">تعرفش انت في يوم تقفشها</p>
+          <p data-line="4" class="lyric-line npv-lyric-line">و البنت باين هيموت و يهنها</p>
+        </div>
+        <button class="lyrics-more-btn" data-action="expand-lyrics">المزيد</button>
       </div>
-    </div>
 
+      <!-- 4. ABOUT THE ARTIST CARD -->
+      <div class="npv-artist-card bg-[#1f1f1f]" id="aboutArtistCard">
+        <div class="npv-artist-banner" id="npvArtistBanner">
+          <img src="assets/artist_shehab.png" alt="Shehab" class="w-full h-full object-cover" id="artistBannerImg" />
+          <div class="npv-artist-dim"></div>
+          <span class="npv-artist-kicker">عن الفنان</span>
+        </div>
+        <div class="npv-artist-content">
+          <div class="npv-artist-title-row">
+            <div class="npv-artist-name-wrap">
+              <span class="npv-artist-name" id="npvArtistCardName">Shehab</span>
+              <svg class="verified-icon" viewBox="0 0 24 24"><path fill="#3d91f4" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <button class="artist-follow-pill" id="npvFollowBtn" data-action="toggle-follow-npv">متابعة</button>
+          </div>
+          <div class="npv-artist-listeners" id="npvArtistListeners">٥,٨٩٢,١٠٤ مستمع شهرياً</div>
+          <p class="npv-artist-bio" id="npvArtistBio">مغني راب ومنتج مصري، بدأ مسيرته في الإسكندرية وأصدر العديد من الأغاني الناجحة مثل ستاموني ومش فاضي وعيني.</p>
+        </div>
+      </div>
+
+      <!-- 5. CREDITS CARD -->
+      <div class="npv-credits-card bg-[#1f1f1f]" id="creditsCard">
+        <div class="credits-card-title">فريق العمل</div>
+        <div class="credits-list" id="npvCreditsList">
+          <div class="credit-row">
+            <span class="credit-role">غناء</span>
+            <span class="credit-name" id="npvCreditArtist">Shehab, Dj Totti</span>
+          </div>
+          <div class="credit-row">
+            <span class="credit-role">كلمات وتلحين</span>
+            <span class="credit-name" id="npvCreditWriter">Shehab, Totti</span>
+          </div>
+          <div class="credit-row">
+            <span class="credit-role">إنتاج موسيقي</span>
+            <span class="credit-name" id="npvCreditProducer">Dj Totti</span>
+          </div>
+          <div class="credit-row">
+            <span class="credit-role">المصدر</span>
+            <span class="credit-name">تسجيلات أصلية بدقة استوديو Master HQ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. NEXT / RECOMMENDED TRACKS -->
+      <div class="npv-more-tracks bg-[#1f1f1f]" id="exploreCard">
+        <div class="more-tracks-header">المزيد من نفس الفنان</div>
+        <div class="more-tracks-list" id="npvMoreTracksList">
+          <div class="more-track-card" data-action="play" data-id="song_1">
+            <div class="more-track-art" style="background-image: url('assets/explore_1.png')">
+              <button class="more-track-play-btn" aria-label="تشغيل شمعة">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            </div>
+            <div class="more-track-info">
+              <span class="more-track-title">شمعة</span>
+              <span class="more-track-artist">Shehab</span>
+            </div>
+          </div>
+          <div class="more-track-card" data-action="play" data-id="song_2">
+            <div class="more-track-art" style="background-image: url('assets/explore_2.png')">
+              <button class="more-track-play-btn" aria-label="تشغيل مش فاضي">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            </div>
+            <div class="more-track-info">
+              <span class="more-track-title">مش فاضي</span>
+              <span class="more-track-artist">Shehab</span>
+            </div>
+          </div>
+          <div class="more-track-card" data-action="play" data-id="song_3">
+            <div class="more-track-art" style="background-image: url('assets/explore_3.png')">
+              <button class="more-track-play-btn" aria-label="تشغيل كدابين">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+            </div>
+            <div class="more-track-info">
+              <span class="more-track-title">كدابين</span>
+              <span class="more-track-artist">Shehab</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 </aside>
 
