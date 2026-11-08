@@ -960,7 +960,7 @@
       html += '<div class="artist-grid">' + NG.ARTISTS.map(artistCard).join('') + '</div>';
     }
 
-    el.library.innerHTML = html;
+    el.library.innerHTML = '<div id="likedSongsView" class="liked-songs-view-container pt-4 pb-24 overflow-y-auto no-scrollbar liked-songs-bg">' + html + '</div>';
   }
 
   /* ---------- studio ------------------------------------------------------ */
@@ -1225,13 +1225,13 @@
     const titleText = byLang(tr.title);
     const artistText = byLang(tr.artist);
 
-    const titleEl = $('#npvTitle');
+    const titleEl = $('#npvTitle') || $('#mainSongTitle');
     if (titleEl) titleEl.textContent = titleText;
 
     const stickyTitle = $('#stickySongTitle');
     if (stickyTitle) stickyTitle.textContent = titleText;
 
-    const artistEl = $('#npvArtist');
+    const artistEl = $('#npvArtist') || $('#mainSongArtist');
     if (artistEl) artistEl.textContent = artistText;
 
     const stickyArtist = $('#stickySongArtist');
@@ -3765,7 +3765,7 @@
         break;
       }
       case 'expand-lyrics': {
-        const card = $('#npvLyricsCard');
+        const card = $('#lyricsPreviewCard') || $('#npvLyricsCard');
         if (card) {
           const exp = card.classList.toggle('is-expanded');
           const btn = card.querySelector('.lyrics-more-btn');

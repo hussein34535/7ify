@@ -6776,3 +6776,119 @@ html, body {
     text-align: center;
   }
 }
+
+
+/* ========================================================================= */
+/* 1:1 SPOTIFY MOBILE UI & CARD STYLES                                       */
+/* ========================================================================= */
+.liked-songs-bg {
+  background: linear-gradient(180deg, #3c52ce 0%, #2b3a8c 17%, #1c2452 32%, #121212 48%, #121212 100%) !important;
+}
+
+.now-playing-top-bg {
+  background: linear-gradient(180deg, var(--npv-bg, #9b110e) 0%, rgba(20, 20, 20, 0.95) 100%) !important;
+}
+
+.sticky-player-header {
+  background-color: var(--sticky-header-bg, #660909) !important;
+}
+
+.lyrics-card-bg {
+  background-color: var(--lyrics-bg, #ea0c0c) !important;
+}
+
+.mini-player-bg {
+  background-color: #6c0909 !important;
+}
+
+.now-playing-view-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.liked-songs-view-container {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  padding: 16px 16px 120px !important;
+}
+
+.song-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+.song-row:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.more-track-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+  margin-bottom: 8px !important;
+}
+.more-track-card:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.more-track-art {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 6px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+.more-track-play-btn {
+  position: absolute !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+}
+.more-track-card:hover .more-track-play-btn {
+  opacity: 1 !important;
+}
+.more-track-info {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+  padding: 0 12px !important;
+}
+.more-track-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.more-track-artist {
+  font-size: 12px !important;
+  color: #b3b3b3 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
