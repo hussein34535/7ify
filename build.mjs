@@ -31,10 +31,11 @@ writeFileSync(join(pub, 'nagham-studio.html'), studioHtml, 'utf8');
 // 2. Build Mobile Spotify iOS (index.html & public/index.html)
 let mobileHtml = readFileSync(join(src, 'index.html'), 'utf8');
 if (mobileHtml.includes('<!--INLINE_STYLE-->')) {
-  mobileHtml = mobileHtml.replace('<!--INLINE_STYLE-->', '');
+  mobileHtml = mobileHtml.replace('<!--INLINE_STYLE-->',() => '<style>\n' + css.trim() + '\n</style>);
 }
 if (mobileHtml.includes('<!--INLINE_SCRIPTS-->')) {
-  mobileHtml = mobileHtml.replace('<!--INLINE_SCRIPTS-->', '');
+  mobileHtml = mobileHtml.replace('<!--INLINE_SCRIPTS-->', ) =>
+    '<script>\n' + app.trim() + '\n</script>\n<script>\n' + ui.trim() + '\n</script>;
 }
 const indexOut = join(here, 'index.html');
 writeFileSync(indexOut, mobileHtml, 'utf8');
