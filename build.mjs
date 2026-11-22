@@ -34,7 +34,7 @@ if (mobileHtml.includes('<!--INLINE_STYLE-->')) {
   mobileHtml = mobileHtml.replace('<!--INLINE_STYLE-->',() => '<style>\n' + css.trim() + '\n</style>);
 }
 if (mobileHtml.includes('<!--INLINE_SCRIPTS-->')) {
-  mobileHtml = mobileHtml.replace('<!--INLINE_SCRIPTS-->', ) =>
+  mobileHtml = mobileHtml.replace('<!--INLINE_SCRIPTS-->', () =>
     '<script>\n' + app.trim() + '\n</script>\n<script>\n' + ui.trim() + '\n</script>');
 }
 const indexOut = join(here, 'index.html');
