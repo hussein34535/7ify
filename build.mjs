@@ -35,7 +35,7 @@ if (mobileHtml.includes('<!--INLINE_STYLE-->')) {
 }
 if (mobileHtml.includes('<!--INLINE_SCRIPTS-->')) {
   mobileHtml = mobileHtml.replace('<!--INLINE_SCRIPTS-->', ) =>
-    '<script>\n' + app.trim() + '\n</script>\n<script>\n' + ui.trim() + '\n</script>;
+    '<script>\n' + app.trim() + '\n</script>\n<script>\n' + ui.trim() + '\n</script>');
 }
 const indexOut = join(here, 'index.html');
 writeFileSync(indexOut, mobileHtml, 'utf8');
